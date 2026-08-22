@@ -1,0 +1,39 @@
+.ink-gitnotice {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--ink-fg);
+  color: var(--ink-bg);
+  font-size: 12.5px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
+}
+
+/* A failure is the one of the three you might need to read twice, so it is the one that stays. */
+.ink-gitnotice.error {
+  background: var(--ink-danger);
+  color: #ffffff;
+}
+
+.ink-gitnotice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ink-gitnotice-close {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 4px;
+  min-width: 32px;
+  min-height: 32px;
+}

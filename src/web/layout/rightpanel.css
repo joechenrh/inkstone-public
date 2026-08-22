@@ -1,0 +1,47 @@
+/* The drawer's own top edge, matching the top bar's height so the two tabs line up with the
+   breadcrumb across the hairline rather than floating above or below it. */
+
+.ink-rightpanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ink-rightpanel-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--ink-rule);
+  flex: none;
+}
+
+.ink-rightpanel-tab {
+  padding: 8px 9px 7px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-fg-muted);
+  cursor: pointer;
+}
+
+/* Both states stated, never inherited: a global `button:hover { color: var(--ink-link) }` sits
+   under every theme and would otherwise decide what the selected tab looks like. */
+.ink-rightpanel-tab:hover { color: var(--ink-fg); }
+
+.ink-rightpanel-tab.on {
+  color: var(--ink-fg);
+  border-bottom-color: var(--ink-link);
+}
+
+/* `hidden` is a display:none the browser already knows, but a flex child overrides it. */
+.ink-rightpanel-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.ink-rightpanel-body[hidden] { display: none; }

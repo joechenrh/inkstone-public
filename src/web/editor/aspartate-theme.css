@@ -1,0 +1,402 @@
+/* Aspartate — converted from the Typora theme (AntonVanke/typora-Aspartate-theme) by
+ * scripts/convert-typora-theme.mjs, then finished by hand.
+ *
+ * Dark only: the upstream ships a single appearance, as most Typora themes do. DOC_THEMES declares
+ * that, which makes the Appearance control inert while this theme is selected rather than offering
+ * a light mode it does not have.
+ */
+:root[data-doc-theme="aspartate"] {
+  /* The shell borrows the theme's page so the sidebar and the document stay one surface.
+     Nested under [data-theme] deliberately: tokens.css declares the dark defaults at
+     `:root[data-theme="dark"]`, the same specificity as this wrapper alone, and the tie went to
+     tokens.css — the sidebar came out in Lapis's dark grey inside an Aspartate page. */
+  &[data-theme="dark"] {
+    --ink-bg: #18191a;
+    --ink-fg: #dcdedf;
+    --ink-fg-muted: #8b8f94;
+    --ink-link: #6cb6ff;
+    --ink-rule: #2c2e30;
+    --ink-code-bg: #282a36;
+    --ink-sidebar-bg: #18191a;
+    --ink-sidebar-hover: #232527;
+    --ink-sidebar-active: #2c2f31;
+  }
+
+
+
+  --text-color: #f5f6f7;
+
+  --bg-color: #18191a;
+
+  --sidebar-width: 300px;
+
+  --select-text-font-color: #000000;
+
+  --side-bar-bg-color: var(--bg-color);
+
+  --code-block-bg-color: rgb(40, 42, 54);
+
+  --active-file-bg-color: #4b4b4b;
+
+  --rawblock-edit-panel-bd: var(--code-block-bg-color);
+
+
+
+  --as-font-family-base: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  --as-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --as-meta-block-bg-color: hsla(0, 0%, 100%, 0.05);
+
+  --as-meta-block-font-color: #dadde1;
+
+  --as-inline-code-color: #ff6e6e;
+
+  --as-link-color: #00aeff;
+
+  --as-title-color: #e3f7ff;
+
+  --as-dropdown-menu: #242526;
+
+  --as-nav-group-item-bg-color: #4b4b4b;
+
+  --as-blockquote-border-color: #606770;
+
+  --as-blockquote-font-color: #ebedf0;
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc {
+    background: var(--bg-color);
+    /* Upstream never sets a colour here: Typora's own base stylesheet supplies it, so the
+       conversion arrived with dark text on a dark page. */
+    color: var(--text-color);
+    font-family: var(--as-font-family-base);
+    /* The setting names the body size; the upstream `font:` shorthand reset it to 100%. */
+    font-size: var(--ink-font-size, 16px);
+    line-height: 1.65;
+    max-width: 950px;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    color: var(--as-title-color);
+    font-family: var(--as-font-family-base);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 1rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 {
+    font-size: calc(var(--ink-font-size, 16px) * 3);
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.6);
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.2);
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 {
+    font-size: calc(var(--ink-font-size, 16px) * 1);
+  }
+
+  .ink-doc.ink-doc.ink-doc h5 {
+    font-size: calc(var(--ink-font-size, 16px) * 0.85);
+  }
+
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-size: calc(var(--ink-font-size, 16px) * 0.8);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-heading:before {
+    color: var(--as-link-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc table tbody tr:nth-child(2n-1) {
+    background-color: var(--as-meta-block-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .arrow::after {
+    border-bottom-color: var(--as-meta-block-bg-color) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc > p,
+  .ink-doc.ink-doc.ink-doc > pre,
+  .ink-doc.ink-doc.ink-doc > ul,
+  .ink-doc.ink-doc.ink-doc > .milkdown-code-block {
+    margin-bottom: 1.25rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc mark {
+    background: var(--as-inline-code-color) !important;
+    border-radius: 4px !important;
+    padding: 1px 4px;
+    font-weight: 700;
+  }
+
+  .ink-doc.ink-doc.ink-doc :not(pre) > code {
+    color: var(--as-inline-code-color);
+    padding: 0 4px;
+  }
+
+  .ink-doc.ink-doc.ink-doc code {
+    background-color: var(--code-block-bg-color);
+    border: .1rem solid rgba(0, 0, 0, .1);
+    border-radius: 0.4rem;
+    font-family: var(--as-font-family-monospace);
+    padding: 0.1rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-hover-tip .md-arrow:after {
+    background: var(--code-block-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc #toc-dropmenu.open {
+    background: var(--code-block-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    border: 0 solid var(--as-blockquote-border-color);
+    border-left: 2px solid var(--as-blockquote-border-color);
+    color: var(--as-blockquote-font-color);
+    padding: 0 1rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 8px;
+    box-sizing: content-box;
+    overflow: hidden;
+  }
+
+  .ink-doc.ink-doc.ink-doc input:before {
+    content: '';
+    display: block;
+    box-sizing: content-box;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--as-title-color);
+    transition: 0.2s border-color ease;
+  }
+
+  .ink-doc.ink-doc.ink-doc input:checked:before {
+    border-color: var(--as-link-color);
+    transition: 0.5s border-color ease;
+  }
+
+  .ink-doc.ink-doc.ink-doc input:disabled:before {
+    border-color: #ccc;
+    background-color: #ccc;
+  }
+
+  .ink-doc.ink-doc.ink-doc input:after {
+    content: '';
+    display: block;
+    position: absolute;
+    box-sizing: content-box;
+    top: 50%;
+    left: 50%;
+    transform-origin: 50% 50%;
+    background-color: var(--as-link-color);
+    width: 16px;
+    height: 16px;
+    border-radius: 100vh;
+    transform: translate(-50%, -50%) scale(0);
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="checkbox"]:before {
+    border-radius: 4px;
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="checkbox"] + * {
+    margin-left: 10px;
+    padding-top: 3px;
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="checkbox"]:after {
+    width: 9px;
+    height: 16px;
+    border-radius: 0;
+    transform: translate(-50%, -85%) scale(0) rotate(45deg);
+    background-color: transparent;
+    box-shadow: 4px 4px 0 0 var(--as-link-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="checkbox"]:checked:after {
+    -webkit-animation: toggleOnCheckbox 0.2s ease forwards;
+    animation: toggleOnCheckbox 0.2s ease forwards;
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="radio"]:before {
+    border-radius: 100vh;
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="radio"]:after {
+    width: 16px;
+    height: 16px;
+    border-radius: 100vh;
+    transform: translate(-50%, -50%) scale(0);
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="radio"]:checked:after {
+    -webkit-animation: toggleOnRadio 0.2s ease forwards;
+    animation: toggleOnRadio 0.2s ease forwards;
+  }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    font-weight: 700;
+    color: var(--as-link-color);
+    text-decoration: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc a:hover,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link:hover {
+    color: var(--as-link-color);
+    text-decoration: underline;
+  }
+
+  .ink-doc.ink-doc.ink-doc pre,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    font-family: var(--as-font-family-monospace);
+    border-radius: 0.4rem;
+    font-size: calc(var(--ink-font-size, 16px) * 0.95) !important;
+    padding: 1rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc #md-notification {
+    background: var(--as-blockquote-border-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc #recent-file-panel-action-btn-container {
+    margin-top: 10px;
+  }
+
+  .ink-doc.ink-doc.ink-doc #recent-file-panel-action-btn {
+    background: transparent;
+  }
+
+  .ink-doc.ink-doc.ink-doc #recent-file-panel tbody tr:nth-child(2n-1) {
+    background-color: var(--code-block-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .nav-group-item.active {
+    background: var(--as-nav-group-item-bg-color) !important;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background-color: var(--code-block-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-comment {
+    color: #52707b
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-string,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-string-2 {
+    color: #55b5db
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-number {
+    color: #cd3f45
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable {
+    color: #55b5db
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable-2 {
+    color: #a074c4
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-def {
+    color: #55b5db
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-keyword {
+    color: #ff79c6
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-operator {
+    color: #9fca56
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-keyword {
+    color: #e6cd69
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-atom {
+    color: #cd3f45
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-meta {
+    color: #55b5db
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-tag {
+    color: #55b5db
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-attribute {
+    color: #9fca56
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-qualifier {
+    color: #9fca56
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-property {
+    color: #a074c4
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-type,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable-3 {
+    color: #9fca56
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-builtin {
+    color: #9fca56
+  }
+
+
+  /* ---- hand-finishing, after rendering the conversion ----
+   *
+   * Upstream styles bare `pre` and bare `code`, which in Vditor's DOM also reach the collapsed
+   * source and the <code> *inside* a fenced block — the block came out as a clipped strip with a
+   * second bordered box drawn within it.
+   *
+   * The .ink-editor prefixes are load-bearing: highlight.js's content theme is injected into <head>
+   * at runtime and wins ties against this bundled sheet, so without them the code kept its light
+   * palette — #24292e text on a #282a36 block. */
+  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--code-block-bg-color);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: inherit;
+  }
+
+  .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: var(--text-color);
+  }
+}

@@ -1,0 +1,66 @@
+/* Adding a picture, on a phone. The button lives in the bottom bar; the sheet opens above it. */
+
+.ink-picture-btn {
+  /* The bar's floor, matching the view group and Save either side of it. */
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 8px;
+  color: var(--ink-fg-muted);
+}
+
+/* Full-screen, so a tap anywhere else closes it — the same dismissal the other phone sheet has. */
+.ink-picture-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: stretch;
+  padding: 12px;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--ink-fg) 16%, transparent);
+}
+
+.ink-picture-sheet {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ink-rule);
+  border-radius: 12px;
+  background: var(--ink-bg);
+  box-shadow: var(--ink-shadow-menu);
+}
+
+.ink-picture-sheet button {
+  display: flex;
+  align-items: center;
+  /* 52px: a thumb, reaching the bottom of a phone, is not a mouse. */
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 18px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink-fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ink-picture-sheet button + button {
+  border-top: 1px solid var(--ink-rule);
+}
+
+.ink-picture-sheet button:active {
+  background: var(--ink-sidebar-hover);
+}
+
+/* Off-screen rather than `display: none`, which Safari refuses to click. */
+.ink-picture-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

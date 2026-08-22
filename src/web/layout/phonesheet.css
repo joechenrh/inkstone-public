@@ -1,0 +1,75 @@
+.ink-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 28%);
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Anchored to the bottom, where a thumb is, and never taller than most of the screen — the
+   document underneath stays visible, which is what says this is over it rather than instead of it. */
+.ink-sheet {
+  width: 100%;
+  /*
+   * A fixed height for history, a fitted one for the outline.
+   *
+   * Sized by its content, the sheet opened at whatever the panel had ready and grew when the rest
+   * arrived — history fetches its log on mount, so it appeared half-size and then expanded. That
+   * is what the fixed detent is for, and history keeps it.
+   *
+   * The outline has no such excuse: its headings are read from the document synchronously, so the
+   * list is complete on the first paint and the box can be the size of what is in it. A
+   * two-heading note was leaving two thirds of the sheet empty.
+   */
+  height: 62dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-bg);
+  border-top: 1px solid var(--ink-rule);
+  border-radius: 14px 14px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.ink-sheet--fits {
+  height: auto;
+  max-height: 62dvh;
+}
+
+.ink-sheet-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 8px 8px 16px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+
+.ink-sheet-title {
+  font-size: 13px;
+  color: var(--ink-fg);
+}
+
+.ink-sheet-sub {
+  font-size: 11px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-sheet-head .ink-iconbtn {
+  margin-left: auto;
+  color: var(--ink-fg-muted);
+  justify-content: center;
+}
+
+.ink-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 0 10px;
+}
+
+/* Both of these are said by the sheet's own title row: the eyebrow repeats the title a centimetre
+   below it, and the facts are now its subtitle. The desktop drawer keeps both — it has no title
+   above them, and it is a panel about the note rather than a sheet opened by name. */
+.ink-sheet .ink-hist-eyebrow,
+.ink-sheet .ink-hist-facts {
+  display: none;
+}

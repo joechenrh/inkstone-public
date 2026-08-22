@@ -1,0 +1,182 @@
+.ink-commit-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 30%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ink-commit {
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 10px;
+  box-shadow: var(--ink-shadow-modal);
+  overflow: hidden;
+}
+
+/* On a phone it is a sheet, the same shape as the outline and history. */
+.ink-commit--sheet {
+  max-width: none;
+  max-height: 88dvh;
+  border-radius: 14px 14px 0 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.ink-commit-scrim:has(.ink-commit--sheet) {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.ink-commit-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px 10px 16px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+
+.ink-commit-title { font-size: 13px; color: var(--ink-fg); }
+.ink-commit-head .ink-iconbtn { margin-left: auto; color: var(--ink-fg-muted); justify-content: center; }
+
+.ink-commit-note,
+.ink-commit-error {
+  padding: 16px;
+  font-size: 13px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-commit-error { color: var(--ink-danger); padding-top: 0; }
+
+/* The file list is short and the diff is long, so the list keeps its size and the diff scrolls. */
+.ink-commit-files {
+  flex: 0 0 auto;
+  max-height: 26vh;
+  overflow-y: auto;
+  padding: 6px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+
+.ink-commit-file {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 9px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink-fg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ink-commit-file:hover { background: var(--ink-sidebar-hover); }
+.ink-commit-file.on { background: var(--ink-sidebar-active); }
+
+.ink-commit-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ink-commit-stat {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.add { color: var(--ink-added, #3f7d58); }
+.del { color: var(--ink-removed, #b4483c); }
+
+.ink-commit-diff {
+  flex: 1;
+  min-height: 90px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--ink-code-bg);
+  font-family: var(--ink-font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre;
+  color: var(--ink-fg-muted);
+}
+
+.ink-commit-diff .add { color: var(--ink-added, #3f7d58); }
+.ink-commit-diff .del { color: var(--ink-removed, #b4483c); }
+.ink-commit-diff .hunk { color: var(--ink-link); }
+
+.ink-commit-message {
+  padding: 8px 10px;
+  border: 1px solid var(--ink-rule);
+  border-radius: 7px;
+  background: var(--ink-bg);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-fg);
+}
+
+.ink-commit-message:focus-visible {
+  outline: none;
+  border-color: var(--ink-link);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-link) 18%, transparent);
+}
+
+
+
+.ink-commit-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* The bottom row is the message and nothing else.
+ *
+ * It carried a Commit button and a "Commit & push" beside it: two controls of equal weight for one
+ * action and one modifier — and a second way to push, when the status bar already has one. Push
+ * stays where push lives; Enter commits. */
+.ink-commit-foot {
+  padding: 12px 16px 16px;
+}
+
+.ink-commit-hint {
+  margin-top: 7px;
+  color: var(--ink-fg-muted);
+  font-size: 11.5px;
+}
+
+/* Touch gets a button back: a hint naming the return key is what this app stopped doing on a
+   touch screen, and a panel with no visible way to finish is a dead end there. */
+/* The same tray as the bottom bar's Save, which is a tap away from it. */
+.ink-commit-go {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: var(--ink-sidebar-hover);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-link);
+}
+
+.ink-commit-go:disabled { opacity: 0.55; }
+
+.ink-commit-message {
+  display: block;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}

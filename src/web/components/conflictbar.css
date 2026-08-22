@@ -1,0 +1,26 @@
+/* Floating conflict bar: absolutely positioned, centered at the top of the editor and
+   covering the body. It's outside the layout flow, so appearing/disappearing never nudges
+   or moves the editor below. */
+.ink-conflict {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 10px 16px;
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+  font-size: 13px;
+  border: 1px solid var(--ink-rule);
+  border-radius: 8px;
+  box-shadow: var(--ink-shadow-modal);
+}
+
+.ink-conflict button {
+  color: var(--ink-link);
+  white-space: nowrap;
+}

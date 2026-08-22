@@ -1,0 +1,168 @@
+/* The typographic bar, owned by the document.
+ *
+ * Imported by both editor shells rather than by `document.css`, and after the themes, because the
+ * whole point of these rules is to be the last word on four things a theme may not do.
+ */
+
+/* ---------------------------------------------------------------------------
+   The typographic bar every document theme has to meet.
+
+   A theme owns palette, type family and measure. What it may not do is break the line: these are
+   the four ways a converted Typora theme actually did, each found by measuring rather than reading
+   (see tests/e2e/theme-conformance.spec.ts, which fails on any of them).
+
+   Scoped to `.ink-doc`, the document itself, rather than to an editor's DOM. It was written against
+   Vditor's classes, which meant a second engine had no bar at all: a theme could set inline code
+   larger than the text around it, or a list tighter than the paragraph above it, and nothing would
+   have caught it. `theme-conformance.spec.ts` checks the mounted document, so the check was there
+   and the guarantee was not.
+
+   `:not(pre) > code` is what "inline code" means to a document. Vditor wraps it in a
+   `span[data-type="code"]` and Crepe does not wrap it at all; a bare `code` would also reach the
+   one inside a fenced block, in both.
+   --------------------------------------------------------------------------- */
+
+/* 1. Inline code is set relative to the text around it, never larger. Everforest shipped it at
+      100% of body, which reads as a size change mid-sentence rather than as a different voice.
+   2. It sits on the baseline. Forest used `vertical-align: top`, which hangs the pill from the top
+      of the line box: against CJK text, whose glyphs fill the em, the offset is plainly visible.
+   3. Its box fits inside the line. The pill's height is font-size x line-height plus its vertical
+      padding, and when that exceeds the line, pills in wrapped text nearly touch the row above —
+      Everforest 28px in a 26px line, BitClean 26px in a 24px one. Capping the vertical padding in
+      `em` keeps the pill proportional to whatever size the theme chose. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc :not(pre) > code {
+  /* `em`, so it also restores the font-size setting: Everforest set inline code in `rem`, which is
+     root-relative and ignores the setting outright — the same trap the ported Lapis hit. */
+  font-size:      0.92em !important;
+  line-height:    1.35 !important;
+  vertical-align: baseline;
+  padding-block:  0.1em;
+  /* An inline box, so its padding cannot push the line apart. Crepe sets inline code to
+     `inline-block`, which is an atomic box: its full height — leading plus vertical padding —
+     becomes the line's height, so every heading and every wrapped line containing inline code came
+     out 3px taller than the same line without it. Measured across the vault, 38 headings. Rule 3
+     above caps the padding for exactly this reason; this is the other half of it. */
+  display:        inline;
+}
+
+/* 4. A list is running prose and takes the document's measure. BitClean set list items to 1.5
+      against 1.8 in a paragraph and Forest set them to 1.0 inside a quote, so a wrapped list item
+      and a wrapped paragraph read as two different documents on one page. `inherit` rather than a
+      number: the measure is still the theme's, it just has to be one measure.
+
+      Tables are deliberately left out — a table is not running prose, and setting one tighter than
+      the text around it is an ordinary typographic choice. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc li,
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote,
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote p {
+  /* The quote itself and not only what is inside it: Forest set `line-height: 1` on the blockquote,
+     which every paragraph and list item under it then inherited. `!important` because the themes
+     set this again inside their dark blocks, where the extra `[data-theme]` outranks this rule.
+
+     `inherit` resolves to the number the document root carries, not to a pixel height, so a theme
+     that deliberately sets a quote or a caption smaller keeps leading proportional to it. */
+  line-height: inherit !important;
+}
+
+/* Each of the three rules above carries the `:root[data-doc-theme]` wrapper the themes carry, and
+   so outranks any single one of them by exactly one class rather than by `!important` — which is
+   kept for the two properties a theme was found setting `!important` itself.
+
+/* A quote is prose, and prose stays in normal flow. Everforest's blockquote was `display: flex`
+   with `align-items: center` — upstream's callout styling — which laid the quote's paragraph and
+   the list under it out as two side-by-side columns and broke the reading order outright.
+
+   !important because the theme's own selector carries its `[data-doc-theme]` wrapper and outranks
+   this one: reading order is not something a palette gets to overrule. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote {
+  display: block !important;
+}
+
+/* A container's padding is the space around its content, so the first and last things inside it do
+   not add their own on top. Measured inside a blockquote: BitClean had 16px above the content and
+   35px below, the surplus being the list's bottom margin stacking onto the quote's padding, which
+   left a visibly empty band at the bottom of every quote that ended in a list. Lapis and Everforest
+   had smaller versions of the same. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote > :first-child {
+  margin-top: 0;
+}
+
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+
+/* 5. A table keeps its columns reachable.
+ *
+ * Everforest rounds its table's corners and clips with `overflow: hidden`; against a table wider
+ * than the column that is not a rounded corner, it is a table with its last four columns deleted,
+ * with no scrollbar to say so. Tailwind lets its table overflow the measure instead, which spills
+ * it into the margin. Both are decoration decisions, and neither gets to make the reader's own data
+ * unreachable — the same principle as the column alignment below, which a theme also does not get
+ * to overrule.
+ *
+ * `auto` still clips at the radius, so Everforest keeps its corners and gains a scrollbar.
+ *
+ * Not `display: block` any more: the document's tables take the measure and wrap now, so there is
+ * nothing to scroll and forcing a block box only broke the layout the theme asked for. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc table {
+  overflow: auto;
+  max-width: 100%;
+}
+
+/* 6. Paragraphs are set apart by the same amount in every theme.
+ *
+ * Measured across the seven: the gap between two paragraphs ran from 13px (BitClean) to 20px
+ * (Aspartate), 0.45 to 0.76 of a line — a wider spread than the line heights themselves. The same
+ * note changed rhythm when the theme changed, which is the thing this file exists to stop.
+ *
+ * 0.75em, and in `em` so it follows the font-size setting rather than ignoring it. At 16px that is
+ * 12px, and the advance from one one-line paragraph to the next comes to 38px against Lapis's 42
+ * and github.com's 40. It reads as a paragraph break and not as a blank line, which is what a page
+ * of short lines had before.
+ *
+ * A theme owns palette, type family and measure. The line is the document's, and so is the space
+ * between two of them.
+ *
+ * Every block takes it, not a list of the ones that had turned up so far. Written as the pairs —
+ * paragraphs, then lists, then quotes and tables — it failed three more times, each on whichever
+ * block the fixture happened to put next: rule 3 above requires the space before a list and after
+ * it to match, and a fenced block kept its own 16px against a paragraph's 12. One selector, and the
+ * arithmetic holds whatever is next to what. Rule 3 is why: it already requires the space before
+ * a list and the space after it to match, so setting one side without the other trades an
+ * inconsistency between themes for an asymmetry inside one — which the bar caught on Lapis,
+ * Aspartate and Tailwind the moment this rule was added for paragraphs alone. Headings keep their
+ * own margins: a heading legitimately wants more air above it than below, and that asymmetry is
+ * what makes it read as a heading.
+ *
+ * A list item is `li p`, not `li > p`: one engine wraps the item's text in a `<p>` inside a
+ * `div.content-dom` of its own, so the direct-child form missed it and every bullet gained 24px —
+ * a list looser than the prose around it, which is one of the four things this file already
+ * forbids in the other direction. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc p,
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc > *:not(:is(h1, h2, h3, h4, h5, h6)) {
+  margin-block: 0.75em !important;
+}
+
+/* A nested list is part of its parent item, not a block beside it. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc li ul,
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc li ol {
+  margin-block: 0 !important;
+}
+
+/* A cell's paragraph is the cell's content, not a block among blocks. One engine wraps every cell
+   in a `<p>`, so the rule above put 12px above and below the text in every cell of every table —
+   and an empty cell became a box with nothing in the middle of it. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc :is(td, th) p {
+  margin-block: 0 !important;
+}
+
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote > p:first-child,
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc li p:first-child {
+  margin-top: 0 !important;
+}
+
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote > p:last-child,
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc li p:last-child {
+  margin-bottom: 0 !important;
+}

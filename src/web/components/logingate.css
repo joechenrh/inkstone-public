@@ -1,0 +1,28 @@
+.ink-login {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 240px;
+  margin: 20vh auto 0;
+}
+
+.ink-login input {
+  font: inherit;
+  padding: 8px;
+  color: var(--ink-fg);
+  background: var(--ink-code-bg);
+  border: none;
+  outline: none;
+}
+
+.ink-login button {
+  padding: 8px;
+  background: var(--ink-code-bg);
+  color: var(--ink-link);
+}
+
+.ink-login-error {
+  margin: 0;
+  color: var(--ink-danger);
+  font-size: 13px;
+}

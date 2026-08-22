@@ -1,0 +1,193 @@
+.ink-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px;
+  overflow-y: auto;
+  height: 100%;
+  font-size: 12.5px;
+  color: var(--ink-fg);
+}
+
+.ink-hist-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.ink-hist-facts dt { color: var(--ink-fg-muted); }
+
+.ink-hist-facts dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ink-hist-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fg-muted);
+}
+
+.ink-hist-day {
+  margin: 10px 0 4px;
+  font-size: 11px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-hist-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1px 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--ink-fg);
+}
+
+/* A global `button:hover { color: var(--ink-link) }` repaints the whole row on hover, and every
+   child inherits it — the time, and the +/- counts along with it, so a hovered row went entirely
+   blue and the diff colours vanished under the pointer. The row states its own colour instead. */
+.ink-hist-entry,
+.ink-hist-entry:hover,
+.ink-hist-entry:focus-visible {
+  color: var(--ink-fg);
+}
+
+.ink-hist-entry:hover,
+.ink-hist-entry:focus-visible {
+  background: var(--ink-sidebar-hover);
+  outline: none;
+}
+
+/* Between the click and the diff arriving. Only the row dims — nothing moves, because moving is
+   what made expanding feel like two separate events. */
+.ink-hist-entry.pending-diff { opacity: 0.55; }
+
+/* Open, the row and its diff are one block rather than two stacked cards with a seam between
+   them: one fill, one radius, on the entry that contains both. */
+.ink-hist-item.open {
+  background: var(--ink-code-bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+/* Deliberate commits carry the accent rule down the full height of the entry, expanded or not. */
+.ink-hist-item.anchor {
+  border-left: 2px solid var(--ink-link);
+  padding-left: 4px;
+}
+
+/* Pressing Commit is the only real signal in a log whose messages are all generated, so it is the
+   one thing worth marking. */
+.ink-hist-item.anchor .ink-hist-when,
+.ink-hist-item.anchor:hover .ink-hist-when { color: var(--ink-link); }
+
+.ink-hist-entry.pending {
+  cursor: default;
+  background: var(--ink-code-bg);
+}
+
+.ink-hist-delta {
+  display: flex;
+  gap: 5px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ink-hist-delta .p { color: var(--ink-added); }
+.ink-hist-delta .m { color: var(--ink-removed); }
+
+.ink-hist-peek {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--ink-fg-muted);
+}
+
+/* The entry below needs air; the open entry provides its own. */
+.ink-hist-item.open { margin-bottom: 12px; }
+
+.ink-hist-diff {
+  margin: 0;
+  background: var(--ink-code-bg);
+  overflow: hidden;
+}
+
+.ink-hist-hunk {
+  margin: 0;
+  padding: 8px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  /* The panel is 320px. Long lines scroll here rather than widening the drawer. */
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Where a dropped @@ header used to separate two hunks. */
+.ink-hist-hunk.split { border-top: 1px solid var(--ink-rule); }
+
+.ink-hist-hunk .a { color: var(--ink-added); }
+.ink-hist-hunk .d { color: var(--ink-removed); }
+
+/* Right-aligned under the diff it belongs to. An outlined box here read as the panel's main
+   action, which it is not — the panel is for reading, and restoring is the rare thing you do
+   after deciding something. */
+.ink-hist-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 5px 8px;
+  background: var(--ink-code-bg);
+  border-top: 1px solid var(--ink-rule);
+  border-radius: 0 0 5px 5px;
+}
+
+.ink-hist-restore {
+  padding: 2px 4px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-hist-restore:hover:not(:disabled),
+.ink-hist-restore:focus-visible:not(:disabled) {
+  color: var(--ink-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  outline: none;
+}
+
+.ink-hist-restore:disabled { opacity: 0.5; cursor: default; }
+
+.ink-hist-note {
+  margin: 4px 8px;
+  font-size: 11.5px;
+  color: var(--ink-fg-muted);
+}
+
+/* A written commit message. Its own line under the time, clipped to one — the panel is a way back
+   into a version, not a place to read prose. */
+.ink-hist-message {
+  flex-basis: 100%;
+  margin-top: 2px;
+  color: var(--ink-fg);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

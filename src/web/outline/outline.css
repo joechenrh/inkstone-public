@@ -1,0 +1,67 @@
+.ink-outline {
+  padding: 4px 0 8px;
+  font-size: var(--ink-tree-font-size);
+  user-select: none;
+}
+
+.ink-outline-row {
+  display: block;
+  width: 100%;
+  /*
+   * The same 30px as a file tree row.
+   *
+   * It was 26, in the same column, at the same font size and line height — so the same text sat
+   * in 1.8px of air where the tree's sits in 3.8. The list with less room was the one holding
+   * headings, which are longer than filenames and truncate, so it was the one that needed more.
+   */
+  min-height: 30px;
+  padding: 0 12px;
+  line-height: 30px;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ink-fg);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.ink-outline-row:hover {
+  background: var(--ink-sidebar-hover);
+}
+
+/* The active heading takes the accent, matching the rendered document it points at. */
+.ink-outline-row.active {
+  color: var(--ink-link);
+  font-weight: 600;
+}
+
+/* 12px per level rather than the usual 20px: at 260px the deeper levels still need room
+   for their text. */
+.ink-outline-l2 { padding-left: 24px; }
+.ink-outline-l3 { padding-left: 36px; }
+.ink-outline-l4 { padding-left: 48px; }
+.ink-outline-l5 { padding-left: 60px; }
+.ink-outline-l6 { padding-left: 72px; }
+
+.ink-outline-untitled {
+  color: var(--ink-fg-muted);
+  font-style: italic;
+}
+
+.ink-outline-empty {
+  padding: 16px;
+  color: var(--ink-fg-muted);
+  font-size: var(--ink-tree-font-size);
+}
+
+/* The outline is a sheet on a phone, and its rows are tapped to jump. 26px was not enough. */
+@media (max-width: 719px) {
+  .ink-outline-row {
+    min-height: 44px;
+    line-height: 44px;
+  }
+}

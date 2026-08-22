@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    Inkstone: a drop of ink on the slab. Kept to two shapes and one colour so it stays
+    legible at 16px in a browser tab. The blue is the Lapis accent (#4870ac).
+  -->
+  <rect width="32" height="32" rx="7.5" fill="#4870ac"/>
+  <path
+    d="M16 6.2c0 0 7.4 8.4 7.4 12.6a7.4 7.4 0 0 1-14.8 0C8.6 14.6 16 6.2 16 6.2z"
+    fill="#ffffff"/>
+  <path
+    d="M13.1 18.9a2.9 2.9 0 0 0 2.9 2.9"
+    fill="none" stroke="#4870ac" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

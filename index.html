@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Replaced at runtime with the open file's name — see App.tsx. -->
+    <title>Inkstone</title>
+    <!--
+      Pre-paint theme script: stamps data-theme on <html> before the first paint
+      so returning dark-theme users never see a white flash (FOUC).
+
+      KEY SYNC: The storage key 'inkstone.theme' below MUST match THEME_STORAGE_KEY
+      in src/web/theme/useTheme.ts. If you rename the key, update BOTH files.
+
+      PRECEDENCE SYNC: The logic below (stored 'light'|'dark' → stored 'system' or
+      missing → OS matchMedia → 'light') mirrors readThemeChoice() + resolve() in
+      src/web/theme/useTheme.ts. Keep both in lock-step.
+
+      This script intentionally duplicates the key string and the precedence logic
+      from useTheme.ts — it runs before any ES module is parsed, so it cannot
+      import from useTheme.ts. Minimise the duplication; do not try to eliminate
+      it with a bundler trick that would run too late to prevent FOUC.
+    -->
+    <script>
+      (function () {
+        try {
+          // KEY: 'inkstone.theme' — must match THEME_STORAGE_KEY in src/web/theme/useTheme.ts
+          var stored = localStorage.getItem('inkstone.theme');
+          if (stored === 'dark' || stored === 'light') {
+            document.documentElement.setAttribute('data-theme', stored);
+            return;
+          }
+          // stored === 'system' or missing — honour OS dark mode preference.
+          try {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              document.documentElement.setAttribute('data-theme', 'dark');
+              return;
+            }
+          } catch (_) {
+            // matchMedia unavailable; fall through to default.
+          }
+          // Default: light.
+          document.documentElement.setAttribute('data-theme', 'light');
+        } catch (_) {
+          // localStorage denied (e.g. Safari private mode); default to light.
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+    <!--
+      lute is the markdown parser, and it is the largest thing this app fetches: 3.9MB raw, about
+      680KB gzipped. Every page needs it — the editor to render IR, the reading page to render a
+      shared note — but nothing asks for it until the bundle has loaded, chosen a route, and pulled
+      Vditor's method module, which is four round trips deep. On a fast link that is 100ms of
+      nothing; on a slow one it is the whole wait, spent idle.
+
+      Preloading starts it with the document instead. It changes no behaviour: whichever module
+      eventually asks for lute gets it from the cache, and a browser that ignores the hint fetches
+      it exactly as before.
+    -->
+    <link rel="preload" as="script" href="/vditor/dist/js/lute/lute.min.js" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/web/main.tsx"></script>
+  </body>
+</html>

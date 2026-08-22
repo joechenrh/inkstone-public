@@ -1,0 +1,18 @@
+node_modules/
+dist/
+public/vditor/
+.DS_Store
+*.log
+test-results/
+playwright-report/
+.superpowers/
+
+# Local development environment, including the GitHub App client secret.
+# Never committed: see docs/design/public-route.md.
+.env.local
+
+# Screenshots and references dropped in for a session. Never committed.
+.ref/
+
+# Throwaway measurement scripts. Never committed.
+*.tmp.mjs

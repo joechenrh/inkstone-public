@@ -1,0 +1,360 @@
+/* Lapis — the default document theme.
+ *
+ * The whole file is nested under the theme attribute, so every rule below is scoped to
+ * [data-doc-theme="lapis"] without 300 hand-edited selectors. The build flattens the nesting to
+ * plain descendant selectors; verified in the built CSS rather than assumed.
+ *
+ * A theme owns the shell as well as the page. The chrome takes its colour from whichever theme is
+ * active, so the sidebar and the document stay one surface rather than two shades meeting at the
+ * pane border — which is what the dark-mode note in theming.md was always about.
+ */
+:root[data-doc-theme="lapis"] {
+  /* Shell tokens. The document palette below is the source of these. */
+  --ink-bg: #ffffff;
+  --ink-fg: #333333;
+  --ink-fg-muted: #777777;
+  --ink-link: #4870ac;
+  --ink-rule: #ececec;
+  --ink-code-bg: #f6f8fa;
+  --ink-sidebar-bg: #ffffff;
+  --ink-sidebar-hover: #f2f3f5;
+  --ink-sidebar-active: #e9ebef;
+
+  &[data-theme="dark"] {
+    --ink-bg: #1e222a;
+    --ink-fg: #b8bfc6;
+    --ink-fg-muted: #858d99;
+    --ink-link: #8393ad;
+    --ink-rule: #2e3440;
+    --ink-code-bg: #080e1d;
+    --ink-sidebar-bg: #1e222a;
+    --ink-sidebar-hover: #272c36;
+    --ink-sidebar-active: #2f3542;
+  }
+
+  /*
+   * Lapis content theme for Vditor IR mode (light + dark)
+   * Source: https://github.com/YiNNx/typora-theme-lapis
+   *
+   * Injection: bundled CSS imported in VditorEditor.tsx.
+   * Vditor IR DOM root: div.vditor-ir > pre.vditor-reset
+   * (confirmed in node_modules/vditor/src/ts/ir/index.ts:35-38)
+   *
+   * Selector root: .ink-doc.ink-doc.ink-doc (specificity 0,2,0)
+   * Beats Vditor's built-in light theme .vditor-reset rules (specificity 0,1,0),
+   * including rules injected at runtime via <link> after bundled CSS.
+   *
+   * No external URLs — fonts referenced by family name only (self-hosted via Task 3).
+   */
+
+  /* ──────────────────────────────────────────────────────── Light theme ── */
+
+  .ink-doc.ink-doc.ink-doc {
+    --lapis-accent:   #4870ac;
+    --lapis-text:     #40464f;
+    --lapis-block-bg: #f6f8fa;
+    --lapis-marker:   #a2b6d4;
+    --lapis-bg:       #ffffff;
+
+    color:       var(--lapis-text);
+    background:  var(--lapis-bg);
+    font-family: "Cantarell", "Source Han Serif CN", "Songti SC", serif;
+    /* The setting names the body size, literally, in every theme. Upstream Lapis sets 1.1rem, and
+     carrying that multiplier over meant "16" rendered 17.6 — the number in Settings described
+     nothing, and switching themes silently resized the text. Themes differ in typeface, heading
+     scale and leading; not in whether they honour the setting. rem cannot be used: it resolves
+     against the html root size, not --ink-font-size. */
+    font-size:   var(--ink-font-size, 16px);
+    line-height: 1.6;
+    margin:      0 auto;
+    word-break:  break-word;
+    word-wrap:   break-word;
+    /* Note: the content column width is controlled by vditor-shell.css's padding/max-width
+       (which must use !important to override the inline padding set by Vditor's JS), so we no
+       longer set max-width here. */
+  }
+
+  /* Headings */
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    color:       var(--lapis-accent);
+    font-family: "Source Han Serif CN", serif;
+    padding:     0;
+    border:      none;
+  }
+
+  /* Headings are calc(), not rem. rem resolves against the html root font size, which is always
+     16px — the editor font setting lives in --ink-font-size, so rem-based headings ignored it and
+     stayed put while the body text around them grew. The multipliers are upstream Lapis's rem
+     values, so the default 16px setting renders exactly as before. */
+  .ink-doc.ink-doc.ink-doc h1 {
+    font-size:     calc(var(--ink-font-size, 16px) * 2);
+    text-align:    center;
+    padding-top:   calc(var(--ink-font-size, 16px) * 0.9);
+    margin-bottom: calc(var(--ink-font-size, 16px) * 2.3);
+  }
+
+  /* The H1..H6 markers Vditor floats into the left gutter. Its own -29px left h2's marker 7px
+     *inside* the pill — the pill starts 12.5px left of its text (see the negative margin below) —
+     so its second character was clipped. Measured before: h3-h6 cleared their text by 6px, h2 by -7.
+
+     One offset for all six rather than a special case for h2, so the markers form a straight column
+     in the gutter. Sizing it for h2 (the leftmost thing any heading paints) is what sets the number:
+     the others then sit further from their text, which is the price of the column lining up. */
+  .ink-editor .ink-doc.ink-doc.ink-doc > h1::before,
+  .ink-editor .ink-doc.ink-doc.ink-doc > h2::before,
+  .ink-editor .ink-doc.ink-doc.ink-doc > h3::before,
+  .ink-editor .ink-doc.ink-doc.ink-doc > h4::before,
+  .ink-editor .ink-doc.ink-doc.ink-doc > h5::before,
+  .ink-editor .ink-doc.ink-doc.ink-doc > h6::before {
+    margin-left: -46px;
+  }
+
+  /* h2 — white-on-blue pill (faithful Lapis coloring: white text + #4870ac background).
+     The pill's 12.5px left padding pushes the text rightward, making the h2 text look indented
+     relative to h3/h4/h5; an equal negative left margin shifts the whole pill left so the
+     "text" left-aligns with the other headings (the pill's appearance is unchanged). */
+  .ink-doc.ink-doc.ink-doc h2 {
+    font-size:     calc(var(--ink-font-size, 16px) * 1.5);
+    color:         #ffffff;
+    background:    var(--lapis-accent);
+    padding:       1px 12.5px;
+    border-radius: 4px;
+    display:       inline-block;
+    /* The bottom margin is larger than the top on purpose: the pill has a filled background, so the
+       gap under it is measured from the fill rather than from the type, and 0.3em left the next
+       line looking stuck to the block. The negative left margin is the pill's own left padding,
+       pulled back so the *text* aligns with h3-h6 while the fill keeps its breathing room. */
+    margin:        0.4em 0 0.65em -12.5px;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.4);
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 {
+    font-size:   calc(var(--ink-font-size, 16px) * 1.2);
+    font-weight: normal;
+  }
+
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-size:   calc(var(--ink-font-size, 16px) * 1.1);
+    font-weight: normal;
+  }
+
+  /* Strong */
+  .ink-doc.ink-doc.ink-doc strong {
+    color: var(--lapis-accent);
+  }
+
+  /* Links */
+  .ink-doc.ink-doc.ink-doc a,
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color:                    var(--lapis-accent);
+    text-decoration:          underline solid;
+    text-underline-offset:    4px;
+    text-decoration-thickness: 1px;
+  }
+
+  /* Blockquote — blue left border, light background */
+  .ink-doc.ink-doc.ink-doc blockquote {
+    border-left: 3px solid var(--lapis-accent);
+    background:  var(--lapis-block-bg);
+    padding:     15px 30px 15px 20px;
+    font-size:   0.9em;
+    margin:      20px 0;
+    color:       var(--lapis-text);
+  }
+
+  /* Inline code.
+     `:not(pre) >` is load-bearing: without it this rule also matches the <code> inside a fenced
+     block. It outranks the `pre code` rule below on specificity, so the block's source would get
+     inline-code padding and a background of its own. */
+  .ink-doc.ink-doc.ink-doc :not(pre) > code:not(.hljs):not(.highlight-chroma) {
+    background:    var(--lapis-block-bg);
+    color:         var(--lapis-accent);
+    font-family:   "JetBrains Mono", monospace;
+    font-size:     94%;
+    padding:       2px 4px;
+    border-radius: 3px;
+  }
+
+  /* Fenced code and math blocks.
+     IR mode renders TWO <pre> per block: the raw source (pre.vditor-ir__marker--pre) and the
+     rendered result (pre.vditor-ir__preview). Vditor collapses the source to a 0x0 overflow:hidden
+     box until the caret enters the block, so a bare `pre` selector hits both -- and the padding
+     then leaks out of the collapsed source as a stray coloured box beside the ``` fence.
+     Style each state explicitly instead. */
+  .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background:    var(--lapis-block-bg);
+    border-radius: 10px;
+    padding:       16px;
+  }
+
+
+
+  /* The <code> inside a block carries the block's own background and padding, so its own must be
+     cleared. Two rules have to be outranked: Vditor's `.vditor-reset code:not(.hljs)...` (0,3,1,
+     padding 0.2em/0.4em) and the same selector in the content theme, which is injected into
+     <head> at runtime and so wins ties against this bundled sheet. Prefixing `.ink-editor` takes
+     this to (0,3,2), which beats both on element count. */
+  .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    color:       #4f5467;
+    font-family: "JetBrains Mono", monospace;
+    background:  transparent;
+    padding:     0;
+    border-radius: 0;
+    font-size:   1em;
+  }
+
+  /* Lists.
+     The indent is this padding-left, applied per level: a nested list sits 20px further in than
+     its parent because it is itself a ul inside the parent's li. There is no right indent —
+     items wrap against the content column like any other paragraph. */
+  .ink-doc.ink-doc.ink-doc ul,
+  .ink-doc.ink-doc.ink-doc ol {
+    padding-left: 20px;
+  }
+
+  /* Items are otherwise separated only by line-height leading (measured: 4.4px), which reads as
+     a solid block. em rather than px so the breathing room tracks the editor font setting.
+     Adjacent margins collapse, so this adds one item-gap, not two. */
+  .ink-doc.ink-doc.ink-doc li {
+    margin: 0.4em 0;
+  }
+
+  /* A nested list is inside its parent's li, so the ul bottom margin that separates a list from
+     the following paragraph would also open a gap under the nested block. */
+  .ink-doc.ink-doc.ink-doc li > ul,
+  .ink-doc.ink-doc.ink-doc li > ol {
+    margin-top:    0.25em;
+    margin-bottom: 0.25em;
+  }
+
+  .ink-doc.ink-doc.ink-doc li::marker,
+    .ink-doc.ink-doc.ink-doc .list-item > .label-wrapper .label {
+    color:       var(--lapis-marker);
+    font-size:   0.8em;
+  }
+
+  /* Tables */
+  .ink-doc.ink-doc.ink-doc table td,
+  .ink-doc.ink-doc.ink-doc table th {
+    border:  1px solid #d9dfe4;
+    padding: 5px 10px;
+  }
+
+  .ink-doc.ink-doc.ink-doc table th {
+    color:       var(--lapis-accent);
+    font-weight: bold;
+    text-align:  center;
+  }
+
+  .ink-doc.ink-doc.ink-doc table tr:nth-child(2n) {
+    background-color: var(--lapis-block-bg);
+  }
+
+  /* Horizontal rule */
+  .ink-doc.ink-doc.ink-doc hr {
+    border:     none;
+    border-top: 2px solid #eef2f5;
+    margin:     20px 0;
+  }
+
+  /* ──────────────────────────────────────────────────────── Dark theme ── */
+  /*
+   * Dark palette sourced from:
+   * https://raw.githubusercontent.com/YiNNx/typora-theme-lapis/main/lapis-dark.css
+   *
+   * --text-color:           #e4e4e4e3   (main text)
+   * --primary-color:        #8393ad     (accent / headings)
+   * --bg-color:             #1e222a     (main background)
+   * --block-bg-color:       #080e1d     (code block background)
+   * --quote-block-bg-color: #2a2f3b     (blockquote background)
+   * --marker-color:         #7d8a9f     (list markers)
+   * --header-span-color:    #47556d     (h2 pill background in dark)
+   */
+
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc {
+    --lapis-accent:   #8393ad;
+    --lapis-text:     #e4e4e4;
+    --lapis-block-bg: #080e1d;
+    --lapis-marker:   #7d8a9f;
+    --lapis-bg:       #1e222a;
+    --lapis-h2-bg:    #47556d;
+
+    color:      var(--lapis-text);
+    background: var(--lapis-bg);
+  }
+
+  /* Dark headings */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc h2 {
+    color:      var(--lapis-text);
+    background: var(--lapis-h2-bg);
+  }
+
+  /* Dark blockquote */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc blockquote {
+    background: #2a2f3b;
+    color:      var(--lapis-text);
+  }
+
+  /* Dark inline code — `:not(pre) >` for the same reason as the light rule above. */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc :not(pre) > code:not(.hljs):not(.highlight-chroma) {
+    background: var(--lapis-block-bg);
+    color:      #abbad4;
+  }
+
+  /* Dark fenced code blocks — scoped to the two real states, never the collapsed source. */
+  &[data-theme="dark"] .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  &[data-theme="dark"] .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--lapis-block-bg);
+  }
+
+  &[data-theme="dark"] .vditor-ir .vditor-reset pre.vditor-ir__marker--pre {
+    background: transparent;
+  }
+
+  &[data-theme="dark"] .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    color:      #abbad4;
+    background: transparent;
+  }
+
+  /* Dark tables */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc table tr:nth-child(2n) {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc table td,
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc table th {
+    border-color: #3a3f4b;
+  }
+
+  /* Dark hr */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc hr {
+    border-top-color: #3a3f4b;
+  }
+
+  /* Dark links */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc a,
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: var(--lapis-accent);
+  }
+
+  /* Dark strong */
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc strong {
+    color: var(--lapis-accent);
+  }
+
+}

@@ -1,0 +1,165 @@
+.ink-icon {
+  color: var(--ink-fg-muted);
+  transition: color 0.16s ease;
+  flex-shrink: 0;
+}
+
+/* Hover on the icon itself, and when a parent button is hovered */
+.ink-icon:hover,
+button:hover .ink-icon {
+  color: var(--ink-link);
+}
+
+/* Gear icon: additional rotate transition */
+.ink-icon-gear {
+  transition: color 0.16s ease, transform 0.4s ease;
+}
+
+.ink-icon-gear:hover,
+button:hover .ink-icon-gear {
+  color: var(--ink-link);
+  transform: rotate(60deg);
+}
+
+.ink-unsaved-dot {
+  color: var(--ink-link);
+  flex-shrink: 0;
+}
+
+/*
+ * Per-icon hover motion. Each one is derived from what its glyph depicts rather than
+ * reusing the gear's rotation — a rotating stack of paper or a rotating outline would be
+ * motion applied to the icon instead of motion the icon means.
+ */
+
+/* Files is two overlapping sheets, so the sheets fan apart: the front slides down-left and
+   the back up-right, the way a stack riffles. */
+.ink-icon-files .ink-files-front,
+.ink-icon-files .ink-files-back {
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.ink-sidebar-tab:hover .ink-icon-files .ink-files-front,
+button:hover .ink-icon-files .ink-files-front {
+  transform: translate(-1.5px, 1.5px);
+}
+
+.ink-sidebar-tab:hover .ink-icon-files .ink-files-back,
+button:hover .ink-icon-files .ink-files-back {
+  transform: translate(1.5px, -1.5px);
+}
+
+/* Outline is a descending indent staircase, so the indents deepen in sequence — each lower
+   bar travels further and starts later, which reads as an outline unfolding level by level. */
+.ink-icon-outline line {
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.ink-sidebar-tab:hover .ink-icon-outline .ink-outline-b2,
+button:hover .ink-icon-outline .ink-outline-b2 {
+  transform: translateX(1.5px);
+  transition-delay: 45ms;
+}
+
+.ink-sidebar-tab:hover .ink-icon-outline .ink-outline-b3,
+button:hover .ink-icon-outline .ink-outline-b3 {
+  transform: translateX(3px);
+  transition-delay: 90ms;
+}
+
+/* Panel toggles are a frame with the panel's own edge inside it, so the edge is what moves — it
+   slides toward the side it belongs to, which is the panel opening. Each mirrors its own side, so
+   the two never look like the same arrow pointing the same way. */
+.ink-icon-panel .ink-panel-edge {
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* 1.5 viewBox units — about 1.1px at the 18px this renders at. Enough to read as the edge moving,
+   short enough that it does not look like the icon is sliding out from under the pointer. */
+button:hover .ink-icon-panel--left .ink-panel-edge { transform: translateX(-1.5px); }
+button:hover .ink-icon-panel--right .ink-panel-edge { transform: translateX(1.5px); }
+
+/* The nib travels along its own axis, toward the tip: a pen being set down to write, not a pen
+   being waved. The glyph points down-left, so that is the only direction it may go. */
+.ink-icon-nib {
+  transition: color 0.16s ease, transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+button:hover .ink-icon-nib { transform: translate(-1px, 1px); }
+
+/* The page's last line is short, the way a paragraph's last line is. On hover it runs out to the
+   full measure — the text finishing, which is what reading a page is. Anchored at its left end so
+   it grows rightwards rather than spreading from the middle. */
+.ink-icon-page .ink-page-tail {
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-box: view-box;
+  transform-origin: 8.5px 16px;
+}
+
+button:hover .ink-icon-page .ink-page-tail { transform: scaleX(1.55); }
+
+/* The brackets open outwards, the way a pair of brackets encloses something — the gesture is
+   "show me what is inside". Anchored so each moves away from the centre rather than both sliding. */
+.ink-icon-brackets .ink-bracket {
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+
+button:hover .ink-icon-brackets .ink-bracket--left { transform: translateX(-1.6px); }
+button:hover .ink-icon-brackets .ink-bracket--right { transform: translateX(1.6px); }
+
+/* The short line is the heading; on hover it runs out to the measure — text being set. The same
+   move as the page's tail, on the opposite line, which is what keeps the two icons from reading
+   as the same thing. */
+.ink-icon-prose .ink-prose-head {
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-box: view-box;
+  transform-origin: 4px 7px;
+}
+
+button:hover .ink-icon-prose .ink-prose-head { transform: scaleX(1.5); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-icon,
+  .ink-icon-gear,
+  .ink-icon-files .ink-files-front,
+  .ink-icon-files .ink-files-back,
+  .ink-icon-outline line,
+  .ink-icon-panel .ink-panel-edge,
+  .ink-icon-nib,
+  .ink-icon-page .ink-page-tail,
+  .ink-icon-brackets .ink-bracket,
+  .ink-icon-prose .ink-prose-head,
+  .ink-icon-lens .ink-lens-handle {
+    transition-duration: 0.01ms;
+    transition-delay: 0ms;
+  }
+
+  .ink-icon-gear:hover,
+  button:hover .ink-icon-gear {
+    transform: none;
+  }
+
+  .ink-sidebar-tab:hover .ink-icon-files .ink-files-front,
+  .ink-sidebar-tab:hover .ink-icon-files .ink-files-back,
+  .ink-sidebar-tab:hover .ink-icon-outline .ink-outline-b2,
+  .ink-sidebar-tab:hover .ink-icon-outline .ink-outline-b3,
+  button:hover .ink-icon-panel .ink-panel-edge,
+  button:hover .ink-icon-nib,
+  button:hover .ink-icon-page .ink-page-tail {
+    transform: none;
+  }
+}
+
+/* The lens handle extends when the field it sits in takes focus — the one moment a search box is
+   doing anything. Anchored at the rim so it grows outward instead of sliding. */
+.ink-icon-lens .ink-lens-handle {
+  transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-box: view-box;
+  transform-origin: 15.4px 15.4px;
+}
+
+.ink-search:focus-within .ink-icon-lens .ink-lens-handle {
+  transform: scale(1.3);
+}

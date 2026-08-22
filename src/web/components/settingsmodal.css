@@ -1,0 +1,440 @@
+.ink-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--ink-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+/* Capped and scrolling inside itself.
+ *
+ * It grew a row and went taller than the window, and a centred modal that outgrows the window
+ * overflows *both* ways — the header went above the top edge, taking the close button with it. A
+ * dialog whose only exit is off screen is the same fault the close button was added to fix.
+ *
+ * The header stays put while the rows scroll under it, so the way out is always where it was. */
+.ink-settings {
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+  border-radius: 8px;
+  box-shadow: var(--ink-shadow-modal);
+  padding: 28px 32px;
+  min-width: 360px;
+  max-width: 480px;
+  width: 100%;
+  max-height: calc(100vh - 48px);
+}
+
+.ink-settings-header { flex: none; }
+
+/* The scrollbar sits at the dialog's edge rather than inset by its padding. */
+.ink-settings-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -32px;
+  padding: 0 32px;
+}
+
+.ink-settings-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--ink-fg);
+}
+
+/* flex-start, not center: a value that wraps to two lines should hang off the top of the row
+   rather than centring itself against its label. */
+.ink-settings-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.ink-settings-label {
+  font-size: 14px;
+  color: var(--ink-fg);
+}
+
+/* A vault path is long and unbreakable, and in a space-between row it wrapped around its own
+   label. It gets the leftover width, breaks anywhere, and stays right-aligned. */
+.ink-settings-value {
+  font-size: 13px;
+  color: var(--ink-fg-muted);
+  min-width: 0;
+  text-align: right;
+  word-break: break-all;
+}
+
+.ink-theme-control {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ink-theme-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-theme-btn[aria-pressed="true"] {
+  background: var(--ink-sidebar-active);
+  color: var(--ink-fg);
+}
+
+.ink-settings-select {
+  font-size: 13px;
+  background: var(--ink-sidebar-bg);
+  color: var(--ink-fg);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.ink-settings-footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ink-logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-danger);
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.ink-logout-btn:hover {
+  background: var(--ink-sidebar-hover);
+}
+
+/* A row whose control is too tall to sit beside its label. */
+.ink-settings-row--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.ink-theme-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Says why the control is inert. Without it a greyed row is just a broken-looking one.
+   On its own line: inline, it squeezed the segmented control and moved the buttons sideways
+   depending on which theme was selected. */
+.ink-theme-why {
+  flex-basis: 100%;
+  margin-top: 5px;
+  font-size: 11.5px;
+  text-align: right;
+  color: var(--ink-fg-muted);
+}
+
+.ink-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.ink-swatch {
+  width: 92px;
+  padding: 0;
+  border: 1px solid var(--ink-rule);
+  border-radius: 8px;
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.ink-swatch[aria-pressed="true"] {
+  border-color: var(--ink-link);
+  box-shadow: 0 0 0 1px var(--ink-link);
+}
+
+/* A miniature page, painted in the theme's own colours rather than described in words. The
+   preview must not inherit the *current* theme, or every swatch would look identical. */
+.ink-swatch-page {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 58px;
+  padding: 8px 9px;
+}
+
+.ink-swatch-page b { font-size: 11px; line-height: 1; }
+
+.ink-swatch-page i {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.55;
+}
+
+.ink-swatch-page i.short { width: 60%; }
+
+/* One line, always. "Bit Clean" wrapped to two and made that card taller than its neighbours, so
+   the row of dots stopped lining up — the dot is the one thing being compared across cards. */
+.ink-swatch-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border-top: 1px solid var(--ink-rule);
+  font-size: 11px;
+  color: var(--ink-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ink-swatch-cap span:first-child,
+.ink-swatch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Whole vocabulary for "which appearances does this theme have": split, or solid. */
+.ink-swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-rule);
+  flex: none;
+}
+
+.ink-swatch-dot.both { background: linear-gradient(90deg, #ffffff 50%, #1e222a 50%); }
+.ink-swatch-dot.light { background: #ffffff; }
+.ink-swatch-dot.dark { background: #1e222a; }
+
+/* Each preview paints itself, independent of the theme currently applied. */
+[data-doc-theme-preview="lapis"] .ink-swatch-page { background: #ffffff; }
+[data-doc-theme-preview="lapis"] .ink-swatch-page b { color: #4870ac; font-family: "Source Han Serif CN", Georgia, serif; }
+[data-doc-theme-preview="lapis"] .ink-swatch-page i { background: #40464f; }
+[data-doc-theme-preview="lapis"] .ink-swatch-page i.a { background: #4870ac; opacity: 0.85; }
+
+[data-doc-theme-preview="plain"] .ink-swatch-page { background: #ffffff; }
+[data-doc-theme-preview="plain"] .ink-swatch-page b { color: #14181d; font-weight: 650; }
+[data-doc-theme-preview="plain"] .ink-swatch-page i { background: #2b3138; }
+
+[data-doc-theme-preview="aspartate"] .ink-swatch-page { background: #18191a; }
+[data-doc-theme-preview="aspartate"] .ink-swatch-page b { color: #ffb454; }
+[data-doc-theme-preview="aspartate"] .ink-swatch-page i { background: #dcdedf; }
+
+[data-doc-theme-preview="forest"] .ink-swatch-page { background: #ffffff; }
+[data-doc-theme-preview="forest"] .ink-swatch-page b { color: #00647f; }
+[data-doc-theme-preview="forest"] .ink-swatch-page i { background: #363c42; }
+
+[data-doc-theme-preview="tailwind"] .ink-swatch-page { background: #ffffff; }
+[data-doc-theme-preview="tailwind"] .ink-swatch-page b { color: #0f172a; }
+[data-doc-theme-preview="tailwind"] .ink-swatch-page i { background: #334155; }
+
+[data-doc-theme-preview="everforest"] .ink-swatch-page { background: #fffbef; }
+[data-doc-theme-preview="everforest"] .ink-swatch-page b { color: #8da101; }
+[data-doc-theme-preview="everforest"] .ink-swatch-page i { background: #5c6a72; }
+
+[data-doc-theme-preview="bitclean"] .ink-swatch-page { background: #eff1f5; }
+[data-doc-theme-preview="bitclean"] .ink-swatch-page b { color: #1e66f5; }
+[data-doc-theme-preview="bitclean"] .ink-swatch-page i { background: #4c4f69; }
+
+/* On a phone the dialog is the screen. Measured before this: 749px tall inside a 664px viewport,
+   with the bottom of the panel — and the buttons on it — unreachable. A sheet that fills the
+   height and scrolls its own body puts them back. */
+@media (max-width: 719px) {
+  .ink-settings {
+    width: 100%;
+    max-width: none;
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+.ink-settings-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* The title carried the bottom margin before the header existed; it belongs to the row now. */
+.ink-settings-header .ink-settings-title {
+  margin: 0;
+}
+
+.ink-settings-close {
+  margin-left: auto;
+  margin-top: -4px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-settings-close:hover {
+  color: var(--ink-fg);
+}
+
+/*
+ * An action sitting inside a settings value, rather than a row of its own.
+ *
+ * The repository is a choice someone made, so the row that names it has to be the way back to
+ * that choice — and adding a second row for it would be adding surface to say the same thing.
+ */
+.ink-settings-inline {
+  margin-left: 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-link);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ink-settings-inline:hover { text-decoration: underline; }
+
+
+/* The build is a string to be read back, so it is set in the face that does not confuse a 0 for an O. */
+.ink-settings-build {
+  font-family: var(--ink-font-mono);
+  font-size: 12.5px;
+}
+
+/*
+ * Everything in Settings that is tapped, at the height a thumb needs.
+ *
+ * Measured on a phone before changing anything: the appearance buttons were 29px, the two font
+ * size selects 25, and Log out 33 — the smallest controls in the app, in the one panel a person
+ * visits with a specific intention and no patience.
+ */
+@media (max-width: 719px) {
+  .ink-theme-btn,
+  .ink-settings-select,
+  .ink-logout-btn {
+    min-height: 44px;
+  }
+
+  .ink-settings-select { padding-right: 8px; }
+
+  /*
+   * A vault path is longer than a phone is wide, and as a right-aligned value it wrapped into a
+   * ragged three-line block beside its own label. Stacked, it gets the full width and one edge.
+   */
+  .ink-settings-row:has(> .ink-settings-value) {
+    flex-wrap: wrap;
+  }
+
+  .ink-settings-value {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The Agent row: a field before it is set up, a sentence and a way out afterwards. */
+
+/* The row has two states — a field with an Add button, and a sentence with Remove — and the field
+   is 14px taller than the sentence, so pairing made the whole dialog jump 15px and every row below
+   this one moved. One height for both: the taller of the two, reserved whichever is showing. */
+.ink-pairing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+}
+
+.ink-pairing-field {
+  flex: 1;
+  min-width: 0;
+  /* Field and button are pinned to the same height as each other and as the sentence that replaces
+     them. Left to their own padding the button came out 33px against the field's 30, so the row
+     was three pixels taller than the state it reserves space for. */
+  height: 30px;
+  padding: 0 8px;
+  font-family: var(--ink-font-mono);
+  font-size: 12px;
+  color: var(--ink-fg);
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 5px;
+}
+
+.ink-pairing-field:focus-visible {
+  outline: 2px solid var(--ink-link);
+  outline-offset: -1px;
+}
+
+.ink-pairing-add {
+  height: 30px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-bg);
+  background: var(--ink-link);
+  border: 1px solid var(--ink-link);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Stated, not inherited — a global `button:hover { color: var(--ink-link) }` would paint this
+   label the colour of its own background. */
+.ink-pairing-add:hover:not(:disabled) { color: var(--ink-bg); filter: brightness(1.08); }
+/* Muted fill, not opacity — see the same rule in agent.css. */
+.ink-pairing-add:disabled {
+  color: var(--ink-fg-muted);
+  background: var(--ink-sidebar-hover);
+  border-color: var(--ink-rule);
+  cursor: default;
+}
+
+/* One line, always. A machine name plus two backends can outgrow the row, and wrapping here
+   defeats the fixed height the row was given so that pairing does not move the dialog. The whole
+   string is in the tooltip. */
+.ink-pairing-state {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-fg-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Two lines are reserved whether or not both are used. The offline hint needs both, and without
+   this the dialog grows 16px the moment the agent stops answering — the same jump the row above
+   was given a fixed height to stop, just moved down one element. `2.9em` is 2 × the 1.45
+   line-height, so it tracks the font size rather than being a number that goes stale. */
+.ink-pairing-hint {
+  display: block;
+  margin-top: 6px;
+  min-height: 2.9em;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-fg-muted);
+}
+
+.ink-pairing-hint code {
+  font-family: var(--ink-font-mono);
+  font-size: 10.5px;
+}

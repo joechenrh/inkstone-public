@@ -1,0 +1,98 @@
+:root {
+  --ink-bg: #ffffff;
+  --ink-fg: #333333;
+  --ink-fg-muted: #777777;
+  --ink-link: #4183c4;
+  --ink-code-bg: #f8f8f8;
+  /* Panes are separated by a hairline, not by a fill: every shell surface shares
+     --ink-bg and --ink-rule draws the boundary (Yuque). Tinting a pane to mark it off
+     reads as heavy at this density. */
+  --ink-rule: #ececec;
+  --ink-sidebar-bg: #ffffff;
+  --ink-sidebar-hover: #f2f3f5;
+  --ink-sidebar-active: #e9ebef;
+  --ink-selection: #b4d5fe;
+  --ink-danger: #c0392b;
+  /* A share running out. Nothing else had a "getting on for too late" colour, and the diff
+     colours are a different axis. */
+  --ink-warn: #b07d2b;
+
+  /* Scrollbars: a low-contrast thumb over a track-less gutter. */
+  --ink-scrollbar-thumb: rgba(0, 0, 0, 0.13);
+  --ink-scrollbar-thumb-hover: rgba(0, 0, 0, 0.26);
+
+  /*
+   * The shell: tree, bars, settings, menus, panels. The system UI stack and nothing else.
+   *
+   * It used to name Maple Mono first, which this app does not ship — so the interface was
+   * monospaced for whoever happened to have that font installed and sans-serif for everyone
+   * else. The chrome had no defined appearance at all.
+   *
+   * Not a shipped face: one covering Latin *and* CJK is megabytes, the Chinese would fall back
+   * to a system font regardless, and this app fetches nothing from a CDN. The system stack is
+   * SF Pro on a Mac and PingFang for Chinese — drawn for interface text rather than for code,
+   * which is the other half of the reason. The document is where the writing face belongs, and
+   * every document theme names its own.
+   */
+  --ink-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --ink-font-mono: "Maple Mono", "Maple Mono NF", "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --ink-font-size: 16px;
+  /* The sidebar's text, and fixed.
+   *
+   * It was a Settings row, and two things were wrong with it. The label said "File tree font size"
+   * and the token drives five surfaces — the tree, the Files/Outline tabs, the outline, the search
+   * field and its results, and the empty state's recent list — so the control did more than it
+   * said. And the thing people actually want here is *zoom*, which the browser already does
+   * better: Cmd +/− takes the line height, the icons and the indents with it, per site, remembered
+   * per display. This only changed a font size, so at 16 the rows kept a 14px rhythm.
+   *
+   * 14px is where the applications that do not offer the choice have landed. Measured off a
+   * side-by-side screenshot of Yuque's sidebar: the same CJK glyph height as ours, in rows 6px
+   * taller. */
+  --ink-tree-font-size: 14px;
+  --ink-line-height: 1.6;
+
+  /* The measure: one width, on every screen. Not a maximum that grows with the window — a
+     paragraph wraps in the same place on a laptop, on an external monitor, and on the shared page
+     someone else opens. 750 is Yuque's, and this was chosen by comparison with it. */
+  --ink-content-width: 750px;
+  --ink-left-width: 260px;
+  --ink-right-width: 320px;
+  --ink-topbar-height: 48px;
+  --ink-statusbar-height: 32px;
+
+  --ink-backdrop: rgba(0, 0, 0, 0.35);
+  --ink-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.24);
+  --ink-shadow-menu: 0 6px 24px rgba(30, 40, 60, 0.16), 0 1px 2px rgba(30, 40, 60, 0.10);
+
+  /* Diff colours. Semantic, and deliberately not the accent: added/removed is a different axis
+     from "this is selected", and the two must not read as the same thing. */
+  --ink-added: #2f7d5d;
+  --ink-removed: #b04a52;
+}
+
+:root[data-theme="dark"] {
+  /* Matches the Lapis dark page colour used inside the editor, so the shell and the
+     document are one surface rather than two shades meeting at the pane border. */
+  --ink-bg: #1e222a;
+  --ink-fg: #b8bfc6;
+  --ink-fg-muted: #858d99;
+  --ink-link: #8393ad;
+  --ink-code-bg: #262b34;
+  --ink-rule: #2e3440;
+  --ink-sidebar-bg: #1e222a;
+  --ink-sidebar-hover: #272c36;
+  --ink-sidebar-active: #2f3542;
+  /* Lifted for the dark ground: the light values fall below a readable contrast on #1e222a. */
+  --ink-added: #5fbb8c;
+  --ink-removed: #d98a91;
+  --ink-selection: #3a5570;
+  --ink-danger: #e07a6f;
+  /* Lifted for the dark ground, like the diff colours above. */
+  --ink-warn: #d5a54a;
+
+  --ink-shadow-menu: 0 6px 24px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ink-scrollbar-thumb: rgba(255, 255, 255, 0.16);
+  --ink-scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+}

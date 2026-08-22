@@ -1,0 +1,651 @@
+/* The shell around Crepe: the same box Vditor's shell defined, so the layout does not know which
+   engine is inside it.
+
+   Crepe brings its own theme; ours overrides only what the application owns — the content column,
+   the scroll container, and the surfaces that must match the rest of the window. Everything about
+   how markdown *looks* stays with the document themes. */
+
+@import "./document-column.css";
+@import "./document-conformance.css";
+
+.ink-crepe {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Crepe's design tokens, in this application's terms.
+ *
+ * Every control Crepe ships — the language picker, the link bubble, the table handles and their
+ * button group — is styled against `--crepe-color-surface`, `--crepe-shadow-1` and the rest. Those
+ * are defined by a *Crepe theme*, and this application imports only `theme/common/style.css`,
+ * because the document's appearance belongs to the seven document themes rather than to Crepe.
+ *
+ * So the variables were never defined, and a declaration reading an undefined variable is thrown
+ * away: `background-color: var(--crepe-color-surface)` is not a fallback to grey, it is no
+ * background at all. Every floating control in the editor was transparent, sitting over the text it
+ * was supposed to be in front of, and the table handles were two bare lines with no surface under
+ * them. One missing definition, three separate-looking complaints.
+ *
+ * Mapped rather than copied: these resolve to the shell's own tokens, so Crepe's controls follow
+ * the application into dark mode and through every setting without a second set of colours to keep
+ * in step.
+ */
+.ink-crepe .milkdown {
+  --crepe-color-background: var(--ink-bg);
+  --crepe-color-on-background: var(--ink-fg);
+  /* Menus and bubbles float above the page, so they take the shell's ground rather than a tint —
+     the hairline and the shadow are what separate them, as everywhere else in this application. */
+  --crepe-color-surface: var(--ink-bg);
+  --crepe-color-surface-low: var(--ink-sidebar-hover);
+  --crepe-color-on-surface: var(--ink-fg);
+  --crepe-color-on-surface-variant: var(--ink-fg-muted);
+  --crepe-color-outline: var(--ink-fg-muted);
+  --crepe-color-primary: var(--ink-link);
+  --crepe-color-secondary: var(--ink-sidebar-active);
+  --crepe-color-on-secondary: var(--ink-fg);
+  --crepe-color-inverse: var(--ink-fg);
+  --crepe-color-on-inverse: var(--ink-bg);
+  --crepe-color-inline-code: var(--ink-danger);
+  --crepe-color-error: var(--ink-danger);
+  --crepe-color-hover: var(--ink-sidebar-hover);
+  --crepe-color-selected: var(--ink-sidebar-active);
+  --crepe-color-inline-area: var(--ink-rule);
+
+  --crepe-base-font-size: var(--ink-font-size);
+  /* The chrome's face, not the document's: these variables reach Crepe's controls, and a menu is
+     interface. What the text is set in stays with the document themes. */
+  --crepe-font-title: var(--ink-font-body);
+  --crepe-font-default: var(--ink-font-body);
+  --crepe-font-code: var(--ink-font-mono);
+
+  --crepe-shadow-1: var(--ink-shadow-menu);
+  --crepe-shadow-2: var(--ink-shadow-modal);
+}
+
+.ink-crepe .milkdown {
+  height: 100%;
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+}
+
+/* The scroller, and the element `documentRoot()` finds — see `surface.ts`. Its column geometry is
+   in `document-column.css`, shared with the other engine; what is left here is Crepe's own. */
+.ink-crepe .ProseMirror {
+  height: 100%;
+  overflow-y: auto;
+  font-size: var(--ink-font-size);
+  line-height: var(--ink-line-height);
+  outline: none;
+}
+
+/* The reader's own caret, since Crepe's is turned off — it must be visible against every theme. */
+.ink-crepe .ProseMirror { caret-color: var(--ink-fg); }
+
+.ink-crepe .ProseMirror:focus-visible { outline: none; }
+
+/* The selection toolbar, in this application's language rather than Crepe's.
+ *
+ * It arrives at Crepe's own scale — 52px tall with 32px buttons and its own surface — which against
+ * these themes read as something borrowed. The table bar next door is the shape this application
+ * already uses for a floating control, so this takes its measurements: small buttons, 15px icons,
+ * the shell's surface, a hairline, muted until pointed at.
+ *
+ * Crepe's own rules are `.milkdown .milkdown-toolbar`, so these carry the same ancestor plus a
+ * doubled class — a tie on specificity is decided by source order, and relying on an import order
+ * is a thing that breaks silently when somebody sorts the imports.
+ */
+/* `[data-show="true"]`, and that attribute is the whole point of this line.
+ *
+ * Crepe hides the toolbar with `.milkdown .milkdown-toolbar[data-show=false] { display: none }` —
+ * three classes' worth of specificity, exactly what a doubled class comes to. A tie goes to source
+ * order and ours is later, so setting `display: flex` unconditionally beat the hide rule and the
+ * toolbar never went away again. Style the shown state; leave hiding to the thing that owns it. */
+.milkdown .milkdown-toolbar.milkdown-toolbar[data-show="true"] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  height: auto;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: var(--ink-shadow-menu);
+  color: var(--ink-fg-muted);
+}
+
+.milkdown .milkdown-toolbar.milkdown-toolbar[data-show="true"] .toolbar-item {
+  width: 26px;
+  height: 26px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-fg-muted);
+  display: grid;
+  place-items: center;
+}
+
+.milkdown .milkdown-toolbar.milkdown-toolbar[data-show="true"] .toolbar-item svg {
+  width: 15px;
+  height: 15px;
+}
+
+.milkdown .milkdown-toolbar.milkdown-toolbar[data-show="true"] .toolbar-item:hover {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+}
+
+/* A hairline between groups, not a filled block. */
+.milkdown .milkdown-toolbar.milkdown-toolbar[data-show="true"] .divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: var(--ink-rule);
+}
+
+/* Lists, at the document's metrics rather than Crepe's.
+ *
+ * Crepe does not use `::marker` — it renders a `.label` span per item, so every theme's marker rule
+ * missed it and the bullets came out at body colour and size. The themes now name both forms; these
+ * are the metrics around them.
+ *
+ * The svg is sized in `em` off the label, and the label's own colour has to reach it: Crepe's icons
+ * are `fill: currentColor`, so colouring the label is what colours the bullet.
+ */
+/* The marker hangs outside the text, which is what `::marker` does and what every theme's list
+ * indent was measured against.
+ *
+ * Crepe lays the item out as a flex row — a 24px label column, a 10px gap, then the content — so
+ * the text of every list item in the vault began 34px further right than the same item in the
+ * shipped rendering, and nested lists compounded it. Taking the label out of flow puts the glyph in
+ * the `ul`'s own 20px padding, where a marker belongs, and leaves the text starting exactly at the
+ * item's edge.
+ *
+ * `right: 100%` against the item's own box, so this holds at any font size and at any nesting
+ * depth without a hardcoded offset. */
+.milkdown .ink-doc li.list-item {
+  position: relative;
+}
+
+/* Height, too: Crepe's wrapper is 32px — taller than a 26px line — and as a flex child it stretched
+   every list item to match. Measured: `li` 26px in the shipped rendering, 32px here, on every item
+   of every list. That is most of what "the lists look loose" was. */
+.milkdown .ink-doc .list-item > .label-wrapper {
+  position: absolute;
+  right: 100%;
+  top: 0;
+  display: flex;
+  /* Centred on the first line, not hung from its top. The marker was aligned to the top of the line
+     box and then nudged down by hand with a margin, which is a number that only holds at one font
+     size and one leading — measured, the bullet sat 3.8px below the middle of its line and the task
+     box 2px below. Giving the wrapper the height of one line and centring in it is the same
+     statement without the number. */
+  align-items: center;
+  justify-content: flex-end;
+  height: calc(var(--ink-line-height) * 1em);
+  min-height: 0;
+}
+
+.milkdown .ink-doc .list-item > .label-wrapper .label {
+  width: auto;
+  min-width: 1.5em;
+  height: auto;
+  line-height: var(--ink-line-height);
+  justify-content: flex-start;
+}
+
+/* A bullet is a mark beside the text, and it has to be the size the other engine's `::marker`
+   draws. Sized against the *box* rather than the dot, it came out far too small: Crepe's icon is a
+   `circle r="3"` in a 24-unit viewBox, so the painted dot is a quarter of whatever the box is —
+   0.62em of box was a 2px dot against roughly 3.4px for the `•` glyph at the marker's 12.8px. */
+.milkdown .ink-doc .list-item > .label-wrapper .label.bullet svg {
+  /* `em` here is the *label's* em, and the themes set the label to 0.8 of the text — so 1em came out
+     a 12.8px box and a 3.2px dot. 1.375em is a 17.6px box, whose quarter is the 4.4px the `•` glyph
+     paints at the marker's own size in the other engine. */
+  width: 1.375em;
+  height: 1.375em;
+  fill: currentColor;
+}
+
+/* A nested list uses a ring, which is what `list-style-type: circle` draws at the second level and
+   what every one of these themes inherited from the browser. Crepe draws the same filled dot at
+   every depth, so nesting stopped being visible at all. The icon is a `<circle>`, so this is the
+   same mark turned inside out rather than a different one. */
+.milkdown .ink-doc li.list-item li.list-item > .label-wrapper .label.bullet svg circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* A task box reads as a control, so it keeps a real size — in the theme's colour, not black. */
+.milkdown .ink-doc .list-item > .label-wrapper .label:is(.checked, .unchecked) svg {
+  width: 1.05em;
+  height: 1.05em;
+  fill: currentColor;
+}
+
+/* Crepe spaces items 6.4px apart; the themes ask for a quarter of an em. */
+.milkdown .ink-doc li.list-item.list-item {
+  margin-block: 0.25em;
+}
+
+.milkdown .ink-doc .list-item > .children > .content-dom > p {
+  margin: 0;
+}
+
+/* Crepe's own block metrics, undone so the document keeps the themes'.
+ *
+ * Measured element by element against the shipped rendering: every paragraph and list item came out
+ * 6px taller, because `.milkdown .ProseMirror p` carries `padding: 4px 0` and its own `line-height:
+ * 1.5` — so the page was uniformly looser than the same note in Vditor, which is the difference you
+ * see before you can name it. Lists lost their trailing margin and the rule became a 13px band.
+ *
+ * These are not theme decisions; they are the engine's defaults arriving on top of them. The themes
+ * and `document-base.css` own leading and spacing, and this gets Crepe out of their way.
+ */
+.milkdown .ink-doc p {
+  padding: 0;
+  line-height: inherit;
+}
+
+/* A line break inside a paragraph, shown as one.
+ *
+ * Crepe keeps the break — it is a `data-type="hardbreak"` widget in the model, so nothing is lost
+ * and nothing is rewritten on save — but renders it as an inline span containing a space, so two
+ * lines of a quote ran together where the other engine put them on separate lines. Notes written by
+ * hand break their lines by hand; this is a difference on every one of them.
+ *
+ * A generated newline rather than `display: block`, so the break stays part of the inline flow and
+ * a caret can still be placed either side of it. */
+.milkdown .ink-doc [data-type="hardbreak"] {
+  font-size: 0;
+}
+
+.milkdown .ink-doc [data-type="hardbreak"]::after {
+  content: "\A";
+  white-space: pre;
+  font-size: 1rem;
+}
+
+/* A rule is a hairline, not a 13px band with padding around it. */
+.milkdown .ink-doc hr {
+  height: 1px;
+  padding: 0;
+  margin-block: 1.5em;
+  background: var(--ink-rule);
+  background-clip: border-box;
+}
+
+/* The fenced block.
+ *
+ * The panel itself — its fill, its radius, its padding — is a theme decision, and every theme now
+ * names this wrapper alongside Vditor's `pre.vditor-ir__preview`. What is left here is Crepe's own
+ * furniture, which arrives on top of it: a line-number gutter, its own type scale, and a CodeMirror
+ * surface that paints its own background over the panel's.
+ *
+ * Before this, a fence rendered as a bare line of 14px code with a black line-number box beside it,
+ * against no panel at all — next to Vditor's filled, rounded block at the document's own size, it
+ * did not read as the same application.
+ */
+.milkdown .ink-doc .milkdown-code-block {
+  margin: 0 0 16px;
+}
+
+/* Line numbers are a source-editor affordance, and this is a document. Vditor shows none. */
+.milkdown .ink-doc .milkdown-code-block .cm-gutters {
+  display: none;
+}
+
+/* CodeMirror paints its own surface; the panel underneath is the one the theme chose. */
+.milkdown .ink-doc .milkdown-code-block :is(.cm-editor, .cm-scroller, .cm-content, .cm-gutters) {
+  background: transparent;
+}
+
+/* Code is set at the document's size, which is what the themes ask for (`pre code { font-size: 1em
+   }`) and what Vditor renders. 14px in the middle of a 16px page is a different size of type. */
+/* CodeMirror writes `font-family: monospace` onto its own scroller, which beats anything the block
+   above it says by being on the element rather than inherited — so a theme's code face, and the
+   fallback in `document-base.css`, both stopped at the edge of the fence and every block came out
+   in the browser's generic mono. Inheriting is the whole fix: the block already has the right face,
+   from the theme when it names one and from the floor when it does not. */
+.milkdown .ink-doc .milkdown-code-block .cm-scroller {
+  font-family: inherit;
+}
+
+/* The size and leading are settled here; the face comes from above. */
+/* `.cm-scroller` has to be named: CodeMirror sets its leading to 1.4 there, and everything below
+   inherits it, so telling only `.cm-content` to inherit inherited 1.4. A ten-line fence came out
+   32px shorter than the same fence in the other engine. */
+.milkdown .ink-doc .milkdown-code-block :is(.cm-editor, .cm-scroller, .cm-content, .cm-line) {
+  font-size: 1em;
+  line-height: var(--ink-line-height);
+}
+
+/* A focused code block is still a paragraph of a document, not a field. */
+.milkdown .ink-doc .milkdown-code-block .cm-editor.cm-focused {
+  outline: none;
+}
+
+/* CodeMirror's own insets, removed so the first character sits on the panel's padding — the same
+   place Vditor puts it. Left at their defaults the code was 6px in from everything else on the
+   page, which is the sort of misalignment that reads as sloppiness without being nameable. */
+.milkdown .ink-doc .milkdown-code-block .cm-content {
+  padding: 0;
+}
+
+.milkdown .ink-doc .milkdown-code-block .cm-line {
+  padding: 0;
+}
+
+/* The active line is a code-editor affordance: a tinted band that follows the caret. In a document
+   it is a stripe across one line of one paragraph for no reason the reader can see. */
+.milkdown .ink-doc .milkdown-code-block .cm-activeLine {
+  background: transparent;
+}
+
+/* The language picker and the copy button, out of the flow — and not on top of the code.
+ *
+ * Crepe lays them out as a row above the code, which added 30px to the height of every fenced block
+ * in the vault: a one-line fence came to 92px against the other engine's 58. Vditor keeps the same
+ * two affordances and gives them no space at all — the language sits quietly in a corner and the
+ * copy button appears when the pointer is over the block.
+ *
+ * Taking them out of the flow the first time put them straight over the first line of code, with
+ * the button's label clipped by the panel's edge. So they float *as a control*: the shell's own
+ * surface, a hairline and a shadow, which is what everything else in this application that hovers
+ * over content looks like — and what makes them legible over whatever they cover.
+ */
+.milkdown .ink-doc .milkdown-code-block {
+  position: relative;
+}
+
+.milkdown .ink-doc .milkdown-code-block > .tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  /* The row is only as tall as the controls on it. Crepe hangs the picker off this element as a
+     third child, and with the picker taken out of the flow the row still measured 36px against
+     22px controls — so the two buttons sat on different centres, 4px apart, which is what "the
+     language and the copy button are not aligned" was. */
+  line-height: 1;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: var(--ink-shadow-menu);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+/* Under the pointer only. `:focus-within` kept the card on screen after the caret went into a
+   freshly created fence and after the copy button was clicked — and with nothing in it to show, an
+   empty white card sat in the corner of the block. The other engine's copy button is hover-only for
+   the same reason. */
+.milkdown .ink-doc .milkdown-code-block:hover > .tools {
+  opacity: 1;
+}
+
+/* And never a card with nothing in it: in read mode the language control is gone, and if the copy
+   button is gone too there is nothing left to draw a surface around. */
+.milkdown .ink-doc .milkdown-code-block > .tools:not(:has(.copy-button)) {
+  display: none;
+}
+
+/* Both controls on one centre, and no margin of their own to shift it. */
+.milkdown .ink-doc .milkdown-code-block > .tools > * {
+  align-self: center;
+  margin: 0;
+}
+
+/* Small and quiet. A one-line fence is 58px tall, and a 36px card of chrome sitting on it is most
+   of the block — this is 24px, which is the size of an icon button everywhere else in the shell. */
+.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 5px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-fg-muted);
+  font-family: var(--ink-font-body);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button):hover {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+}
+
+.milkdown .ink-doc .milkdown-code-block > .tools svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* The picker hangs off a control in the corner, so it opens downward from it and to the left —
+   anchored to the button's right edge, which is the one that is always on screen. */
+.milkdown .ink-doc .milkdown-code-block > .tools .language-picker {
+  position: absolute;
+  top: 100%;
+  /* `left: auto` and it has to be `!important`: Crepe positions the picker by writing an inline
+     `left` on it, and with both edges set the left one wins — so the menu opened 240px to the right
+     of the button, past the right edge of the scroller. The document then had something wider than
+     itself in it, which is a horizontal scrollbar, which is a narrower column and a narrower code
+     block. That is what "the picker changes the width of the code block" was. */
+  left: auto !important;
+  right: 0;
+  z-index: 2;
+}
+
+
+/* The fence before its editor has mounted.
+ *
+ * Crepe renders a `pre` placeholder for a code block that has not been scrolled to yet and swaps in
+ * CodeMirror when it comes into view. The placeholder was left at 14px with its own leading, so a
+ * fence visibly changed size as it scrolled onto the screen. It carries the panel already — it is
+ * inside the wrapper the themes style — so only its type needs to agree. */
+.milkdown .ink-doc .milkdown-code-block-placeholder {
+  margin: 0;
+  padding: 0;
+  font-size: 1em;
+  line-height: var(--ink-line-height);
+  background: transparent;
+  border-radius: 0;
+}
+
+/* A table's block, spaced like every other block.
+ *
+ * Crepe wraps a table in `.milkdown-table-block` and gives the wrapper 4px above and below, so the
+ * `margin-bottom: 16px` the document gives a table landed on an element inside the wrapper and did
+ * nothing. Tables sat tighter to the text than anything else on the page. */
+.milkdown .ink-doc .milkdown-table-block {
+  margin: 0 0 16px;
+}
+
+/* Holding the modifier turns a link into something that looks clickable — see
+   `openLinkOnModifierClick` in `CrepeEditor.tsx`. Without a cursor change the gesture is invisible
+   to anyone who does not already know it. */
+.ink-crepe.ink-crepe-open-links .ink-doc a[href] {
+  cursor: pointer;
+}
+
+/* The language picker is a menu, and a menu needs a surface.
+ *
+ * Crepe styles the picker as a bare positioning wrapper — `position: absolute` and a top padding —
+ * and hangs the search field and the list off it with no border, radius or shadow anywhere. Over a
+ * document that was a column of language names printed straight onto the paragraph behind them.
+ *
+ * The surface goes on `.list-wrapper`, which is the element that actually contains both parts, so
+ * the field and the list read as one menu rather than two things that happen to overlap. Everything
+ * inside it is then transparent. This is the shape every other menu in this application has.
+ */
+.milkdown .ink-doc .milkdown-code-block .language-picker .list-wrapper {
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: var(--ink-shadow-menu);
+  padding: 6px;
+  color: var(--ink-fg);
+  font-family: var(--ink-font-body);
+}
+
+.milkdown .ink-doc .milkdown-code-block .language-picker .language-list {
+  background: transparent;
+  padding: 4px 0 0;
+  /* Shorter than Crepe's 410px: this opens inside a document, not over a full-height panel. */
+  height: auto;
+  max-height: 200px;
+}
+
+.milkdown .ink-doc .milkdown-code-block .language-picker .language-list-item {
+  /* Crepe indents the list by 20px for a leading icon this application does not show. */
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.milkdown .ink-doc .milkdown-code-block .language-picker .language-list {
+  padding-left: 0;
+}
+
+/* The field is part of the menu, so it takes the shell's field shape rather than floating on its
+   own white card inside a white card. */
+.milkdown .ink-doc .milkdown-code-block .language-picker .search-box {
+  background: var(--ink-sidebar-hover);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink-fg);
+}
+
+/* A field inside a menu, not a call to action: the ring stays a hairline and only the fill moves,
+   which is what the rest of the shell's fields do. */
+.milkdown .ink-doc .milkdown-code-block .language-picker .search-box:focus-within {
+  border-color: var(--ink-rule);
+  background: var(--ink-bg);
+}
+
+/* The field inside the menu is a field, not a second card.
+ *
+ * Crepe's search box keeps its own white surface and the browser's focus ring, which against a
+ * white menu read as a blue double border floating on nothing. The wrapper is the field; the input
+ * inside it is just text. */
+.milkdown .ink-doc .milkdown-code-block .language-picker .search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font-family: var(--ink-font-body);
+  font-size: 13px;
+  width: 100%;
+}
+
+
+/* Reading is a mode, and these two belong to editing.
+ *
+ * The language picker changes the document, so it has no business being offered when the document
+ * cannot be changed — clicking it in read mode did nothing except leave its space behind. Copy
+ * stays: copying a block is one of the things reading is for, which is the same call the other
+ * engine's shell makes about its own copy button.
+ *
+ * ProseMirror keeps an empty paragraph at the end of the document so there is somewhere to put the
+ * caret after a block that ends it — necessary while editing, and while reading it is a blank block
+ * under the last thing on the page. */
+.ink-crepe .ink-doc[contenteditable="false"] .milkdown-code-block .language-button {
+  display: none;
+}
+
+.ink-crepe .ink-doc[contenteditable="false"] > p:last-child:empty {
+  display: none;
+}
+
+
+/* One bar down the side of a quote, not two.
+ *
+ * Crepe draws its own: an absolutely positioned `::before`, 4px of grey at the left edge. Every one
+ * of the seven document themes already draws that bar — most as a `border-left`, Forest as a
+ * `::before` of its own — so the quote came out with the theme's bar and Crepe's sitting side by
+ * side, a blue one and a grey one.
+ *
+ * Two classes, which is above Crepe's `.milkdown blockquote::before` and below any theme's, so a
+ * theme that draws its bar this way keeps it and Crepe's goes.
+ *
+ * Not an alert's, though: that `::before` is the callout's icon rather than a second bar, and this
+ * rule tied with it on specificity and won on source order — five icons that appeared in one engine
+ * and not the other. */
+.milkdown .ink-doc blockquote:not([data-alert])::before {
+  content: none;
+}
+
+/* The picture, while its markdown is showing.
+ *
+ * A widget decoration, not part of the document — see `source-reveal.ts`. It sits on its own line
+ * under the source because that is where the picture will be once the caret leaves, so nothing
+ * moves when it closes. `contenteditable` off: it is a preview, and a caret has no business in it. */
+.ink-editor .ink-source-preview {
+  display: block;
+  max-width: 100%;
+  margin-top: 6px;
+  /* The same corner every other panel in the document has. */
+  border-radius: 4px;
+}
+
+/* The syntax of whatever the caret is in — see `marker-reveal.ts`.
+ *
+ * Muted, so it reads as punctuation about the text rather than as text. The other engine uses its
+ * `--second-color` for exactly this and the effect is the same: you see what the run is made of
+ * without the line changing colour. */
+.ink-editor .ink-marker {
+  color: var(--ink-fg-muted);
+  font-weight: 400;
+  font-style: normal;
+  text-decoration: none;
+  /* Not selectable, not draggable: it is a rendering of the document, like the bold weight. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The `#`s hang in the gutter, in the column the other engine floats them into — so a heading's
+   words do not shift sideways the moment a caret lands in them.
+ *
+ * Out of flow, not merely negatively margined: Lapis's h2 is an inline-block pill with a filled
+ * background, and an in-flow marker with a negative margin grows the pill leftwards to cover it.
+ *
+ * The geometry is the other engine's, so the two agree: `-46px` is exactly the `margin-left` that
+ * `lapis-theme.css` applies to Vditor's own markers, and `text-align: left` keeps `#` and `###`
+ * starting at the same x, so they form a column rather than a ragged edge.
+ *
+ * One offset for all six, as over there. Lapis's h2 pill starts 12.5px left of its own text, so its
+ * marker sits that much further out than the rest; the alternative is a per-theme special case for
+ * a marker that is only on screen while the caret is in that one heading. */
+.ink-editor .ink-doc > h1,
+.ink-editor .ink-doc > h2,
+.ink-editor .ink-doc > h3,
+.ink-editor .ink-doc > h4,
+.ink-editor .ink-doc > h5,
+.ink-editor .ink-doc > h6 {
+  /* So the marker can be pinned to the heading's own left edge. Without it the marker takes its
+     static position from the inline flow, and Lapis centres h1 — which put the `#` at the middle
+     of the line rather than in the gutter. */
+  position: relative;
+}
+
+.ink-editor .ink-marker--heading {
+  position: absolute;
+  left: -46px;
+  top: 0;
+  width: 34px;
+  text-align: left;
+  font-weight: 400;
+  font-size: var(--ink-font-size, 16px);
+  line-height: inherit;
+  white-space: nowrap;
+}

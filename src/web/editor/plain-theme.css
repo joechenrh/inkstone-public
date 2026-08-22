@@ -1,0 +1,173 @@
+/* Plain — for notes you scan and search rather than read end to end.
+ *
+ * The counterpart to Lapis: where Lapis decorates the page (a centred serif title, a pill for h2),
+ * this uses no colour for structure at all. Headings are weight and size; a hairline separates a
+ * section; the accent appears only on things you can act on, like links. Leading is tighter so more
+ * of a long file is on screen at once, which is the whole reason to pick it.
+ *
+ * Nested under the theme attribute, same as lapis-theme.css.
+ */
+:root[data-doc-theme="plain"] {
+  --plain-bg: #ffffff;
+  --plain-fg: #2b3138;
+  --plain-strong: #14181d;
+  --plain-muted: #5b636c;
+  --plain-rule: #e7eaee;
+  --plain-block: #f4f6f8;
+  --plain-link: #2f6fd0;
+  --plain-marker: #a7aeb6;
+
+  /* The shell borrows the page, so the two never meet as different shades. */
+  --ink-bg: #ffffff;
+  --ink-fg: #2b3138;
+  --ink-fg-muted: #6b737c;
+  --ink-link: #2f6fd0;
+  --ink-rule: #e7eaee;
+  --ink-code-bg: #f4f6f8;
+  --ink-sidebar-bg: #ffffff;
+  --ink-sidebar-hover: #f1f3f6;
+  --ink-sidebar-active: #e8ebef;
+
+  &[data-theme="dark"] {
+    --plain-bg: #14181d;
+    --plain-fg: #ccd3da;
+    --plain-strong: #f0f3f6;
+    --plain-muted: #98a1aa;
+    --plain-rule: #262c33;
+    --plain-block: #1c2128;
+    --plain-link: #79a6e8;
+    --plain-marker: #5a626b;
+
+    --ink-bg: #14181d;
+    --ink-fg: #ccd3da;
+    --ink-fg-muted: #8b939c;
+    --ink-link: #79a6e8;
+    --ink-rule: #262c33;
+    --ink-code-bg: #1c2128;
+    --ink-sidebar-bg: #14181d;
+    --ink-sidebar-hover: #1c2128;
+    --ink-sidebar-active: #232a32;
+  }
+
+  .ink-doc.ink-doc.ink-doc {
+    background: var(--plain-bg);
+    color: var(--plain-fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Source Han Sans CN", system-ui, sans-serif;
+    /* Rem would ignore the editor font-size setting, which lives on documentElement. */
+    font-size: var(--ink-font-size, 16px);
+    line-height: 1.62;
+    word-break: break-word;
+  }
+
+  /* Headings: weight and size carry the hierarchy, never colour. h1 and h2 take a hairline so a
+     section is visible when scrolling past at speed; h3 and below do not, or the page becomes a
+     ladder of rules. */
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    color: var(--plain-strong);
+    font-family: inherit;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+    line-height: 1.3;
+    margin: 1.4em 0 0.5em;
+    padding: 0;
+    border: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.6);
+    margin-top: 0.2em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--plain-rule);
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.28);
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid var(--plain-rule);
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 { font-size: calc(var(--ink-font-size, 16px) * 1.12); }
+  .ink-doc.ink-doc.ink-doc h4 { font-size: calc(var(--ink-font-size, 16px) * 1); }
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-size: calc(var(--ink-font-size, 16px) * 0.94);
+    color: var(--plain-muted);
+  }
+
+  .ink-doc.ink-doc.ink-doc p { margin: 0 0 0.9em; }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: var(--plain-link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  .ink-doc.ink-doc.ink-doc strong { color: var(--plain-strong); font-weight: 650; }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    margin: 0.9em 0;
+    padding: 0.1em 0 0.1em 14px;
+    border-left: 3px solid var(--plain-rule);
+    background: none;
+    color: var(--plain-muted);
+    font-size: inherit;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul,
+  .ink-doc.ink-doc.ink-doc ol { padding-left: 22px; }
+  .ink-doc.ink-doc.ink-doc li { margin: 0.25em 0; }
+  .ink-doc.ink-doc.ink-doc li::marker,
+    .ink-doc.ink-doc.ink-doc .list-item > .label-wrapper .label { color: var(--plain-marker); font-size: 0.9em; }
+
+  /* Inline code. `:not(pre) >` keeps this off the <code> inside a fenced block, whose background
+     belongs to the block. */
+  .ink-doc.ink-doc.ink-doc :not(pre) > code:not(.hljs):not(.highlight-chroma) {
+    background: var(--plain-block);
+    color: var(--plain-fg);
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 90%;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+
+  /* Fenced blocks: both the rendered <pre> and the expanded source, never a bare `pre` — that
+     selector also hits the collapsed source and paints a sliver beside the fence. */
+  .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--plain-block);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  .ink-doc.ink-doc.ink-doc pre code,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    color: var(--plain-fg);
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: transparent;
+    padding: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc table { border-collapse: collapse; }
+  .ink-doc.ink-doc.ink-doc th,
+  .ink-doc.ink-doc.ink-doc td {
+    border: 1px solid var(--plain-rule);
+    padding: 6px 11px;
+  }
+  .ink-doc.ink-doc.ink-doc th { background: var(--plain-block); font-weight: 650; }
+
+  .ink-doc.ink-doc.ink-doc hr {
+    border: none;
+    border-top: 1px solid var(--plain-rule);
+    margin: 1.6em 0;
+  }
+}

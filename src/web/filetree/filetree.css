@@ -1,0 +1,253 @@
+.ink-tree-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ink-tree {
+  padding: 8px 0;
+  font-size: var(--ink-tree-font-size);
+  user-select: none;
+}
+
+/* Fix 3: Increase row height to ~30px with vertical padding for breathing room */
+.ink-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-right: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  transition: background-color 0.12s ease;
+}
+
+.ink-tree-row:hover {
+  background: var(--ink-sidebar-hover);
+  transition: background-color 0.12s ease;
+}
+
+/* Fix 7: Selected row — left accent bar (Typora style) + subtle background */
+.ink-tree-row.selected {
+  background: var(--ink-sidebar-active);
+}
+
+.ink-tree-row.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--ink-link);
+  opacity: 1;
+  transform: scaleY(1);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  transform-origin: center;
+}
+
+.ink-tree-row:not(.selected)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--ink-link);
+  opacity: 0;
+  transform: scaleY(0.5);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  transform-origin: center;
+}
+
+/* The extra margin rather than a wider row `gap`: the gap also spaces the unsaved dot, which
+   is already close enough. The chevron's ink stops 3px short of its own box, so the row's 4px
+   gap reads as 7px against the name — measurably tighter than it looks in the markup. */
+.ink-tree-caret {
+  width: 10px;
+  margin-right: 3px;
+  color: var(--ink-fg-muted);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ink-tree-caret svg {
+  transition: transform 0.15s ease;
+  transform: rotate(0deg);
+}
+
+.ink-tree-caret.expanded svg {
+  transform: rotate(90deg);
+}
+
+.ink-tree-caret.empty {
+  visibility: hidden;
+}
+
+/* Cantarell, not the system stack.
+ *
+ * It is already downloaded on this route — Lapis sets the document in it — so the sidebar and the
+ * document become one voice for no extra bytes. The system stack made the tree read as OS chrome
+ * bolted on beside the note rather than part of the same application.
+ *
+ * Latin only, by its own `unicode-range`; CJK falls through to PingFang, which is the same
+ * humanist register. Trying this out — see whether it survives a day of use.
+ */
+.ink-tree-name {
+  font-family: "Cantarell", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.ink-tree-unsaved {
+  margin-right: 4px;
+  flex-shrink: 0;
+  color: var(--ink-fg-muted);
+}
+
+/* Fix 2: Increase gap between action icons to 8px */
+.ink-tree-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.ink-tree-row:hover .ink-tree-actions {
+  opacity: 1;
+}
+
+/* Keep the trigger visible while its menu is open — otherwise moving the pointer to the
+   menu hides the button the menu belongs to. */
+.ink-tree-actions:has([aria-expanded="true"]) {
+  opacity: 1;
+}
+
+.ink-tree-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-fg-muted);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.ink-tree-action-btn:hover {
+  color: var(--ink-fg);
+}
+
+/* Fix 1: Tree action icons at 16px for density */
+.ink-tree-actions .ink-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.ink-tree-empty {
+  padding: 16px;
+  color: var(--ink-fg-muted);
+  font-size: var(--ink-tree-font-size);
+}
+
+.ink-tree-input-row {
+  padding: 3px 8px;
+}
+
+/* Yuque-style inline input: rounded corners + accent-color outline, with a soft glow ring on focus */
+.ink-tree-inline-input {
+  width: 100%;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-link);
+  color: var(--ink-fg);
+  font-size: var(--ink-tree-font-size);
+  font-family: inherit;
+  padding: 4px 8px;
+  outline: none;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-link) 14%, transparent);
+}
+
+/*
+ * A thumb needs 44px, and the tree was the only surface on the phone still at 30.
+ *
+ * The bottom bar's buttons, the commit panel's controls, the sign-in button and every repository
+ * row are all 44 — four places, all touched with a thumb. Measured before changing anything: the
+ * tree row was 30px on the phone and 30px on the desktop, identical, which is the fault rather
+ * than the difference. Seven fewer files fit on a screen; the search field above is the answer to
+ * a list too long to scroll, and it is a better answer than rows that are hard to hit.
+ */
+@media (max-width: 719px) {
+  .ink-tree-row {
+    min-height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  /* The per-row menu was 20x20 — a fifth of the area a fingertip covers. The glyph stays the size
+     it was; only the region that answers a tap grows. */
+  .ink-tree-action-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/*
+ * The tree, before it is known.
+ *
+ * `breathe` rather than a sweep: the point is to say "still coming" quietly, and a shimmer moving
+ * across a sidebar is a thing to watch rather than a thing to wait through. Off entirely for
+ * anyone who has asked for less motion.
+ */
+.ink-tree-skeleton {
+  padding: 6px 8px 0;
+  animation: ink-breathe 1.4s ease-in-out infinite;
+}
+
+.ink-tree-skeleton-row {
+  height: 10px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  background: var(--ink-sidebar-hover);
+}
+
+.ink-tree-skeleton-row:nth-child(odd) { width: 58%; }
+.ink-tree-skeleton-row:nth-child(even) { width: 42%; }
+
+@keyframes ink-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-tree-skeleton { animation: none; }
+}
+
+/* What deleting a picture would cost, beside the ✓ / ✗ that would do it. Quiet, because it is a
+   fact rather than a warning — and the one that matters most, "no note uses it", is the good news
+   you came looking for. */
+.ink-tree-uses {
+  margin-right: 6px;
+  color: var(--ink-danger);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.ink-tree-uses--free {
+  color: var(--ink-fg-muted);
+}

@@ -1,0 +1,310 @@
+/* The agent drawer. Same surface, spacing and hairlines as the history panel beside it — this is
+   another view of the same document, not another application. */
+
+.ink-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  overflow-y: auto;
+  height: 100%;
+  font-size: 12.5px;
+  color: var(--ink-fg);
+}
+
+.ink-agent-head {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+}
+
+.ink-agent-where {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fg-muted);
+}
+
+.ink-agent-pick {
+  width: 100%;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-fg);
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 5px;
+}
+
+.ink-agent-version {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ink-agent-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-added);
+  flex: none;
+}
+
+.ink-agent-note,
+.ink-agent-fine {
+  margin: 0;
+  color: var(--ink-fg-muted);
+  line-height: 1.5;
+}
+
+.ink-agent-fine { font-size: 11px; }
+
+/* A state that is only prose: the fact, then the detail under it, then at most one thing to press.
+   The gap inside is smaller than the panel's, because these three belong together. */
+.ink-agent-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ink-agent-says {
+  margin: 0;
+  color: var(--ink-fg);
+  line-height: 1.5;
+}
+
+/* The panel is a flex column, so a button in it stretches the full width of the drawer by default
+   — a lot of weight for "try again". */
+.ink-agent-state .ink-agent-controls { margin-top: 4px; }
+
+.ink-agent-bad {
+  margin: 0;
+  color: var(--ink-danger);
+  line-height: 1.5;
+}
+
+.ink-agent-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ink-agent-box {
+  width: 100%;
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-fg);
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  resize: vertical;
+  /* `resize: vertical` with no floor lets the drag handle collapse the box to a hairline, which
+     cannot be grabbed again — the control destroys itself. The ceiling is here so a drag cannot
+     push Ask, the answer and the diff off the bottom of a drawer either. */
+  min-height: 56px;
+  max-height: 40vh;
+}
+
+.ink-agent-box:focus-visible {
+  outline: 2px solid var(--ink-link);
+  outline-offset: -1px;
+}
+
+.ink-agent-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* With the search toggle gone there is nothing on the left to push against. */
+.ink-agent-controls--right { justify-content: flex-end; }
+
+
+.ink-agent-btn {
+  padding: 5px 11px;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--ink-bg);
+  background: var(--ink-link);
+  border: 1px solid var(--ink-link);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* A global `button:hover { color: var(--ink-link) }` sits under every theme, and on a filled
+   button that paints the label the same colour as its own background. Both states are stated
+   here rather than inherited — this cost a release once already. */
+.ink-agent-btn:hover:not(:disabled) {
+  color: var(--ink-bg);
+  filter: brightness(1.08);
+}
+
+/* Not `opacity`. On a filled button it fades the white label and the blue fill toward the page at
+   the same rate, and white-on-pale-blue is a button with nothing written on it — which is what a
+   screenshot of this state showed. A muted fill with a solid muted label reads as unavailable and
+   is still readable. */
+.ink-agent-btn:disabled {
+  color: var(--ink-fg-muted);
+  background: var(--ink-sidebar-hover);
+  border-color: var(--ink-rule);
+  cursor: default;
+}
+
+.ink-agent-btn.ghost {
+  color: var(--ink-link);
+  background: none;
+}
+
+.ink-agent-btn.ghost:hover:not(:disabled) {
+  color: var(--ink-link);
+  background: var(--ink-sidebar-hover);
+  filter: none;
+}
+
+/* A turn holds five kinds of thing — what was asked, what the model reasoned aloud, what it ran,
+   what it did, and the answer — and they were all one size, one weight and one 7px gap, so the
+   whole block read as a single wall of paragraphs. The gaps below are not uniform on purpose:
+   space *between* kinds, tight *within* them, and the two that are process rather than content
+   recede. */
+.ink-agent-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 13px;
+  border-top: 1px solid var(--ink-rule);
+}
+
+.ink-agent-turn p { margin: 0; line-height: 1.55; }
+
+/* The question, set as one: a rule down its left rather than bold text, which at this size was
+   indistinguishable from the answer below it. */
+.ink-agent-prompt {
+  padding-left: 9px;
+  border-left: 2px solid var(--ink-rule);
+  color: var(--ink-fg-muted);
+}
+
+.ink-agent-said { color: var(--ink-fg); }
+
+.ink-agent-answer {
+  color: var(--ink-fg);
+  white-space: pre-wrap;
+}
+
+/* Process, not content: what it ran and what it did are there for trust, and they should be
+   skippable. Consecutive ones close up into one band instead of each claiming a full gap. */
+.ink-agent-step,
+.ink-agent-ran {
+  color: var(--ink-fg-muted);
+  font-size: 11.5px;
+}
+
+.ink-agent-ran + .ink-agent-step,
+.ink-agent-step + .ink-agent-step,
+.ink-agent-ran + .ink-agent-ran,
+.ink-agent-step + .ink-agent-ran { margin-top: -7px; }
+
+/* One line with an ellipsis, and the whole command in the tooltip. Wrapping broke it mid-token —
+   `'C++ coroutine` / `s.md'"` — which is three lines of noise around a fact that only needs to
+   say "it ran something, and it was a read". */
+.ink-agent-ran code {
+  display: block;
+  font-family: var(--ink-font-mono);
+  font-size: 10.5px;
+  color: var(--ink-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ink-agent-proposal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 11px;
+  border-top: 1px solid var(--ink-rule);
+}
+
+.ink-agent-proposal-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ink-agent-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fg-muted);
+}
+
+.ink-agent-delta {
+  margin-left: auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ink-agent-delta .p { color: var(--ink-added); }
+.ink-agent-delta .m { margin-left: 6px; color: var(--ink-removed); }
+
+/* No fill. `--ink-code-bg` is a *code block* colour, and two light themes set it to something dark
+   — Tailwind's is #1e293b and Aspartate's is #282a36 — so filling with it puts dark text on a dark
+   ground in a light theme. That has cost a release once. The history panel beside this one shows a
+   diff with colour alone and no fill, which is why it has never had the problem; this matches it. */
+.ink-agent-diff {
+  margin: 0;
+  padding: 8px 0;
+  max-height: 40vh;
+  overflow: auto;
+  border-top: 1px solid var(--ink-rule);
+  border-bottom: 1px solid var(--ink-rule);
+  font-family: var(--ink-font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink-fg-muted);
+}
+
+.ink-agent-diff .a { color: var(--ink-added); }
+.ink-agent-diff .d { color: var(--ink-removed); }
+.ink-agent-diff .g { color: var(--ink-fg-muted); opacity: 0.7; }
+
+/* In a phone sheet the panel is 496px tall, and a diff allowed 40vh of it pushes Apply and Discard
+   below the fold — reachable by scrolling, but the two controls a proposal exists for should not
+   have to be hunted for. The diff scrolls inside itself instead. */
+@media (max-width: 719px) {
+  .ink-agent-diff { max-height: 24vh; }
+}
+
+/* "New" ends the conversation for the note on screen. A word rather than a button: it is rare and
+   it throws something away, and it only appears when there is something to end. */
+.ink-agent-new {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 10.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-link);
+  cursor: pointer;
+}
+
+.ink-agent-new:hover { color: var(--ink-link); text-decoration: underline; }
+
+/* Turns stack with a rule between them and the newest last, which is where the eye already is
+   after pressing Ask. */
+.ink-agent-turn + .ink-agent-turn { padding-top: 13px; }
+
+/* What normal looks like, so nobody has to learn it by waiting twice. Dropped once the wait is
+   past normal — at that point it is no longer reassurance, it is an alibi. */
+.ink-agent-usual { opacity: 0.7; }

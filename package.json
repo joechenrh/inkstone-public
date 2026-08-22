@@ -1,0 +1,59 @@
+{
+  "name": "inkstone",
+  "version": "0.11.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:server": "tsx watch --env-file-if-exists=.env.local src/server/main.ts",
+    "dev:web": "vite",
+    "dev:agent": "tsx --env-file-if-exists=.env.local src/agent/main.ts",
+    "predev:web": "node scripts/prepare-assets.mjs",
+    "build": "tsc -p tsconfig.server.json && vite build",
+    "prebuild": "node scripts/prepare-assets.mjs",
+    "prepare-assets": "node scripts/prepare-assets.mjs",
+    "start": "node dist/server/main.js",
+    "agent": "tsx src/agent/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "pnpm build && playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/static": "^8.0.4",
+    "@fastify/websocket": "^11.0.2",
+    "@preact/signals": "^2.11.0",
+    "chokidar": "^4.0.3",
+    "fastify": "^5.2.1",
+    "preact": "^10.29.8",
+    "simple-git": "^3.27.0",
+    "subset-font": "^2.5.0",
+    "vditor": "^3.11.2",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.1",
+    "@lezer/highlight": "^1.2.3",
+    "@milkdown/crepe": "^7.22.1",
+    "@milkdown/kit": "^7.22.1",
+    "@playwright/test": "^1.62.1",
+    "@preact/preset-vite": "^2.10.6",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/preact": "^3.2.4",
+    "@types/node": "^22.10.5",
+    "@types/ws": "^8.18.1",
+    "jsdom": "^26.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^3.0.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "packageManager": "pnpm@10.11.1"
+}

@@ -1,0 +1,500 @@
+.ink-shell {
+  display: grid;
+  grid-template-columns: var(--ink-left-width) 1fr;
+  grid-template-rows: var(--ink-topbar-height) 1fr var(--ink-statusbar-height);
+  height: 100%;
+}
+
+/* With the sidebar collapsed there is one column, and the status bar spans everything. */
+.ink-shell--no-left {
+  grid-template-columns: 1fr;
+}
+
+/* Spans both columns. Without this the top bar auto-places into column 1 — the sidebar's
+   260px track — and its right-hand icons bunch up next to the breadcrumb. */
+.ink-topbar {
+  grid-column: 1 / -1;
+}
+
+/*
+ * The sidebar spans the body AND status rows, running to the bottom of the window.
+ * The status bar is document-scoped (word counts) and so is confined to the editor column;
+ * the vault-scoped git controls live in this sidebar's footer instead.
+ */
+.ink-left {
+  grid-column: 1;
+  grid-row: 2 / 4;
+  background: var(--ink-sidebar-bg);
+  border-right: 1px solid var(--ink-rule);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.ink-shell--no-left .ink-center,
+.ink-shell--no-left .ink-statusbar {
+  grid-column: 1;
+}
+
+/* The right panel floats (taking no layout space) so the editing window's right edge is
+   fixed — opening or closing it never nudges the body. Kept for the agent panel. */
+.ink-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  width: var(--ink-right-width);
+  background: var(--ink-sidebar-bg);
+  border-left: 1px solid var(--ink-rule);
+  overflow-y: auto;
+  animation: ink-panel-slide-in 0.18s ease;
+}
+
+@keyframes ink-panel-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.ink-center {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  /* Does not scroll itself: the editor manages its own scrolling internally.
+     position:relative anchors the floating conflict bar and the right drawer. */
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-bg);
+}
+
+.ink-statusbar {
+  grid-column: 2;
+  grid-row: 3;
+  justify-content: flex-end;
+}
+
+/* --- sidebar internals --- */
+
+.ink-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ink-sidebar-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* Extra room above the tabs so the row reads as its own band rather than crowding the
+     top bar's rule. */
+  padding: 12px 8px 6px;
+  flex: none;
+}
+
+/* The create trigger sits at the far right of the same row — one header row, not two. */
+.ink-sidebar-add {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+  color: var(--ink-fg-muted);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.ink-sidebar-add:hover,
+.ink-sidebar-add[aria-expanded="true"] {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+}
+
+/*
+ * Labelled tabs, not bare icons: two abstract glyphs alone do not say "files" and "outline",
+ * and the sidebar has the width to spell it out. The hover chip gives the pair a hit target
+ * you can see before you click.
+ */
+.ink-sidebar-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--ink-tree-font-size);
+  color: var(--ink-fg-muted);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.ink-sidebar-tab:hover {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+}
+
+.ink-sidebar-tab[aria-pressed="true"] {
+  color: var(--ink-link);
+}
+
+/* Hover must not repaint the selected tab's colour — the chip appears, the accent stays. */
+.ink-sidebar-tab[aria-pressed="true"]:hover {
+  color: var(--ink-link);
+}
+
+/* The glyph follows the label rather than the generic icon hover rule, so the two never
+   disagree about what colour the tab is. */
+.ink-sidebar-tab .ink-icon,
+.ink-sidebar-tab:hover .ink-icon {
+  color: inherit;
+}
+
+.ink-sidebar-view {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/*
+ * The vault's git state and actions, pinned to the bottom-right of the status bar. They stay
+ * in one fixed place whether or not the sidebar is open — an earlier version hosted them in
+ * the sidebar footer, where collapsing the sidebar silently took them away.
+ */
+.ink-git-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-fg-muted);
+  font-size: 13px;
+}
+
+.ink-git-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ink-topbar,
+.ink-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  background: var(--ink-sidebar-bg);
+  color: var(--ink-fg-muted);
+  font-size: 14px;
+  user-select: none;
+}
+
+.ink-topbar {
+  border-bottom: 1px solid var(--ink-rule);
+}
+
+.ink-statusbar {
+  border-top: 1px solid var(--ink-rule);
+}
+
+.ink-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.ink-iconbtn:hover .ink-icon {
+  color: var(--ink-link);
+}
+
+/* Engaged toggles carry the accent, the same signal the sidebar tabs use for the view they
+   are on — aria-pressed is the hook in both places, so the state cannot drift from the markup.
+   Read-only is a mode the document stays in, and it has to be legible without hovering. */
+.ink-iconbtn[aria-pressed="true"] .ink-icon {
+  color: var(--ink-link);
+}
+
+/* The view group: one control, three states, exactly one lit.
+ *
+ * A shared tray rather than three loose icons, because that is the claim being made — these are
+ * values of one setting, not switches that happen to sit together. The selected one is lifted onto
+ * the page colour so the tray reads as a track with a thumb in it. */
+.ink-viewgroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--ink-sidebar-hover);
+}
+
+.ink-viewbtn {
+  border-radius: 6px;
+  transition: background-color 0.16s ease;
+}
+
+.ink-viewbtn:hover {
+  background: color-mix(in srgb, var(--ink-bg) 55%, transparent);
+}
+
+.ink-viewbtn[aria-pressed="true"] {
+  background: var(--ink-bg);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-viewbtn { transition-duration: 0.01ms; }
+}
+
+/* Settings sits past this, because it configures the app rather than the document — and it is
+   what remains when the document-scoped half has gone. */
+.ink-topbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--ink-rule);
+  margin: 0 6px 0 2px;
+  flex-shrink: 0;
+}
+
+/* Keyboard focus has to be visible.
+ *
+ * The search field is the exception and styles its own: this ring stands 2px *outside* the focused
+ * element, which is right for a button and wrong for an input that already sits in a bordered box —
+ * it drew a second rectangle around the first. See search.css.
+ *
+ * Measured: 22 controls could be reached with Tab and none of them showed it — the whole top bar,
+ * both sidebar tabs, every row's action button, the history entries and Commit. `:focus-visible`
+ * rather than `:focus`, so a pointer click never draws a ring; the editor surface is excluded
+ * because a ring around the whole document is not what focus means there. */
+.ink-shell
+  :is(button, a, input, select, textarea, [tabindex])
+  :not(.ink-doc):not(.ink-search-input):focus-visible,
+.ink-shell
+  :is(button, a, input, select, textarea, [tabindex]):not(.ink-doc):not(.ink-search-input):focus-visible {
+  outline: 2px solid var(--ink-link);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ink-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* A long path wrapped to a second line rather than truncating — measured 45px of breadcrumb in a
+     48px bar at 760px wide, with a deeply nested note. `min-width: 0` is the part that actually
+     does it: a flex item will not shrink below its content without it, so the ellipsis never
+     applied. The end of the name is the informative end, so the ellipsis takes the front. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  direction: rtl;
+  text-overflow: ellipsis;
+}
+
+/* The name is still left-to-right; only the truncation comes off the front. */
+.ink-breadcrumb > * {
+  direction: ltr;
+}
+
+.ink-statusbar-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.ink-git-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-git-branch-name {
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.ink-git-dirty-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-link);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.ink-commit-btn {
+  margin-left: 2px;
+  border-radius: 3px;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.ink-commit-btn:not(:disabled):hover {
+  background: var(--ink-sidebar-hover);
+}
+
+.ink-commit-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ink-push-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  font-size: 13px;
+  color: var(--ink-link);
+  transition: background-color 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+  margin-left: 4px;
+}
+
+.ink-push-btn:hover {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+}
+
+/* Working is a colour, not a shape. The label carries the state so nothing in the bar changes
+   size at the moment you are watching it — and it goes quieter rather than louder, because a
+   button in progress is not asking for anything. */
+.ink-push-btn.working {
+  color: var(--ink-fg-muted);
+  opacity: 0.75;
+}
+
+.ink-push-btn:disabled {
+  cursor: default;
+}
+
+.ink-git-error {
+  color: var(--ink-danger);
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   The phone: one screen at a time.
+   --------------------------------------------------------------------------- */
+.ink-shell--phone {
+  grid-template-columns: 1fr;
+  /* The bars take their height plus whatever the notch and the home indicator need. */
+  grid-template-rows:
+    calc(var(--ink-topbar-height) + env(safe-area-inset-top, 0px))
+    1fr
+    /* auto, not a fixed 52: with no file open the bottom bar renders nothing, and a fixed row
+       reserved an empty 52px strip below the list for a screen that has no bar. The bar's own
+       height and the home indicator's inset live on the bar itself. */
+    auto;
+  /* dvh, not vh: the soft keyboard shrinks the visual viewport, and vh would leave the bottom
+     bar under it. */
+  height: 100dvh;
+}
+
+.ink-shell--phone .ink-topbar {
+  /* Explicit, because the sliding menu claims rows one and two by name. An auto-placed bar would
+     be pushed past it into a row of its own — which put the document's header at the bottom of
+     the screen for the length of every drag. */
+  grid-row: 1;
+  grid-column: 1;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* The one inside the sliding menu is not a grid item; it is that panel's own first row. */
+.ink-shell--phone .ink-left--sliding > .ink-topbar {
+  grid-row: auto;
+  grid-column: auto;
+  flex: none;
+}
+
+/* The list is a screen here, not a 260px column — it takes the whole width and the whole row. */
+.ink-shell--phone .ink-left {
+  grid-column: 1;
+  grid-row: 2;
+  width: auto;
+  border-right: none;
+}
+
+.ink-shell--phone .ink-center {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.ink-shell--phone .ink-statusbar {
+  grid-column: 1;
+  height: auto;
+}
+
+/* Empty, so it should take no room and draw no line. */
+.ink-shell--phone .ink-statusbar:empty {
+  border: none;
+}
+
+.ink-shell--phone .ink-phonebar {
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+}
+
+/* A 320px drawer over a 390px screen is a screen. */
+.ink-shell--phone .ink-right {
+  width: auto;
+  inset: 0;
+}
+
+/* Touch targets. 28px is comfortable with a pointer and not with a thumb; 44px is the floor. */
+@media (pointer: coarse) {
+  .ink-iconbtn {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .ink-viewbtn {
+    min-width: 44px;
+  }
+}
+
+/*
+ * A back-swipe draws the list in over a document that stays where it is.
+ *
+ * Both occupy the phone's one grid cell for the length of the drag. The list is on top and
+ * opaque — the document must not show through the menu arriving over it — and it carries a shadow
+ * along its leading edge so the two read as one sheet above another rather than as a seam.
+ */
+.ink-shell--phone .ink-center {
+  position: relative;
+  background: var(--ink-bg);
+}
+
+.ink-shell--phone .ink-left--sliding {
+  /* Every row. The arriving menu is a whole screen — its own header, its own body, and its own
+     empty bottom. It used to stop at the end of row two, which left a 60px strip of the
+     document's Edit/Read/Save bar showing beneath a list that has nothing to do with it. */
+  grid-row: 1 / 4;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  background: var(--ink-bg);
+  /* The leading edge casts over the document it is arriving across. */
+  box-shadow: 2px 0 18px rgb(0 0 0 / 16%);
+  /* Parked off the left edge; the gesture writes the transform that brings it in. */
+  transform: translateX(-100%);
+  will-change: transform;
+}
+
+.ink-shell--phone .ink-left--sliding > .ink-tree-container,
+.ink-shell--phone .ink-left--sliding > .ink-sidebar {
+  flex: 1;
+  min-height: 0;
+}

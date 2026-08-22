@@ -1,0 +1,44 @@
+/*
+ * Over the editor while a note is being fetched.
+ *
+ * Opaque, because the editor underneath still holds the previous note — showing the old text
+ * under the new note's name is worse than showing neither.
+ */
+.ink-doc-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--ink-bg);
+  overflow: hidden;
+}
+
+.ink-doc-skeleton-inner {
+  /* The content column, so the placeholder sits where the text will. */
+  max-width: var(--ink-content-width);
+  margin: 0 auto;
+  padding: 48px 24px 0;
+  animation: ink-breathe 1.4s ease-in-out infinite;
+}
+
+.ink-doc-skeleton-title {
+  width: 42%;
+  height: 26px;
+  margin: 0 auto 34px;
+  border-radius: 5px;
+  background: var(--ink-sidebar-hover);
+}
+
+.ink-doc-skeleton-line {
+  height: 12px;
+  margin-bottom: 14px;
+  border-radius: 4px;
+  background: var(--ink-sidebar-hover);
+}
+
+.ink-doc-skeleton-line.a { width: 100%; }
+.ink-doc-skeleton-line.b { width: 88%; }
+.ink-doc-skeleton-line.c { width: 62%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-doc-skeleton-inner { animation: none; }
+}

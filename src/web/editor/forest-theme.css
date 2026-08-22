@@ -1,0 +1,573 @@
+/* forest — converted from a Typora theme, then assembled by scripts/assemble-theme.mjs.
+ *
+ * Shell tokens are filled in from the theme's own resolved colours, so the sidebar and the
+ * page stay one surface. Everything below the marker is the standard finishing every
+ * conversion needs; see the script for why each line exists.
+ */
+:root[data-doc-theme="forest"] {
+  /* Shell tokens: the chrome takes the theme's own page. Nested under [data-theme] because
+     tokens.css declares the defaults at `:root[data-theme="dark"]` and a bare wrapper only ties. */
+  &[data-theme="light"] {
+    --ink-bg: #ffffff;
+    --ink-fg: #363c42;
+    --ink-fg-muted: #7c858c;
+    --ink-link: #00647f;
+    --ink-rule: #e6e9ea;
+    --ink-code-bg: #f6f7f8;
+    --ink-sidebar-bg: #ffffff;
+    --ink-sidebar-hover: #f1f3f4;
+    --ink-sidebar-active: #e8ebec;
+  }
+
+
+  --primary-color: #f0f0f0;
+  --side-bar-bg-color: #003444;
+  --active-file-bg-color: #004144;
+  --active-file-text-color: #ffffff;
+  --active-file-border-color: #757575;
+  --item-hover-text-color: #fff;
+  --item-hover-bg-color: #005C44;
+  --control-text-color: #ddd;
+  --control-text-hover-color: #fff;
+  --monospace: 'SourceHanSansSC','JetBrains Mono', -apple-system, sans-serif;
+
+
+  --theme-primary-color: #00997B;
+  --white-color: #fff;
+
+
+  --head-text-color: #333444;
+  --h1-text-color: rgba(0, 52, 68, 0.9);
+  --h5-text-color: var(--theme-primary-color);
+  --h6-text-color: rgba(0, 153, 123, 0.838);
+  --head-prefix-color: #D0D0D0;
+
+
+  --text-color: #363C42;
+  --text-search-hit-color: rosybrown;
+
+
+  --highlight-bg-color: #FFF3F3;
+  --highlight-text-color: #FF2F2F;
+
+
+  --a-text-color: var(--theme-primary-color);
+
+
+  --annotate-text-color: #8CAA16;
+
+
+  --inline-code-bg-color: #f3f3f3;
+  --inline-code-text-color: #00769A;
+
+
+  --selection-text-color: rgba(0, 153, 123, 0.2);
+
+
+  --checked-text-color: #ADB5BD;
+  --line-through-color: #CFD4DA;
+  --border-color: #868E96;
+
+
+  --table-border-color: #DADCDE;
+  --table-cell-bg-color:rgba(0, 153, 123, 0.03);
+
+
+  --quote-bg-color: rgba(0, 153, 123, 0.05);
+  --quote-text-color: #81888D ;
+
+
+  --sidebar-footer-dropdown-menu-border-color: #212529;
+  --sidebar-footer-dropdown-menu-item-border-color: #ADB5BD;
+  --sidebar-footer-item-hover-bg-color: #004544;
+  --siderbar-dropdown-menu-text-color: #fff;
+
+
+  --sidebar-resizer: #6eace2;
+
+
+  --window-border: #1F6F57;
+  .ink-doc.ink-doc.ink-doc {
+    position: static;
+    width: 90%;
+    max-width: 900px;
+    line-height: 1.6;
+    padding: 36px 0 70px;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6,
+  .ink-doc.ink-doc.ink-doc p {
+    width: auto;
+  }
+
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc {
+    background: var(--white-color);
+    font-family: 'SourceHanSansSC','JetBrains Mono', -apple-system, sans-serif;
+  }
+
+  .ink-doc.ink-doc.ink-doc p {
+    font-size: 1em;
+    font-family: 'SourceHanSansSC', 'JetBrains Mono', -apple-system, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    width: auto;
+    line-height: 2;
+    font-style: normal;
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4 {
+    color: var(--head-text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc h2::before,
+  .ink-doc.ink-doc.ink-doc h3::before,
+  .ink-doc.ink-doc.ink-doc h4::before,
+  .ink-doc.ink-doc.ink-doc h5::before,
+  .ink-doc.ink-doc.ink-doc h6::before,
+  .ink-doc.ink-doc.ink-doc h2.md-focus::before,
+  .ink-doc.ink-doc.ink-doc h3.md-focus::before,
+  .ink-doc.ink-doc.ink-doc h4.md-focus::before,
+  .ink-doc.ink-doc.ink-doc h5.md-focus::before,
+  .ink-doc.ink-doc.ink-doc h6.md-focus::before {
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--head-prefix-color);
+    font-size: calc(var(--ink-font-size, 16px) * 0.8);
+    font-weight: bold;
+    font-variant: 'small-caps';
+    line-height: 2;
+    padding: 0;
+    border: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 {
+    font-size: calc(var(--ink-font-size, 16px) * 2.1);
+    font-weight: 900;
+    text-align: center;
+    color: var(--h1-text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc h1>span {
+    position: relative;
+    display: inline-block;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1>span:after {
+    content: '';
+    display: block;
+    position: absolute;
+    border-top: 3px double var(--h1-text-color);
+    height: 3px;
+    width: 15rem;
+    max-width: 80%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.7);
+    font-weight: 800;
+  }
+
+  .ink-doc.ink-doc.ink-doc>h2::before {
+    content: 'H2';
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.4);
+    font-weight: 800;
+  }
+
+  .ink-doc.ink-doc.ink-doc>h3::before {
+    content: 'H3';
+  }
+
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h5 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.2);
+    font-weight: bold;
+  }
+
+  .ink-doc.ink-doc.ink-doc h5 {
+    color: var(--h5-text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc h6 {
+    color: var(--h6-text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc>h4::before {
+    content: 'H4';
+  }
+
+  .ink-doc.ink-doc.ink-doc>h5::before {
+    content: 'H5';
+  }
+
+  .ink-doc.ink-doc.ink-doc>h6::before {
+    content: 'H6';
+  }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: var(--a-text-color);
+    cursor: pointer;
+    padding: 0 3px 0 3px;
+    text-decoration: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc a:hover {
+    text-decoration: none;
+    border-bottom: 1px solid;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-link a>span:after {
+    content: '';
+    display: inline-block;
+    background-image: url("./forest/link-icon.svg");
+    background-repeat: no-repeat;
+    width: 0.8em;
+    height: 0.8em;
+    vertical-align: middle;
+    margin-left: 3px;
+  }
+
+  .ink-doc.ink-doc.ink-doc strong {
+    font-weight: 700;
+  }
+
+  .ink-doc.ink-doc.ink-doc mark {
+    background: var(--highlight-bg-color);
+    color: var(--highlight-text-color);
+    font-weight: 500;
+    padding: 0 2px 0 2px;
+    margin: 0 2px 0 2px;
+    border-radius: 2px;
+  }
+
+  .ink-doc.ink-doc.ink-doc code {
+    margin: 0 2px;
+    padding: 0px 4px;
+    font-size: calc(var(--ink-font-size, 16px) * 0.95);
+    background: var(--inline-code-bg-color);
+    display: inline;
+    vertical-align: top;
+    line-height: 1.6;
+    border-radius: 6px;
+    font-weight: 700;
+    color: var(--inline-code-text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-hover-tip .md-arrow:after {
+    background: var(--side-bar-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc *[mdtype="heading"] code {
+    font-size: inherit!important;
+    vertical-align: baseline;
+  }
+
+  .ink-doc.ink-doc.ink-doc img {
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc p>img:only-child:not(.md-img-error) img,
+  .ink-doc.ink-doc.ink-doc p>img:only-child {
+    display: block;
+    margin: unset;
+  }
+
+  .ink-doc.ink-doc.ink-doc u {
+    text-decoration: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc u>span {
+    border-bottom: 1px solid;
+  }
+
+  .ink-doc.ink-doc.ink-doc span::selection,
+  .ink-doc.ink-doc.ink-doc *::selection {
+    background: var(--selection-text-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    position: relative;
+    padding: 1rem;
+    background-color: var(--quote-bg-color);
+    border-radius: 6px;
+    line-height: 1;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote p {
+    color: var(--quote-text-color);
+    margin: 0 ;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote::before {
+    content: '';
+    position: absolute;
+    top: 0rem;
+    left: 0rem;
+    height: 100%;
+    width: .30rem;
+    background: var(--theme-primary-color);
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+  }
+
+  .ink-doc.ink-doc.ink-doc div[mdtype='hr'] {
+    text-align: center;
+  }
+
+  .ink-doc.ink-doc.ink-doc hr {
+    border-top: 1px dashed var(--theme-primary-color);
+    transform: scaleY(0.5);
+    width: 90%;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul>li>ul>li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul>li>ul>li>ul>li {
+    list-style-type: disc;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul>li>ul>li>ul>li>ul>li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul>li>ul>li>ul>li>ul>li>ul>li {
+    list-style-type: disc;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul>li>ul>li>ul>li>ul>li>ul>li>ul>li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol ul li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol ul>li>ul>li {
+    list-style-type: disc;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol ul>li>ul>li>ul>li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol ul>li>ul>li>ul>li>ul>li {
+    list-style-type: disc;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol ul>li>ul>li>ul>li>ul>li>ul>li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol ul>li>ul>li>ul>li>ul>li>ul>li>ul>li {
+    list-style-type: circle;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol>li>ol>li {
+    list-style-type: lower-alpha;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol>li>ol>li>ol>li {
+    list-style-type: decimal;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol>li>ol>li>ol>li>ol>li {
+    list-style-type: lower-alpha;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol>li>ol>li>ol>li>ol>li>ol>li {
+    list-style-type: decimal;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol>li>ol>li>ol>li>ol>li>ol>li>ol>li {
+    list-style-type: lower-alpha;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol>li>ol>li>ol>li>ol>li>ol>li>ol>li>ol>li {
+    list-style-type: decimal;
+  }
+
+  .ink-doc.ink-doc.ink-doc lili {
+    list-style-type: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc li>input,
+  .ink-doc.ink-doc.ink-doc li>input[type=checkbox] {
+    margin-left: -1.6rem;
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc li>input:before {
+    border: 2px solid var(--border-color);
+    width: 1rem;
+    height: 1rem;
+    background:  var(--white-color);
+    content: ' ';
+    transition: background-color 200ms ease-in-out;
+    display: block;
+  }
+
+  .ink-doc.ink-doc.ink-doc li>input:checked:before,
+  .ink-doc.ink-doc.ink-doc li>input[checked]:before {
+    background: var(--theme-primary-color);
+    border-width: 1px;
+    transition: background-color 200ms ease-in-out;
+    border: 2px solid var(--theme-primary-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc li>input[checked]+p {
+    color: var(--checked-text-color);
+    text-decoration: line-through;
+    text-decoration-color: var(--line-through-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc li>input:checked:after,
+  .ink-doc.ink-doc.ink-doc li>input[checked]:after {
+    opacity: 1;
+  }
+
+  .ink-doc.ink-doc.ink-doc li>input:after {
+    opacity: 1;
+    -webkit-transition: opacity 0.05s ease-in-out;
+    -moz-transition: opacity 0.05s ease-in-out;
+    transition: opacity 0.05s ease-in-out;
+    -webkit-transform: rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+    position: absolute;
+    top: 0.25rem;
+    left: 0.19rem;
+    width: 0.6rem;
+    height: 0.375rem;
+    border: 2px solid var(--white-color);
+    border-top: 0;
+    border-right: 0;
+    content: ' ';
+    opacity: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc table.md-table {
+    width: auto;
+    min-width: 80%;
+  }
+
+  .ink-doc.ink-doc.ink-doc table tr:nth-child(2n),
+  .ink-doc.ink-doc.ink-doc table thead {
+    background-color: var(--table-cell-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc table thead {
+    font-weight: 900;
+  }
+
+  .ink-doc.ink-doc.ink-doc table tbody tr {
+    border-bottom: 1px solid var(--table-border-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc table tr:first-of-type {
+    border-top: 1px solid var(--table-border-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc table tr th,
+  .ink-doc.ink-doc.ink-doc table tr td {
+    border-left: 1px solid var(--table-border-color);
+    padding: 6px 13px;
+  }
+
+  .ink-doc.ink-doc.ink-doc table tr th:last-of-type,
+  .ink-doc.ink-doc.ink-doc table tr td:last-of-type {
+    border-right: 1px solid var(--table-border-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc #toc-dropmenu {
+    width: 400px;
+  }
+
+  .ink-doc.ink-doc.ink-doc #toc-dropmenu.open {
+    background: var(--side-bar-bg-color);
+    color: var(--white-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc #md-notification:before {
+    top: 18px;
+  }
+
+  .ink-doc.ink-doc.ink-doc #md-notification p {
+    color: var(--theme-primary-color);
+    font-weight: 500;
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source {
+    font-family: 'SourceHanSansSC','JetBrains Mono', -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-header {
+    color: var(--theme-primary-color);
+  }
+
+
+
+  /* ---- standard finishing ---- */
+
+  .ink-editor .ink-doc.ink-doc.ink-doc {
+    /* The setting names the body size in every theme; upstream always sets its own. */
+    font-size: var(--ink-font-size, 16px);
+    /* Upstream leaves this to Typora's base stylesheet. */
+    color: #363c42;
+    background: var(--white-color);
+  }
+
+
+  /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
+     which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
+     block takes the theme's own code surface, which its shell tokens already declare. */
+  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--ink-code-bg);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  /* The block's box belongs to the <pre>, so the <code> inside it carries none of its own. */
+  .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: inherit;
+  }
+}

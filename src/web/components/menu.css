@@ -1,0 +1,80 @@
+/*
+ * Popover menu. Fixed-positioned so it escapes the sidebar's overflow clipping — see the
+ * comment in Menu.tsx. This is an overlay, so it is one of the few places allowed a shadow.
+ */
+.ink-menu {
+  position: fixed;
+  z-index: 40;
+  min-width: 158px;
+  padding: 4px;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 7px;
+  box-shadow: var(--ink-shadow-menu);
+}
+
+.ink-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 9px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-fg);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ink-menu-item .ink-icon {
+  color: var(--ink-fg-muted);
+}
+
+.ink-menu-item:hover,
+.ink-menu-item:focus-visible {
+  background: var(--ink-sidebar-hover);
+  outline: none;
+}
+
+.ink-menu-item:hover .ink-icon,
+.ink-menu-item:focus-visible .ink-icon {
+  color: var(--ink-fg);
+}
+
+.ink-menu-item.danger,
+.ink-menu-item.danger .ink-icon {
+  color: var(--ink-danger);
+}
+
+/* A share with days rather than weeks left. The number is the warning; nothing else nags. */
+.ink-menu-item.warn,
+.ink-menu-item.warn .ink-icon,
+.ink-menu-item.warn:hover .ink-icon,
+.ink-menu-item.warn:focus-visible .ink-icon {
+  color: var(--ink-warn);
+}
+
+.ink-menu-item.danger:hover .ink-icon,
+.ink-menu-item.danger:focus-visible .ink-icon {
+  color: var(--ink-danger);
+}
+
+/* Separates the destructive item from the rest. */
+.ink-menu-item.danger {
+  margin-top: 4px;
+  border-top: 1px solid var(--ink-rule);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  padding-top: 9px;
+}
+
+/* Menu items are tapped with a thumb on a phone; 33px was under the 44 everything else uses. */
+@media (max-width: 719px) {
+  .ink-menu-item {
+    min-height: 44px;
+  }
+}

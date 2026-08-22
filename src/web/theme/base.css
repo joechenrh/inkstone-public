@@ -1,0 +1,106 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  /* The app is a fixed three-section shell; only the inner panels may scroll. Scrolling
+     is disabled at the root to prevent wide content (e.g. code blocks, Vditor's internal
+     layout) from forcing the whole page to scroll horizontally/vertically. */
+  overflow: hidden;
+}
+
+body {
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+  font-family: var(--ink-font-body);
+  font-size: var(--ink-font-size);
+  line-height: var(--ink-line-height);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ink-selection);
+}
+
+/*
+ * Scrollbars: a thin, low-contrast pill over an invisible track.
+ *
+ * Only the ::-webkit-scrollbar pseudo-elements are used — deliberately. Setting the standard
+ * `scrollbar-width`/`scrollbar-color` hands the scrollbar to the standard path, which on macOS
+ * honours "Show scroll bars: When scrolling" and so renders an overlay bar that is invisible at
+ * rest; it also makes Chrome ignore these pseudo-elements entirely. The pseudo-element path
+ * forces a persistent, always-visible bar, which is what a long document needs. Firefox falls
+ * back to its default scrollbar, which is acceptable for a self-hosted single-user tool.
+ *
+ * The thumb is inset with a transparent border + background-clip so the visible bar stays slim
+ * while the hit area stays comfortable.
+ *
+ * The editor's scroll container is `.vditor-ir .vditor-reset` -- Vditor gives it height:100%
+ * and overflow, so the outer .vditor-content never scrolls. Its right edge is the window edge
+ * (see vditor-shell.css), which is what puts this scrollbar against the side of the screen.
+ */
+.ink-left::-webkit-scrollbar,
+.ink-sidebar-view::-webkit-scrollbar,
+.ink-right::-webkit-scrollbar,
+.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ink-left::-webkit-scrollbar-track,
+.ink-sidebar-view::-webkit-scrollbar-track,
+.ink-right::-webkit-scrollbar-track,
+.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ink-left::-webkit-scrollbar-thumb,
+.ink-sidebar-view::-webkit-scrollbar-thumb,
+.ink-right::-webkit-scrollbar-thumb,
+.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar-thumb {
+  background-color: var(--ink-scrollbar-thumb);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+.ink-left::-webkit-scrollbar-thumb:hover,
+.ink-sidebar-view::-webkit-scrollbar-thumb:hover,
+.ink-right::-webkit-scrollbar-thumb:hover,
+.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-scrollbar-thumb-hover);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:hover {
+  color: var(--ink-link);
+}
+
+a {
+  color: var(--ink-link);
+  text-decoration: none;
+}
+
+/* Held for exactly the frame in which the theme swaps. Every token changes at once, and anything
+   with a transition would otherwise animate between two palettes — most visibly the selected file
+   row, sweeping through pale grey on its way to the dark value. */
+.ink-theme-switching,
+.ink-theme-switching *,
+.ink-theme-switching *::before,
+.ink-theme-switching *::after {
+  transition: none !important;
+}

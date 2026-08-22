@@ -1,0 +1,196 @@
+.ink-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 8px 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--ink-rule);
+  /* On a phone this row is tapped, not clicked. */
+  min-height: 36px;
+  border-radius: 7px;
+  background: var(--ink-bg);
+  color: var(--ink-fg-muted);
+}
+
+/* Focus goes on the field, not the input inside it.
+ *
+ * The shell's ring stands 2px outside whatever has focus, which is right for a button and wrong
+ * here: the input already sits inside a bordered box, so the ring drew a second rectangle around
+ * the first. The border takes the accent and a low-opacity halo bleeds outward from it — GitHub,
+ * Linear and most current form design systems do exactly this, and it is one shape instead of two. */
+.ink-search:focus-within {
+  border-color: var(--ink-link);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-link) 18%, transparent);
+}
+
+.ink-search-input:focus,
+.ink-search-input:focus-visible {
+  outline: none;
+}
+
+.ink-search-input {
+  flex: 1;
+  /* Inside the field's own border, so the ring does not straddle it. */
+  border-radius: 4px;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: var(--ink-tree-font-size, 14px);
+  color: var(--ink-fg);
+}
+
+.ink-search-input::placeholder {
+  color: var(--ink-fg-muted);
+  /* The placeholder carries the only instruction there is, so it must not be cut in half in a
+     260px sidebar — it shrinks rather than truncating. */
+  font-size: 0.86em;
+}
+
+/* Safari draws its own clear button on type=search, which would sit beside ours. */
+.ink-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.ink-search-clear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--ink-fg-muted);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 3px;
+}
+
+.ink-search-clear:hover {
+  color: var(--ink-fg);
+}
+
+.ink-search-results {
+  overflow-y: auto;
+  padding: 0 8px 8px;
+}
+
+.ink-search-hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 5px;
+  color: var(--ink-fg);
+}
+
+.ink-search-hit:hover {
+  background: var(--ink-sidebar-hover);
+}
+
+/* Which question this group answers. Two groups, because "a note called that" and "a note that
+   mentions it" are different answers and mixing them makes the list unreadable. */
+.ink-search-group {
+  padding: 8px 8px 3px;
+  color: var(--ink-fg-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ink-search-hit-name mark,
+.ink-search-hit-line mark {
+  background: none;
+  color: var(--ink-fg);
+  font-weight: 600;
+}
+
+.ink-search-hit-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: var(--ink-tree-font-size, 14px);
+}
+
+.ink-search-hit-where {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--ink-fg-muted);
+  font-size: 11px;
+}
+
+/* The line the hit is on. One line, clipped — this is a reason to open the note, not the note. */
+.ink-search-hit-line {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-fg-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ink-search-hit-line mark {
+  background: none;
+  color: var(--ink-fg);
+  font-weight: 600;
+}
+
+.ink-search-note {
+  padding: 8px 16px;
+  color: var(--ink-fg-muted);
+  font-size: 12px;
+}
+
+.ink-search-hint {
+  margin: -4px 8px 8px;
+  padding: 0 9px;
+  color: var(--ink-fg-muted);
+  font-size: 11.5px;
+}
+
+/*
+ * The phone's one row: search, and the button that adds to what it searches.
+ *
+ * There is no view switcher on a phone for `+` to live in — the outline cannot work on that
+ * screen, so the switcher is not drawn — and this is the row that already acts on the list.
+ */
+.ink-tree-searchrow {
+  display: flex;
+  /* `stretch`, not `center`: the button takes the field's height rather than guessing at it, so
+     the two boxes are the same size whatever the field's padding turns out to be. */
+  align-items: stretch;
+  /* The field brings its own 8px margin, which is the gap; adding another would double it. */
+  gap: 0;
+  /* On a desktop the switcher above holds the field off the top bar. There is no switcher here,
+     so without this the field's border sits on the bar's hairline. Same 8px as its own bottom
+     margin and its side insets — one value, all the way round. */
+  padding-top: 8px;
+  padding-right: 8px;
+}
+
+.ink-tree-searchrow .ink-search { flex: 1; min-width: 0; }
+
+.ink-tree-add {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  flex: none;
+  /* Matches the field's own bottom margin so the row sits on one baseline. */
+  margin-bottom: 8px;
+  color: var(--ink-fg-muted);
+  border: 1px solid var(--ink-rule);
+  border-radius: 7px;
+}
+
+.ink-tree-add:hover { background: var(--ink-sidebar-hover); }
+
+
+/* The search row is tapped with a thumb like everything else on this screen. */
+@media (max-width: 719px) {
+  .ink-tree-searchrow .ink-search,
+  .ink-tree-add {
+    min-height: 44px;
+  }
+}

@@ -1,0 +1,237 @@
+/* The share panel: the commit panel's shape, with the commit panel's tokens.
+ *
+ * A centred modal on a desktop and a sheet at the bottom of a phone. Not a new arrangement — the
+ * outline, the history and the commit panel are all already this, and one more shape is one more
+ * thing to learn for no gain. */
+
+.ink-share-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 30%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ink-share {
+  width: 100%;
+  /* Narrower than the commit panel, which has a diff to show. This is one line of link, and at
+     440px the content read as scattered across a box built for something bigger. */
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 10px;
+  box-shadow: var(--ink-shadow-modal);
+  overflow: hidden;
+}
+
+.ink-share--sheet {
+  max-width: none;
+  border-radius: 14px 14px 0 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.ink-share-scrim:has(.ink-share--sheet) {
+  align-items: flex-end;
+  padding: 0;
+}
+
+/* The panel's own two bars, and they are the same height as each other — which is the app's bar
+   height, so the rhythm is one it already uses. Left to their contents they came out 57 and 45,
+   and a box whose lid and base disagree looks wrong before anyone can say why. */
+.ink-share-head,
+.ink-share-foot {
+  display: flex;
+  align-items: center;
+  min-height: var(--ink-topbar-height);
+}
+
+.ink-share-head {
+  gap: 10px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+
+.ink-share-title { font-size: 13px; color: var(--ink-fg); }
+.ink-share-head .ink-iconbtn { margin-left: auto; color: var(--ink-fg-muted); justify-content: center; }
+
+/* One padded block, so every state ends the same distance from the panel's edge. The creating
+   state has no footer under it and used to finish flush against the border. */
+.ink-share-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px 16px 14px;
+}
+
+.ink-share-link {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* The box is stretched to whatever height the button beside it has, so its line has to be centred
+   rather than left where the padding put it: at 44px on a phone that was 9px above the text and 18
+   below, which is exactly as crooked as it sounds. The text gets its own element because
+   `text-overflow: ellipsis` needs a block container, and a flex one is not that. */
+.ink-share-url {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  padding: 0 10px;
+  /* A field, painted the way this app paints one: the page's own ground inside a hairline, the
+     same as the commit message input. NOT `--ink-code-bg` — under Tailwind that is a dark slate
+     even in the light theme, because that theme renders code blocks dark on a light page, and a
+     link box borrowing it came out dark text on dark. */
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+  font-family: var(--ink-font-mono);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.ink-share-urltext {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* The fallback when the clipboard refuses, so it must be selectable in the first place. */
+  user-select: all;
+}
+
+.ink-share-url.pending { color: var(--ink-fg-muted); }
+.ink-share-url.pending .ink-share-urltext { user-select: none; }
+
+.breathe { animation: ink-share-breathe 1.4s ease-in-out infinite; }
+
+@keyframes ink-share-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe { animation: none; }
+}
+
+.ink-share-btn {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 8px 13px;
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  /* Wide enough for the longest word it ever says, so reporting a copy changes the word and
+     nothing else. It used to grow from `Copy` to `Copied` and turn green at the same time —
+     three changes to say one thing, and the panel twitched every time. */
+  min-width: 76px;
+  text-align: center;
+  background: var(--ink-link);
+  /* The page's own ground, not white. In dark mode `--ink-link` is a muted slate and white on it
+     falls to about 2.6:1; the ground reverses cleanly and reads at 6:1 in both. */
+  color: var(--ink-bg);
+}
+
+/* base.css turns every hovered button's text into the accent, and the accent is this button's
+   background — so without this the label vanishes on hover. The sign-in button carries the same
+   two lines for the same reason. */
+.ink-share-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  color: var(--ink-bg);
+}
+
+/* Nothing to copy yet. Quiet rather than a dimmed version of a solid block, which reads as a
+   control that has broken rather than one that is waiting. */
+.ink-share-btn:disabled,
+.ink-share-btn:disabled:hover {
+  background: none;
+  color: var(--ink-fg-muted);
+  border-color: var(--ink-rule);
+  cursor: default;
+}
+.ink-share-btn.ghost,
+.ink-share-btn.ghost:hover { background: none; color: var(--ink-link); border-color: currentcolor; }
+.ink-share-btn.danger { background: none; color: var(--ink-danger); border-color: currentcolor; }
+
+.ink-share-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-share-when { margin-left: auto; white-space: nowrap; }
+.ink-share-soon { color: var(--ink-warn); }
+
+.ink-share-extend {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink-link);
+  cursor: pointer;
+}
+
+.ink-share-extend:hover { text-decoration: underline; }
+
+/* A destructive action, styled the way this app styles one everywhere else: text in the danger
+   colour under a hairline, not a bordered box. See `.ink-menu-item.danger`. */
+.ink-share-foot {
+  border-top: 1px solid var(--ink-rule);
+  padding: 0 16px;
+}
+
+.ink-share-stop {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink-danger);
+  cursor: pointer;
+}
+
+/* Danger, hovered or not. The global rule would turn it into the accent and quietly drop the one
+   thing its colour is there to say. */
+.ink-share-stop:hover {
+  color: var(--ink-danger);
+  text-decoration: underline;
+}
+
+.ink-share-error {
+  font-size: 12.5px;
+  color: var(--ink-danger);
+}
+
+.ink-share-error b { display: block; margin-bottom: 3px; }
+
+.ink-share-note {
+  font-size: 12.5px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-share-note b { display: block; margin-bottom: 3px; color: var(--ink-fg); }
+
+/* On a phone the row stacks and everything reaches 44px, like the rest of the phone UI. */
+/* A phone gets the same arrangement, only taller where a thumb has to land. Stacking the link
+   above a full-width Copy and putting the extend link on a line of its own made a sheet twice the
+   height it needed to be — the panel is one line of link, and it should look like one. At 390px
+   the box still has 274px for a 30-character URL. */
+@media (max-width: 719px) {
+  .ink-share-btn { min-height: 44px; }
+  .ink-share-url { min-height: 44px; }
+  .ink-share-meta { flex-wrap: wrap; }
+  .ink-share-extend { min-height: 32px; }
+  .ink-share-stop { min-height: 44px; align-self: stretch; }
+}

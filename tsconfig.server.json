@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "lib": ["ES2023"]
+  },
+  // `src/types` carries the ambient declarations for dependencies that ship none. Without it here
+  // `pnpm typecheck` passes against the root config and `pnpm build` fails against this one, which
+  // is a confusing five minutes.
+  "include": ["src/server", "src/agent", "src/types"]
+}

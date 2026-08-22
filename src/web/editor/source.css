@@ -1,0 +1,66 @@
+/* Over the editor column, covering it completely: the rendered document underneath must not show
+   through, and VditorEditor stays mounted so leaving this mode does not rebuild it. */
+.ink-source {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  background: var(--ink-bg);
+  overflow: hidden;
+}
+
+/* The gutter scrolls with the text but is not part of it — selecting the document must not select
+   the line numbers, and copying must not carry them. Separate element, `user-select: none`. */
+.ink-source-gutter {
+  flex: 0 0 auto;
+  padding: 18px 10px 18px 18px;
+  text-align: right;
+  color: var(--ink-fg-muted);
+  opacity: 0.45;
+  user-select: none;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  border-right: 1px solid var(--ink-rule);
+}
+
+.ink-source-area {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: none;
+  color: var(--ink-fg);
+  /* No wrapping in the gutter's world either: both sides share the metrics exactly, or the
+     numbers drift line by line down a long file. */
+  overflow: auto;
+  /* No wrapping, which is what makes the gutter honest: one logical line is one row, so the
+     numbers line up by construction rather than by two elements agreeing to measure identically.
+     Measured with wrapping on: the textarea scrolled to 346px where the gutter reached 273px, and
+     the numbers slid further apart the longer the file got.
+
+     The cost is a horizontal scrollbar on long prose lines. It is the right way round for a view
+     whose purpose is precision — and the same trade every code editor makes. */
+  white-space: pre;
+}
+
+/* The one place both elements must agree. Any change here belongs in both rules. */
+.ink-source-gutter,
+.ink-source-area {
+  font-family: var(--ink-font-mono);
+  font-size: calc(var(--ink-font-size, 16px) * 0.9);
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.ink-source-area::selection {
+  background: var(--ink-selection);
+}
+
+/* A read-only source view is still worth reading, so it keeps the text colour — the faded
+   `opacity: .3` Vditor uses for a disabled surface is right for a disabled control and wrong
+   here, the same call as in the rendered view. */
+.ink-source-area[readonly] {
+  cursor: default;
+}

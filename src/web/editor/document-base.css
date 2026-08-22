@@ -1,0 +1,174 @@
+/* The typographic fundamentals a document rests on, owned here rather than by an editor.
+ *
+ * The seven themes never set these. They set colour, size and spacing and inherited weight, leading
+ * and the rest from `vditor/dist/index.css`, which is scoped to `.vditor-reset` — so mounting a
+ * different editor produced headings at weight 400 where Lapis had always looked like 600, and a
+ * body leading of 24px where it had been 25.6px. Nothing was overridden; the floor had simply gone.
+ *
+ * Measured off the shipped Vditor rendering so this changes nothing for it, and gives Crepe the
+ * same ground to stand on.
+ *
+ * Three classes, like the themes: Crepe reaches its own document as `.milkdown .ProseMirror h1`
+ * (0,2,1), which beats a single class outright — this file applied to Vditor and did nothing at all
+ * to Crepe until it was raised. The themes are also three classes and are imported after this, so
+ * they still win the tie and still own every decision they make.
+ */
+
+.ink-doc.ink-doc.ink-doc.ink-doc.ink-doc {
+  line-height: var(--ink-line-height);
+}
+
+.ink-doc.ink-doc.ink-doc h1,
+.ink-doc.ink-doc.ink-doc h2,
+.ink-doc.ink-doc.ink-doc h3,
+.ink-doc.ink-doc.ink-doc h4,
+.ink-doc.ink-doc.ink-doc h5,
+.ink-doc.ink-doc.ink-doc h6 {
+  font-weight: 600;
+}
+
+/* A heading's own air, from the same place and for the same reason as the block spacing below: it
+   was `.vditor-reset h1, …, h6 { margin: 24px 0 16px }`, which no other document ever matched. Crepe
+   supplies a top margin of its own — 32px on h1, 20px on h4 — and no bottom margin at all, so every
+   section ran straight into its first paragraph. */
+.ink-doc.ink-doc.ink-doc :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 24px;
+  margin-bottom: 16px;
+}
+
+/* Leading tightens as headings grow, which is what stops a two-line title looking double-spaced. */
+.ink-doc.ink-doc.ink-doc h1 { line-height: 1.25; }
+.ink-doc.ink-doc.ink-doc h2 { line-height: 1.25; }
+.ink-doc.ink-doc.ink-doc h3 { line-height: 1.3; }
+.ink-doc.ink-doc.ink-doc h4,
+.ink-doc.ink-doc.ink-doc h5,
+.ink-doc.ink-doc.ink-doc h6 { line-height: 1.5; }
+
+/* Deliberately not `p, li, blockquote`. Pinning each one broke the themes that set a looser
+   leading for lists and quotes — Tailwind and Everforest use 1.8 — because the paragraph took this
+   value and the list kept the theme's, and the two no longer agreed. The typographic bar in
+   `theme-conformance.spec.ts` caught it. The surface sets the leading; everything inherits it, and
+   a theme that changes one changes it for that theme's own reasons. */
+
+/* The air between blocks.
+ *
+ * This lived in `vditor/dist/index.css` under `.vditor-reset`, so a document with any other class on
+ * it had none of it: measured across the vault, **851 blocks** came out with `margin-bottom: 0`
+ * where the shipped rendering has 16px, in every one of the sixteen notes. On screen that is
+ * consecutive paragraphs touching — the single most visible difference between the two engines, and
+ * one no theme could have fixed, because no theme sets it.
+ *
+ * The values are Vditor's own, copied rather than re-chosen, so this changes nothing for it. `16px`
+ * is deliberately not `1em`: it is absolute in the original, and a document set at 18px would space
+ * differently from the same document today.
+ *
+ * `pre` is left out on purpose. Vditor renders a fence as two `pre` — the collapsed source and the
+ * preview — and zeroes their margins itself in IR mode; a rule here would out-specify that and put
+ * a gap beside every fence. Fences carry their own spacing in each engine's shell.
+ */
+.ink-doc.ink-doc.ink-doc :is(p, ul, ol, blockquote, table) {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.ink-doc.ink-doc.ink-doc :is(ul, ol) {
+  padding-left: 2em;
+}
+
+.ink-doc.ink-doc.ink-doc li + li {
+  margin-top: 0.25em;
+}
+
+/* The last thing in a list item does not add air below itself: the item's own spacing is the space.
+   A nested list is the case that shows it — its 16px bottom margin fell between the sub-list and
+   the next item of the outer list, so nesting left a visible hole in the middle of the list. Same
+   rule as the blockquote below, and the same reason. */
+.ink-doc.ink-doc.ink-doc li > :last-child,
+/* Not `>`: Crepe wraps an item's content in a `.children` div, so the nested list is a grandchild
+   and the child rule never reached it. */
+.ink-doc.ink-doc.ink-doc li :is(ul, ol):last-child {
+  margin-bottom: 0;
+}
+
+/* A paragraph inside a list item only gets air when the item is a loose one — which is the only
+   time markdown gives it a `p` of its own. */
+.ink-doc.ink-doc.ink-doc li p {
+  margin-top: 16px;
+}
+
+.ink-doc.ink-doc.ink-doc blockquote {
+  padding: 0 1em;
+}
+
+.ink-doc.ink-doc.ink-doc blockquote > :first-child { margin-top: 0; }
+.ink-doc.ink-doc.ink-doc blockquote > :last-child { margin-bottom: 0; }
+
+/* A table fills the column, and its cells wrap.
+ *
+ * This went the other way first, to match what the older engine does — a table only as wide as its
+ * contents, cells that never wrap, and a scrollbar when that is wider than the page. Measured, that
+ * *is* what the older engine renders. It is not what Typora renders and not what reads better here:
+ * a two-column table sitting in a third of the measure looks like a mistake, and a table you have
+ * to scroll sideways is one you cannot read at a glance.
+ *
+ * So the table takes the measure and the text inside it wraps, which is the arrangement that never
+ * hides anything: no column can end up off the edge, because there is no edge to be off.
+ *
+ * Rows keep a minimum height so an empty cell is still a cell — `height` on a table cell is a
+ * minimum by definition, which is exactly the behaviour wanted and the reason it is not
+ * `min-height`, which table cells ignore.
+ */
+.ink-doc.ink-doc.ink-doc table {
+  display: table;
+  width: 100%;
+  /* `fixed`, not `auto`: with `auto` the browser sizes columns from their content, so one long cell
+     pushed the table past the column it lives in — measured 727px inside a 588px measure, which is
+     the overflow this was meant to end. Fixed gives equal columns that take the measure and let the
+     text wrap, which is what fills the width and what Typora does. */
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+  overflow: auto;
+}
+
+.ink-doc.ink-doc.ink-doc :is(td, th) {
+  white-space: normal;
+  word-break: normal;
+  /* A cell that is one long unbroken run still has to fit the column it was given. */
+  overflow-wrap: break-word;
+  height: 2.2em;
+}
+
+/* A cell's paragraph is the cell. Crepe gives every cell a `p`, which then took the 16px of air
+   every other paragraph gets and made each row 16px taller than the same row in the other engine. */
+.ink-doc.ink-doc.ink-doc :is(td, th) > p {
+  margin: 0;
+}
+
+/* Code is set in a monospaced face, from the same missing floor as everything else here.
+ *
+ * `vditor/dist/index.css` carries `.vditor-reset pre > code { font-family: mononoki, … }`, and four
+ * of the seven themes never set a code face of their own because they never had to — so under those
+ * themes a fenced block in the other engine came out in the prose face, which for Tailwind is a
+ * serif. Copied from Vditor's stylesheet, so it changes nothing for it.
+ *
+ * The fenced *block* rather than the text inside it, because that is where a theme that does set a
+ * code face puts it — naming the scroller here reached deeper than the themes do and overrode three
+ * of them with this fallback. Everything inside inherits. */
+.ink-doc.ink-doc.ink-doc :is(pre > code, .milkdown-code-block) {
+  font-family: mononoki, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+/* Code is set a little smaller than the prose around it, so an inline span does not push the line
+   apart. The ratio is Vditor's and has been what this application looks like since Phase 1. */
+.ink-doc.ink-doc.ink-doc :not(pre) > code {
+  font-size: 0.92em;
+  line-height: 1.35;
+}
+
+/* A rule is a filled line, not a border — themes colour it through the background. */
+.ink-doc.ink-doc.ink-doc hr {
+  height: 1px;
+  border: 0;
+  background: var(--ink-rule);
+}

@@ -1,0 +1,1464 @@
+/* everforest — converted from a Typora theme, then assembled by scripts/assemble-theme.mjs.
+ *
+ * Shell tokens are filled in from the theme's own resolved colours, so the sidebar and the
+ * page stay one surface. Everything below the marker is the standard finishing every
+ * conversion needs; see the script for why each line exists.
+ */
+:root[data-doc-theme="everforest"] {
+  /* Shell tokens: the chrome takes the theme's own page. Nested under [data-theme] because
+     tokens.css declares the defaults at `:root[data-theme="dark"]` and a bare wrapper only ties. */
+  &[data-theme="light"] {
+    --ink-bg: #fffbef;
+    --ink-fg: #5c6a72;
+    --ink-fg-muted: #939f91;
+    --ink-link: #8da101;
+    --ink-rule: #e6e2d0;
+    --ink-code-bg: #f4f0d9;
+    --ink-sidebar-bg: #fffbef;
+    --ink-sidebar-hover: #f4f0d9;
+    --ink-sidebar-active: #ece8d5;
+  }
+  &[data-theme="dark"] {
+    --ink-bg: #2e353a;
+    --ink-fg: #d3c6aa;
+    --ink-fg-muted: #9da9a0;
+    --ink-link: #a7c080;
+    --ink-rule: #3d484d;
+    --ink-code-bg: #343f44;
+    --ink-sidebar-bg: #2e353a;
+    --ink-sidebar-hover: #343f44;
+    --ink-sidebar-active: #3d484d;
+  }
+
+
+  --ef-fg: #5c6a72;
+  --ef-fg-muted: #829181;
+  --ef-gray-0: #a6b0a0;
+  --ef-gray-1: #939f91;
+  --ef-gray-2: #829181;
+
+  --ef-bg-dim: #f2efdf;
+  --ef-bg-0: #fffbef;
+  --ef-bg-1: #f8f5e4;
+  --ef-bg-2: #f2efdf;
+  --ef-bg-3: #edeada;
+  --ef-bg-4: #e8e5d5;
+  --ef-bg-5: #bec5b2;
+
+  --ef-red: #f85552;
+  --ef-orange: #f57d26;
+  --ef-yellow: #dfa000;
+  --ef-green: #8da101;
+  --ef-aqua: #35a77c;
+  --ef-blue: #3a94c5;
+  --ef-purple: #df69ba;
+
+
+  --bg: var(--ef-bg-0);
+  --bg-panel: var(--ef-bg-1);
+  --bg-soft: var(--ef-bg-2);
+  --bg-muted: var(--ef-bg-3);
+  --text: var(--ef-fg);
+  --text-muted: var(--ef-fg-muted);
+  --border: #d7d3c4;
+  --accent: var(--ef-green);
+  --accent-2: var(--ef-blue);
+  --selection: #e0e6c9;
+  --source-selection: rgba(141, 161, 1, 0.24);
+  --select-text-bg-color: var(--selection);
+  --select-text-font-color: var(--text);
+
+
+  --bg-color: var(--bg);
+  --text-color: var(--text);
+  --md-char-color: var(--ef-gray-1);
+  --meta-content-color: var(--ef-fg-muted);
+
+  --primary-color: var(--ef-green);
+  --primary-btn-border-color: var(--ef-bg-4);
+  --primary-btn-text-color: #ffffff;
+
+  --window-border: 1px solid var(--border);
+  --active-file-bg-color: var(--bg-muted);
+  --active-file-text-color: var(--text);
+  --active-file-border-color: var(--accent);
+
+  --side-bar-bg-color: var(--bg-panel);
+  --item-hover-bg-color: var(--bg-soft);
+  --item-hover-text-color: var(--text);
+
+  --monospace: ui-monospace, "JetBrains Mono", "Zed Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+
+
+  --color-1: var(--ef-blue);
+  --color-1-0-b: rgba(58, 148, 197, 0.08);
+
+  --color-2: var(--ef-red);
+  --color-2-0-b: rgba(248, 85, 82, 0.08);
+
+  --color-3: var(--ef-aqua);
+  --color-3-0-b: rgba(53, 167, 124, 0.08);
+
+  --color-4: var(--ef-purple);
+  --color-4-0-b: rgba(223, 105, 186, 0.08);
+
+  --color-5: var(--ef-yellow);
+  --color-5-0-b: rgba(223, 160, 0, 0.1);
+
+
+  --font-body: "PingFang SC", "Microsoft YaHei", "LXGW WenKai", ui-serif,
+  "Iowan Old Style", "Times New Roman", serif;
+  --font-code: ui-monospace, "JetBrains Mono", "Zed Plex Mono", "SFMono-Regular",
+  Menlo, Consolas, monospace;
+  --font-size: 16px;
+  --line-height: 1.65;
+
+  --radius: 10px;
+  --radius-sm: 8px;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-2: 0 6px 18px rgba(0, 0, 0, 0.06);
+  --gap-1: 0.5rem;
+  --gap-2: 0.75rem;
+  --gap-3: 1rem;
+  --gap-4: 1.5rem;
+  --side-bar-bg-color: var(--bg);
+  color-scheme: light;
+  --window-bg: var(--bg);
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc .typora-export {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+  }
+
+  .ink-doc.ink-doc.ink-doc {
+    max-width: 840px;
+    margin: 2.2rem auto;
+    padding: 0 var(--gap-3);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::selection {
+    background: var(--select-text-bg-color);
+    color: var(--select-text-font-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc pre,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    --select-text-bg-color: var(--source-selection);
+    --select-text-font-color: var(--text);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-thumb {
+    background: var(--ef-bg-5);
+    border-radius: 20px;
+    border: 2px solid var(--bg);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+    margin: 2.2rem 0 1rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 {
+    font-size: calc(var(--ink-font-size, 16px) * 2.1);
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.8);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.35rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.5);
+    border-bottom: 1px dashed var(--ef-bg-5);
+    padding-bottom: 0.25rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.25);
+  }
+
+  .ink-doc.ink-doc.ink-doc h5 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.1);
+  }
+
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-size: calc(var(--ink-font-size, 16px) * 1);
+    color: var(--text-muted);
+  }
+
+  .ink-doc.ink-doc.ink-doc p {
+    margin: 0 0 1.05rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc strong {
+    color: var(--ef-fg);
+  }
+
+  .ink-doc.ink-doc.ink-doc em {
+    color: var(--ef-purple);
+  }
+
+  .ink-doc.ink-doc.ink-doc del {
+    color: var(--text-muted);
+  }
+
+  .ink-doc.ink-doc.ink-doc ul,
+  .ink-doc.ink-doc.ink-doc ol {
+    margin: 0 0 1rem 1.5rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc li {
+    margin: 0.3rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc li > p {
+    margin: 0.2rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc li input {
+    transform: scale(1.05);
+  }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc a:hover {
+    text-decoration: underline;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    margin: 1.25rem 0;
+    padding: 0.8rem 1rem;
+    border-left: 4px solid var(--ef-aqua);
+    background: rgba(53, 167, 124, 0.06);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+  }
+
+  .ink-doc.ink-doc.ink-doc table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 1.2rem 0;
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .ink-doc.ink-doc.ink-doc th,
+  .ink-doc.ink-doc.ink-doc td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--ef-bg-4);
+  }
+
+  .ink-doc.ink-doc.ink-doc thead th {
+    background: var(--ef-bg-3);
+    color: var(--text);
+    text-align: left;
+  }
+
+  .ink-doc.ink-doc.ink-doc tbody tr:hover {
+    background: var(--ef-bg-2);
+  }
+
+  /* The face only. This theme names its code face on `code`, which in one engine is the element a
+     fenced block's text lives in and in the other does not exist — so the fence fell back to the
+     document's default mono while inline code kept this one. Everything else in the rule below is
+     inline code's own (a background, a border) and would be wrong on a whole block. */
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    font-family: var(--font-code);
+  }
+
+  .ink-doc.ink-doc.ink-doc code,
+  .ink-doc.ink-doc.ink-doc tt {
+    font-family: var(--font-code);
+    font-size: 0.92em;
+    background: rgba(58, 148, 197, 0.06);
+    color: #1e4b59;
+    border: 1px solid #d7ebe3;
+    padding: 0.15rem 0.35rem;
+    border-radius: 6px;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    overflow: auto;
+    box-shadow: var(--shadow-1);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner,
+  .ink-doc.ink-doc.ink-doc .cm-s-typora-default {
+    background: transparent;
+    color: var(--text);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-comment {
+    color: #939f91;
+    font-style: italic;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-keyword {
+    color: #f85552;
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-atom,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-number {
+    color: #f57d26;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-def,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable {
+    color: var(--text);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-2 {
+    color: #3a94c5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-3 {
+    color: #35a77c;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-string {
+    color: #8da101;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-property {
+    color: #3a94c5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-operator {
+    color: var(--text);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-tag {
+    color: #f85552;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-attribute {
+    color: #dfa000;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-meta {
+    color: #a6b0a0;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-builtin {
+    color: #35a77c;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-quote {
+    color: #8da101;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-hr {
+    color: #939f91;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-link {
+    color: #3a94c5;
+    text-decoration: underline;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-error {
+    color: #ffffff;
+    background: #f85552;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote,
+  .ink-doc.ink-doc.ink-doc .md-alert {
+    margin: 14px 0;
+    padding: 16px;
+    background: var(--color-1-0-b);
+    box-sizing: border-box;
+    border-radius: 8px;
+    border-left: 4px solid var(--color-1);
+    border-right: 0.1px solid transparent;
+    border-bottom: 0.1px solid transparent;
+    border-top: 0.1px solid transparent;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote blockquote {
+    background: var(--color-1-0-b);
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote > blockquote,
+  .ink-doc.ink-doc.ink-doc blockquote > .md-alert,
+  .ink-doc.ink-doc.ink-doc .md-alert > .md-alert,
+  .ink-doc.ink-doc.ink-doc .md-alert > blockquote {
+    margin-bottom: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc p + blockquote,
+  .ink-doc.ink-doc.ink-doc p + .md-alert {
+    margin-top: -8px;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note > *:first-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution > *:first-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip > *:first-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important > *:first-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning > *:first-child {
+    margin-top: 0;
+    line-height: 1;
+    margin-bottom: -4px;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note > *:last-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution > *:last-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip > *:last-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important > *:last-child,
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note {
+    border-left-color: var(--color-1);
+    background: var(--color-1-0-b);
+    color: var(--color-1);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution {
+    border-left-color: var(--color-2);
+    background: var(--color-2-0-b);
+    color: var(--color-2);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip {
+    border-left-color: var(--color-3);
+    background: var(--color-3-0-b);
+    color: var(--color-3);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important {
+    border-left-color: var(--color-4);
+    background: var(--color-4-0-b);
+    color: var(--color-4);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning {
+    border-left-color: var(--color-5);
+    background: var(--color-5-0-b);
+    color: var(--color-5);
+  }
+
+  .ink-doc.ink-doc.ink-doc .footnotes,
+  .ink-doc.ink-doc.ink-doc .footnotes-area {
+    font-size: calc(var(--ink-font-size, 16px) * 0.92);
+    color: var(--text-muted);
+    border-top: 1px dashed var(--ef-bg-4);
+    margin-top: 2rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc img {
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+  }
+
+  .ink-doc.ink-doc.ink-doc figcaption {
+    color: var(--text-muted);
+    font-size: calc(var(--ink-font-size, 16px) * 0.9);
+    text-align: center;
+  }
+
+  .ink-doc.ink-doc.ink-doc li > input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.1em;
+    height: 1.1em;
+    margin: 0 0.5em 0 0;
+    border: 2px solid #8da101;
+    border-radius: 4px;
+    background: transparent;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .ink-doc.ink-doc.ink-doc li > input[type="checkbox"]:checked {
+    background-color: #8da101;
+    border-color: #8da101;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8.5l3 3 6-6' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .ink-doc.ink-doc.ink-doc li input[type="checkbox"],
+  .ink-doc.ink-doc.ink-doc input[type="checkbox"] {
+    accent-color: var(--ef-green);
+  }
+
+  .ink-doc.ink-doc.ink-doc li input[type="checkbox"] {
+    width: 1.05em;
+    height: 1.05em;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    border-radius: 4px;
+  }
+
+  .ink-doc.ink-doc.ink-doc li input[type="checkbox"]:focus {
+    outline: 2px solid rgba(167, 192, 128, 0.45);
+    outline-offset: 2px;
+  }
+
+  .ink-doc.ink-doc.ink-doc lili,
+  .ink-doc.ink-doc.ink-doc lili {
+    list-style: none;
+    position: relative;
+    padding-left: 1.8rem;
+    margin: 0.35rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"],
+  .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"] {
+    position: absolute;
+    left: 0;
+    top: 0.25em;
+    width: 1.1em;
+    height: 1.1em;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 6px;
+    border: 2px solid var(--ef-green);
+    background: transparent;
+    margin: 0;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .ink-doc.ink-doc.ink-doc lili > p,
+  .ink-doc.ink-doc.ink-doc lili > p {
+    display: inline;
+    margin: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"]:checked,
+  .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"]:checked {
+    background-color: var(--ef-green);
+    border-color: var(--ef-green);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8.5l3 3 6-6' stroke='%23000000' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc #app,
+  .ink-doc.ink-doc.ink-doc #typora-app,
+  .ink-doc.ink-doc.ink-doc .typora-export,
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc .content,
+  .ink-doc.ink-doc.ink-doc #main,
+  .ink-doc.ink-doc.ink-doc .titlebar {
+    background: var(--window-bg) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc {
+    transition: background-color 0s !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert > *:first-child {
+    margin-bottom: 0.5rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc code,
+  .ink-doc.ink-doc.ink-doc tt {
+    font-size: calc(var(--ink-font-size, 16px) * 1) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert > *:first-child {
+    margin-bottom: 0.5rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc code,
+  .ink-doc.ink-doc.ink-doc tt {
+    font-size: calc(var(--ink-font-size, 16px) * 1) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    display: flex;
+    align-items: center;
+    min-height: 3em;
+    line-height: 1.6;
+    box-sizing: border-box;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote > p,
+  .ink-doc.ink-doc.ink-doc blockquote > :not(blockquote) {
+    margin: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc .typora-export,
+  .ink-doc.ink-doc.ink-doc .typora-export body {
+    background: var(--bg) !important;
+    color: var(--text) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc b,
+  .ink-doc.ink-doc.ink-doc strong {
+    color: var(--ef-green) !important;
+    font-weight: 600;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"]:hover .md-math-container,
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-panel,
+  .ink-doc.ink-doc.ink-doc .md-mathjax-midline {
+    background: var(--bg-panel) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathjax-preview {
+    background: var(--bg-panel) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-input {
+    background: rgba(242, 239, 223, 0.9) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG,
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG_Display,
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] svg {
+    color: var(--text) !important;
+    background: transparent !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .dialog,
+  .ink-doc.ink-doc.ink-doc .popup,
+  .ink-doc.ink-doc.ink-doc .preference-panel,
+  .ink-doc.ink-doc.ink-doc .settings-panel {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .dialog,
+  .ink-doc.ink-doc.ink-doc .popup,
+  .ink-doc.ink-doc.ink-doc .preference-panel,
+  .ink-doc.ink-doc.ink-doc .settings-panel {
+    border-color: var(--border) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .search-input,
+  .ink-doc.ink-doc.ink-doc .search-result {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .status-bar {
+    background-color: var(--bg-panel) !important;
+    color: var(--text-color) !important;
+    border-top: 1px solid var(--border) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-editor .cm-selectionBackground,
+  .ink-doc.ink-doc.ink-doc .cm-editor.cm-focused .cm-selectionBackground {
+    background: transparent !important;
+  }
+
+
+
+  /* The upstream ships its dark side as a separate file, as Typora themes do. */
+  &[data-theme="dark"] {
+
+
+    --ef-fg: #d3c6aa;
+    --ef-fg-muted: #9da9a0;
+    --ef-gray-0: #7a8478;
+    --ef-gray-1: #859289;
+    --ef-gray-2: #9da9a0;
+
+
+    --ef-bg-dim: #22282b;
+    --ef-bg-0: #2e353a;
+    --ef-bg-1: #363f44;
+    --ef-bg-2: #3f484d;
+    --ef-bg-3: #495156;
+    --ef-bg-4: #52595f;
+    --ef-bg-5: #5a6268;
+
+    --ef-red: #e67e80;
+    --ef-orange: #e69875;
+    --ef-yellow: #dbbc7f;
+    --ef-green: #a7c080;
+    --ef-aqua: #83c092;
+    --ef-blue: #7fbbb3;
+    --ef-purple: #d699b6;
+
+
+    --bg: var(--ef-bg-0);
+    --bg-panel: var(--ef-bg-1);
+    --bg-soft: var(--ef-bg-2);
+    --bg-muted: var(--ef-bg-3);
+    --text: var(--ef-fg);
+    --text-muted: var(--ef-gray-2);
+    --border: #444c50;
+    --accent: var(--ef-green);
+    --accent-2: var(--ef-blue);
+    --selection: #445047;
+    --source-selection: #445047;
+    --select-text-bg-color: var(--selection);
+    --select-text-font-color: var(--text);
+
+
+    --bg-color: var(--bg);
+    --text-color: var(--text);
+    --md-char-color: var(--ef-gray-1);
+    --meta-content-color: var(--ef-gray-2);
+
+    --primary-color: var(--ef-green);
+    --primary-btn-border-color: var(--ef-bg-4);
+    --primary-btn-text-color: var(--ef-bg-0);
+
+    --window-border: 1px solid var(--border);
+    --active-file-bg-color: var(--bg-muted);
+    --active-file-text-color: var(--text);
+    --active-file-border-color: var(--accent);
+
+    --side-bar-bg-color: var(--bg-panel);
+    --item-hover-bg-color: var(--bg-soft);
+    --item-hover-text-color: var(--text);
+
+    --monospace: ui-monospace, "JetBrains Mono", "Zed Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+
+    --color-1: var(--ef-blue);
+    --color-1-0-b: rgba(127, 187, 179, 0.12);
+
+    --color-2: var(--ef-red);
+    --color-2-0-b: rgba(230, 126, 128, 0.14);
+
+    --color-3: var(--ef-aqua);
+    --color-3-0-b: rgba(131, 192, 146, 0.12);
+
+    --color-4: var(--ef-purple);
+    --color-4-0-b: rgba(214, 153, 182, 0.14);
+
+    --color-5: var(--ef-yellow);
+    --color-5-0-b: rgba(219, 188, 127, 0.14);
+
+
+    --font-body: "PingFang SC", "Microsoft YaHei", "LXGW WenKai", ui-serif, "Iowan Old Style", "Times New Roman", serif;
+    --font-code: ui-monospace, "JetBrains Mono", "Zed Plex Mono", "SFMono-Regular",
+    Menlo, Consolas, monospace;
+    --font-size: 16px;
+    --line-height: 1.65;
+
+    --radius: 10px;
+    --radius-sm: 8px;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --shadow-2: 0 10px 24px rgba(0, 0, 0, 0.35);
+    --gap-1: 0.5rem;
+    --gap-2: 0.75rem;
+    --gap-3: 1rem;
+    --gap-4: 1.5rem;
+    --side-bar-bg-color: var(--bg);
+    color-scheme: dark;
+    --window-bg: var(--bg);
+    .ink-doc.ink-doc.ink-doc,
+    .ink-doc.ink-doc.ink-doc .typora-export {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+    }
+
+    .ink-doc.ink-doc.ink-doc {
+      max-width: 840px;
+      margin: 2.2rem auto;
+      padding: 0 var(--gap-3);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::selection {
+      background: var(--select-text-bg-color);
+      color: var(--select-text-font-color);
+    }
+
+    .ink-doc.ink-doc.ink-doc pre,
+
+    .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+      --select-text-bg-color: var(--source-selection);
+      --select-text-font-color: var(--text);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-thumb {
+      background: var(--ef-bg-4);
+      border-radius: 20px;
+      border: 2px solid var(--bg);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1,
+    .ink-doc.ink-doc.ink-doc h2,
+    .ink-doc.ink-doc.ink-doc h3,
+    .ink-doc.ink-doc.ink-doc h4,
+    .ink-doc.ink-doc.ink-doc h5,
+    .ink-doc.ink-doc.ink-doc h6 {
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.25;
+      margin: 2.2rem 0 1rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1 {
+      font-size: calc(var(--ink-font-size, 16px) * 2.1);
+    }
+
+    .ink-doc.ink-doc.ink-doc h2 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.8);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.35rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc h3 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.5);
+      border-bottom: 1px dashed var(--ef-bg-4);
+      padding-bottom: 0.25rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc h4 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.25);
+    }
+
+    .ink-doc.ink-doc.ink-doc h5 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.1);
+    }
+
+    .ink-doc.ink-doc.ink-doc h6 {
+      font-size: calc(var(--ink-font-size, 16px) * 1);
+      color: var(--text-muted);
+    }
+
+    .ink-doc.ink-doc.ink-doc p {
+      margin: 0 0 1.05rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc strong {
+      color: var(--ef-green); font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc em {
+      color: var(--ef-purple); font-style: italic;
+    }
+
+    .ink-doc.ink-doc.ink-doc del {
+      color: var(--text-muted);
+    }
+
+    .ink-doc.ink-doc.ink-doc ul,
+    .ink-doc.ink-doc.ink-doc ol {
+      margin: 0 0 1rem 1.5rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc li {
+      margin: 0.3rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc li > p {
+      margin: 0.2rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc li input {
+      transform: scale(1.05);
+    }
+
+    .ink-doc.ink-doc.ink-doc a,
+
+    .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .ink-doc.ink-doc.ink-doc a:hover {
+      text-decoration: underline;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote {
+      margin: 1.25rem 0;
+      padding: 0.8rem 1rem;
+      border-left: 4px solid var(--ef-aqua);
+      background: var(--ef-bg-2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+    }
+
+    .ink-doc.ink-doc.ink-doc table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      margin: 1.2rem 0;
+      background: var(--bg-panel);
+      box-shadow: var(--shadow-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .ink-doc.ink-doc.ink-doc th,
+    .ink-doc.ink-doc.ink-doc td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--ef-bg-3);
+    }
+
+    .ink-doc.ink-doc.ink-doc thead th {
+      background: var(--ef-bg-2);
+      color: var(--text);
+      text-align: left;
+    }
+
+    .ink-doc.ink-doc.ink-doc tbody tr:hover {
+      background: var(--ef-bg-1);
+    }
+
+    .ink-doc.ink-doc.ink-doc code,
+    .ink-doc.ink-doc.ink-doc tt {
+      font-family: var(--font-code);
+      font-size: 0.92em;
+      background: var(--ef-bg-1);
+      color: #d8edea;
+      border: 1px solid var(--ef-bg-3);
+      padding: 0.15rem 0.35rem;
+      border-radius: 6px;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+    .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      overflow: auto;
+      box-shadow: var(--shadow-1);
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner,
+    .ink-doc.ink-doc.ink-doc .cm-s-typora-default {
+      background: transparent;
+      color: var(--text);
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-comment {
+      color: #d699b6;
+      font-style: italic;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-keyword {
+      color: #e67e80;
+      font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-atom,
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-number {
+      color: #e69875;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-def,
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable {
+      color: var(--text);
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-2 {
+      color: #7fbbb3;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-3 {
+      color: #83c092;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-string {
+      color: #a7c080;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-property {
+      color: #7fbbb3;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-operator {
+      color: var(--text);
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-tag {
+      color: #e67e80;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-attribute {
+      color: #dbbc7f;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-meta {
+      color: #7a8478;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-builtin {
+      color: #83c092;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-quote {
+      color: #a7c080;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-hr {
+      color: #859289;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-link {
+      color: #7fbbb3;
+      text-decoration: underline;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-error {
+      color: #1a0d0d;
+      background: #e67e80;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote,
+    .ink-doc.ink-doc.ink-doc .md-alert {
+      margin: 14px 0;
+      padding: 16px;
+      background: var(--color-1-0-b);
+      box-sizing: border-box;
+      border-radius: 8px;
+      border-left: 4px solid var(--color-1);
+      border-right: 0.1px solid transparent;
+      border-bottom: 0.1px solid transparent;
+      border-top: 0.1px solid transparent;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote blockquote {
+      background: var(--color-1-0-b);
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote > blockquote,
+    .ink-doc.ink-doc.ink-doc blockquote > .md-alert,
+    .ink-doc.ink-doc.ink-doc .md-alert > .md-alert,
+    .ink-doc.ink-doc.ink-doc .md-alert > blockquote {
+      margin-bottom: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc p + blockquote,
+    .ink-doc.ink-doc.ink-doc p + .md-alert {
+      margin-top: -8px;
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note > *:first-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution > *:first-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip > *:first-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important > *:first-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning > *:first-child {
+      margin-top: 0;
+      line-height: 1;
+      margin-bottom: -4px;
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note > *:last-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution > *:last-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip > *:last-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important > *:last-child,
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning > *:last-child {
+      margin-bottom: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note {
+      border-left-color: var(--color-1);
+      background: var(--color-1-0-b);
+      color: var(--color-1);
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution {
+      border-left-color: var(--color-2);
+      background: var(--color-2-0-b);
+      color: var(--color-2);
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip {
+      border-left-color: var(--color-3);
+      background: var(--color-3-0-b);
+      color: var(--color-3);
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important {
+      border-left-color: var(--color-4);
+      background: var(--color-4-0-b);
+      color: var(--color-4);
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning {
+      border-left-color: var(--color-5);
+      background: var(--color-5-0-b);
+      color: var(--color-5);
+    }
+
+    .ink-doc.ink-doc.ink-doc .footnotes,
+    .ink-doc.ink-doc.ink-doc .footnotes-area {
+      font-size: calc(var(--ink-font-size, 16px) * 0.92);
+      color: var(--text-muted);
+      border-top: 1px dashed var(--ef-bg-4);
+      margin-top: 2rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc img {
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-2);
+    }
+
+    .ink-doc.ink-doc.ink-doc figcaption {
+      color: var(--text-muted);
+      font-size: calc(var(--ink-font-size, 16px) * 0.9);
+      text-align: center;
+    }
+
+    .ink-doc.ink-doc.ink-doc li > input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 1.1em;
+      height: 1.1em;
+      margin: 0 0.5em 0 0;
+      border: 2px solid #a7c080;
+      border-radius: 4px;
+      background: transparent;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .ink-doc.ink-doc.ink-doc li > input[type="checkbox"]:checked {
+      background-color: #a7c080;
+      border-color: #a7c080;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8.5l3 3 6-6' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .ink-doc.ink-doc.ink-doc li input[type="checkbox"],
+    .ink-doc.ink-doc.ink-doc input[type="checkbox"] {
+      accent-color: var(--ef-green);
+    }
+
+    .ink-doc.ink-doc.ink-doc li input[type="checkbox"] {
+      width: 1.05em;
+      height: 1.05em;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+      border-radius: 4px;
+    }
+
+    .ink-doc.ink-doc.ink-doc li input[type="checkbox"]:focus {
+      outline: 2px solid rgba(167, 192, 128, 0.45);
+      outline-offset: 2px;
+    }
+
+    .ink-doc.ink-doc.ink-doc b {
+      color: var(--ef-green); font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc em strong,
+    .ink-doc.ink-doc.ink-doc strong em,
+    .ink-doc.ink-doc.ink-doc em b,
+    .ink-doc.ink-doc.ink-doc b em {
+      color: #d3c6aa;
+      font-weight: 600;
+      font-style: italic;
+    }
+
+    .ink-doc.ink-doc.ink-doc lili,
+    .ink-doc.ink-doc.ink-doc lili {
+      list-style: none;
+      position: relative;
+      padding-left: 1.8rem;
+      margin: .35rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"],
+    .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"] {
+      position: absolute;
+      left: 0;
+      top: .25em;
+      width: 1.1em;
+      height: 1.1em;
+      appearance: none;
+      -webkit-appearance: none;
+      border-radius: 6px;
+      border: 2px solid var(--ef-green);
+      background: transparent;
+      margin: 0;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .ink-doc.ink-doc.ink-doc lili > p,
+    .ink-doc.ink-doc.ink-doc lili > p {
+      display: inline;
+      margin: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"],
+    .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"] {
+      accent-color: var(--ef-green);
+    }
+
+    .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"]:checked,
+    .ink-doc.ink-doc.ink-doc lili > input[type="checkbox"]:checked {
+      background-color: var(--ef-green);
+      border-color: var(--ef-green);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 8.5l3 3 6-6' stroke='%230f1716' stroke-width='2'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .ink-doc.ink-doc.ink-doc hr {
+      border: none;
+      border-top: 1px solid #3a4246;
+      margin: 2rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc,
+    .ink-doc.ink-doc.ink-doc {
+      transition: background-color 0s !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc,
+    .ink-doc.ink-doc.ink-doc,
+    .ink-doc.ink-doc.ink-doc #app,
+    .ink-doc.ink-doc.ink-doc #typora-app,
+    .ink-doc.ink-doc.ink-doc .typora-export,
+    .ink-doc.ink-doc.ink-doc,
+    .ink-doc.ink-doc.ink-doc .content,
+    .ink-doc.ink-doc.ink-doc #main,
+    .ink-doc.ink-doc.ink-doc .titlebar {
+      background: var(--window-bg) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert > *:first-child {
+      margin-bottom: 0.5rem !important;
+      line-height: 1.2 !important;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+    .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+      font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc code,
+    .ink-doc.ink-doc.ink-doc tt {
+      font-size: calc(var(--ink-font-size, 16px) * 1) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .md-alert > *:first-child {
+      margin-bottom: 0.5rem !important;
+      line-height: 1.2 !important;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+    .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+      font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc code,
+    .ink-doc.ink-doc.ink-doc tt {
+      font-size: calc(var(--ink-font-size, 16px) * 1) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote {
+      display: flex;
+      align-items: center;
+      min-height: 3.0em;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote > p,
+    .ink-doc.ink-doc.ink-doc blockquote > :not(blockquote) {
+      margin: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc .typora-export,
+    .ink-doc.ink-doc.ink-doc .typora-export body {
+      background: var(--bg) !important;
+      color: var(--text) !important;
+    }
+
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"]:hover .md-math-container,
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-panel,
+    .ink-doc.ink-doc.ink-doc .md-mathjax-midline {
+      background: var(--bg-panel) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathjax-preview {
+      background: var(--bg-panel) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-input {
+      background: rgba(63, 72, 77, 0.5) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG,
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG_Display,
+    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] svg {
+      color: var(--text) !important;
+      background: transparent !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .dialog,
+    .ink-doc.ink-doc.ink-doc .popup,
+    .ink-doc.ink-doc.ink-doc .preference-panel,
+    .ink-doc.ink-doc.ink-doc .settings-panel {
+      background-color: var(--bg-color) !important;
+      color: var(--text-color) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .dialog,
+    .ink-doc.ink-doc.ink-doc .popup,
+    .ink-doc.ink-doc.ink-doc .preference-panel,
+    .ink-doc.ink-doc.ink-doc .settings-panel {
+      border-color: var(--border) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .search-input,
+    .ink-doc.ink-doc.ink-doc .search-result {
+      background-color: var(--bg-color) !important;
+      color: var(--text-color) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .status-bar {
+      background-color: var(--bg-panel) !important;
+      color: var(--text-color) !important;
+      border-top: 1px solid var(--border) !important;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-editor .cm-selectionBackground,
+    .ink-doc.ink-doc.ink-doc .cm-editor.cm-focused .cm-selectionBackground {
+      background: transparent !important;
+    }
+
+
+  }
+
+  /* ---- standard finishing ---- */
+
+  .ink-editor .ink-doc.ink-doc.ink-doc {
+    /* The setting names the body size in every theme; upstream always sets its own. */
+    font-size: var(--ink-font-size, 16px);
+    background: var(--window-bg) !important;
+  }
+
+  &[data-theme="dark"] .ink-editor .ink-doc.ink-doc.ink-doc {
+    background: var(--window-bg) !important;
+  }
+
+
+  /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
+     which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
+     block takes the theme's own code surface, which its shell tokens already declare. */
+  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--ink-code-bg);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  /* The block's box belongs to the <pre>, so the <code> inside it carries none of its own. */
+  .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* ---- corrections, applied by hand after rendering ----
+   *
+   * Vditor makes tables `display: block` so a wide one can scroll, which leaves the box filling the
+   * column while the rows shrink to their content. This theme paints the table itself, so the
+   * difference showed as a ~400px strip of colour beside it. Sizing the box to its content puts the
+   * fill back under the table; max-width keeps the scrolling that display:block was for.
+   *
+   * The rounded table border also had square cell borders running into it, so the grid lines were
+   * clipped part-way round the curve and left a notch at the corners. The perimeter belongs to the
+   * table's own border; the cells keep only the lines between them. */
+  .ink-editor .ink-doc.ink-doc.ink-doc table {
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:first-child > * { border-top: none; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:last-child > * { border-bottom: none; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr > *:first-child { border-left: none; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr > *:last-child { border-right: none; }
+
+  /* Removing the perimeter borders was not enough: the corner cells still paint a square fill over
+     the table's rounded corner. They carry its radius so the fill stops where the border does. */
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:first-child > *:first-child { border-top-left-radius: 10px; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:first-child > *:last-child { border-top-right-radius: 10px; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:last-child > *:first-child { border-bottom-left-radius: 10px; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:last-child > *:last-child { border-bottom-right-radius: 10px; }
+}

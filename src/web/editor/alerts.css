@@ -1,0 +1,184 @@
+/*
+ * Alerts — GitHub's five, drawn the same way wherever a note is rendered.
+ *
+ * Keyed on `.ink-doc`, never on an engine's own class. That is the lesson of the fortnight: the
+ * largest disagreement between the two renderings was a document fact written down where only one
+ * engine could read it, and an alert is a document fact.
+ *
+ * The colours are GitHub's mapping of colour to meaning. A reader who knows one should not have to
+ * learn the other, and the notes are read there too.
+ */
+
+:root {
+  --ink-alert-note: #3b6fb5;
+  --ink-alert-tip: #2f7d55;
+  --ink-alert-important: #7a4fb5;
+  --ink-alert-warning: #a8761f;
+  --ink-alert-caution: #b04434;
+  /* How much of the type's colour is behind it. Light paper takes less. */
+  --ink-alert-tint: 10%;
+}
+
+:root[data-theme="dark"] {
+  --ink-alert-note: #6fa6e6;
+  --ink-alert-tip: #62b487;
+  --ink-alert-important: #ab86e0;
+  --ink-alert-warning: #d8a54a;
+  --ink-alert-caution: #e08272;
+  --ink-alert-tint: 16%;
+}
+
+/* The block itself. `--ink-alert` is the one thing the five rules below set; everything else is
+   derived from it, so a document theme that wants its own palette overrides five values. */
+.ink-doc blockquote[data-alert] {
+  position: relative;
+  /*
+   * All four paddings, not just the left.
+   *
+   * The icon is positioned against this box, and every theme gives a blockquote its own vertical
+   * rhythm — so an icon aligned to the label in one theme sat above it in the next. A callout is
+   * this application's own component; owning its box is what makes it the same object in all seven.
+   */
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  padding-left: 40px !important;
+  padding-right: 14px !important;
+  border-left: 3px solid var(--ink-alert) !important;
+  border-radius: 0 4px 4px 0;
+  background: color-mix(in srgb, var(--ink-alert) var(--ink-alert-tint), transparent) !important;
+  color: inherit;
+}
+
+.ink-doc blockquote[data-alert="note"] { --ink-alert: var(--ink-alert-note); }
+.ink-doc blockquote[data-alert="tip"] { --ink-alert: var(--ink-alert-tip); }
+.ink-doc blockquote[data-alert="important"] { --ink-alert: var(--ink-alert-important); }
+
+.ink-doc blockquote[data-alert="warning"] { --ink-alert: var(--ink-alert-warning); }
+.ink-doc blockquote[data-alert="caution"] { --ink-alert: var(--ink-alert-caution); }
+
+/*
+ * The icon, in the margin the padding above made for it. A mask rather than an `<img>`, so it takes
+ * the type's colour and needs nothing in the document to hang on.
+ *
+ * `!important` on the box, and measured before being written: Crepe draws its own quote bar as
+ * `blockquote::before` — 4px wide — and that rule beat this one, so the mask was there, correct,
+ * and painted into a 4px sliver. It is the same reason `document-column.css` is `!important`
+ * throughout: an engine styling a `::before` this file also needs.
+ */
+.ink-doc blockquote[data-alert]::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 13px !important;
+  /* Centred on the label's line box: the padding above it, plus half of what is left over between
+     that line and a 16px icon. Guessed at `0.75em` before, and it showed. */
+  top: calc(12px + (var(--ink-font-size, 16px) * 0.85 * 1.4 - 16px) / 2) !important;
+  bottom: auto !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 0 !important;
+  background-color: var(--ink-alert) !important;
+  -webkit-mask: var(--ink-alert-icon) center / 16px 16px no-repeat;
+  mask: var(--ink-alert-icon) center / 16px 16px no-repeat;
+}
+
+.ink-doc blockquote[data-alert="note"] {
+  --ink-alert-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.8h.01"/></svg>');
+}
+.ink-doc blockquote[data-alert="tip"] {
+  --ink-alert-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8a4.2 4.2 0 0 0-2.4 7.65c.4.3.65.75.65 1.25v.3h3.5v-.3c0-.5.25-.95.65-1.25A4.2 4.2 0 0 0 8 1.8z"/><path d="M6.6 13.2h2.8M7 14.6h2"/></svg>');
+}
+.ink-doc blockquote[data-alert="important"] {
+  --ink-alert-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.2" width="12" height="9.2" rx="1.6"/><path d="M5.4 11.4 5 14l3.4-2.6"/><path d="M8 4.8v2.8M8 9.4h.01"/></svg>');
+}
+.ink-doc blockquote[data-alert="warning"] {
+  --ink-alert-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7.13 2.6a1 1 0 0 1 1.74 0l5.1 9.1a1 1 0 0 1-.87 1.5H2.9a1 1 0 0 1-.87-1.5z"/><path d="M8 6.2v3M8 11.2h.01"/></svg>');
+}
+.ink-doc blockquote[data-alert="caution"] {
+  --ink-alert-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 1.8h4.8L14.2 5.6v4.8L10.4 14.2H5.6L1.8 10.4V5.6z"/><path d="M8 5v3.4M8 10.8h.01"/></svg>');
+}
+
+/*
+ * The marker line, which is the label and the syntax in one place.
+ *
+ * Collapsed to nothing and replaced by the type's name, rather than removed from the document:
+ * this is a rendering of text that is really there, and the text has to come back the moment the
+ * caret arrives — which is the rule this editor already follows for bold, code, headings, links
+ * and pictures.
+ */
+/*
+ * A block, not an inline run collapsed to nothing.
+ *
+ * As an inline it still opened a line box of its own — the label sat on it and the body was pushed
+ * a whole line further down, 30px of air nobody asked for. Measured at 97px of callout where 65
+ * was the arithmetic.
+ */
+.ink-doc blockquote[data-alert] .ink-alert-marker {
+  display: block;
+  /*
+   * The newline the marker carries is a space here, not a line.
+   *
+   * It has to be carried — hiding the marker alone leaves an empty first line — and this box is a
+   * block, so the body starts on its own line regardless. Left as `pre-wrap`, which is what one
+   * engine sets around it, that newline opened a line *inside* this box: the syntax, a blank line,
+   * then the body.
+   */
+  white-space: normal;
+  /* On the box, not on the label inside it: as the pseudo-element's own margin it went away with
+     the pseudo-element, and the callout lost 2px every time a caret entered one. */
+  margin-bottom: 2px;
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+}
+
+.ink-doc blockquote[data-alert] .ink-alert-marker::before {
+  display: block;
+  color: var(--ink-alert);
+  font-family: var(--ink-font-body);
+  font-size: calc(var(--ink-font-size, 16px) * 0.85);
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * One label, however many pieces the marker arrives in.
+ *
+ * A ProseMirror inline decoration applies to each inline node in its range, so the marker text and
+ * the break after it come out as two adjacent spans — the label, being a `::before`, was drawn
+ * twice, and the second span kept 6px of line to itself, which is where the two engines stopped
+ * agreeing on the height of a callout. The DOM half wraps both in one span and is unaffected.
+ */
+.ink-doc blockquote[data-alert] .ink-alert-marker + .ink-alert-marker {
+  display: none;
+}
+
+.ink-doc blockquote[data-alert="note"] .ink-alert-marker::before { content: "Note"; }
+.ink-doc blockquote[data-alert="tip"] .ink-alert-marker::before { content: "Tip"; }
+.ink-doc blockquote[data-alert="important"] .ink-alert-marker::before { content: "Important"; }
+.ink-doc blockquote[data-alert="warning"] .ink-alert-marker::before { content: "Warning"; }
+.ink-doc blockquote[data-alert="caution"] .ink-alert-marker::before { content: "Caution"; }
+
+/* The caret is in it: the syntax, in the type's colour. The icon and the rule do not move, so only
+   the first line's text changes and nothing jumps. */
+/*
+ * The label and the syntax are one slot, so they are one line box.
+ *
+ * Only the glyphs change: the same block, the same face, the same size, the same leading — so a
+ * callout is exactly as tall with the caret in it as without. Two mistakes were made here in one
+ * rule. `inherit` brought the syntax in at body size, and a monospace face brought it in with
+ * different metrics; between them a callout resized every time a caret entered one.
+ *
+ * One face and one size is also what Typora does, and what the other reveals in this editor already
+ * do — `marker-reveal.ts` colours the syntax and changes nothing else about it.
+ */
+.ink-doc blockquote[data-alert].ink-alert--open .ink-alert-marker {
+  font-size: calc(var(--ink-font-size, 16px) * 0.85);
+  line-height: 1.4;
+  color: var(--ink-alert);
+}
+
+.ink-doc blockquote[data-alert].ink-alert--open .ink-alert-marker::before {
+  content: none;
+}

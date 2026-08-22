@@ -1,0 +1,36 @@
+.ink-phonebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 12px;
+}
+
+/* A peer of the view group, not a smaller different thing beside it.
+   It was a 36px outlined pill against a 48px tray — two kinds of control in one bar, and under
+   the 44px this app holds every other touch target to. Same height, same tray, same weight. */
+.ink-phonebar-save {
+  /* 48px, not 44: the view group is a 44px button inside a 2px tray, so matching the floor rather
+     than the neighbour left them visibly different heights side by side. */
+  min-height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--ink-sidebar-hover);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink-fg-muted);
+  cursor: pointer;
+}
+
+/* The accent only when there is something to save — that is the one moment it is a button
+   rather than a label reporting the document's state. */
+.ink-phonebar-save:not(:disabled) {
+  color: var(--ink-link);
+}
+
+.ink-phonebar-save:disabled {
+  cursor: default;
+}

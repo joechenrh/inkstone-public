@@ -1,0 +1,8 @@
+node_modules
+dist
+public/vditor
+.git
+.superpowers
+test-results
+playwright-report
+*.log

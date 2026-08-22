@@ -1,0 +1,124 @@
+/* Sits over the editor column rather than replacing it: VditorEditor must stay mounted, because
+   tearing the Vditor instance down and rebuilding it on every open and close is expensive and
+   loses the editor's own state. The editor underneath is empty and disabled whenever this shows. */
+.ink-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--ink-bg);
+  z-index: 1;
+}
+
+.ink-empty-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ink-empty-eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-fg-muted);
+}
+
+.ink-empty-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ink-empty-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: var(--ink-tree-font-size, 14px);
+  color: var(--ink-fg);
+}
+
+.ink-empty-item:hover,
+.ink-empty-item:focus-visible {
+  background: var(--ink-sidebar-hover);
+  outline: none;
+}
+
+.ink-empty-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Pushed right and quieter: it disambiguates two notes with the same name, and is not what you
+   are scanning for. */
+.ink-empty-where {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--ink-fg-muted);
+}
+
+/* Borrowed from VSCode's welcome screen, where the wordmark is a watermark rather than a title:
+   large enough to hold the top of the column, faint enough that the first thing you actually read
+   is the first note in the list. Left-aligned with the rows, not centred over them — the column has
+   one edge and the mark shares it.
+
+   The heading face from the document, not the interface font: this is the one place the app signs
+   its name, and it should read like a title on the writing surface. */
+.ink-empty-mark {
+  font-family: "Source Han Serif CN", serif;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--ink-fg);
+  opacity: 0.09;
+  user-select: none;
+  margin-bottom: 2px;
+}
+
+/* An action reads as something you can do; a recent note reads as something that exists. The link
+   colour is the whole difference, since the two groups are otherwise the same row. */
+.ink-empty-action {
+  color: var(--ink-link);
+}
+
+/* The keys sit in the same right-hand slot the folder path uses, so the two groups line up down a
+   shared edge. */
+.ink-empty-where kbd {
+  font: inherit;
+  font-size: 11px;
+  border: 1px solid var(--ink-rule);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 3px;
+  color: var(--ink-fg-muted);
+}
+
+.ink-empty-line {
+  font-size: 13px;
+  color: var(--ink-fg-muted);
+  padding: 0 8px;
+}
+
+/* No keycaps where there is no keyboard. The rows stay — they are the actions — but a chip reading
+   ⌘⌥N on a phone is naming a key the device does not have, which is the same lie as naming one
+   that does nothing. */
+@media (pointer: coarse) {
+  .ink-empty-where kbd {
+    display: none;
+  }
+}

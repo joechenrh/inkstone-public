@@ -1,0 +1,1149 @@
+/* bitclean — converted from a Typora theme, then assembled by scripts/assemble-theme.mjs.
+ *
+ * Shell tokens are filled in from the theme's own resolved colours, so the sidebar and the
+ * page stay one surface. Everything below the marker is the standard finishing every
+ * conversion needs; see the script for why each line exists.
+ */
+:root[data-doc-theme="bitclean"] {
+  /* Shell tokens: the chrome takes the theme's own page. Nested under [data-theme] because
+     tokens.css declares the defaults at `:root[data-theme="dark"]` and a bare wrapper only ties. */
+  &[data-theme="light"] {
+    --ink-bg: #eff1f5;
+    --ink-fg: #4c4f69;
+    --ink-fg-muted: #6c6f85;
+    --ink-link: #1e66f5;
+    --ink-rule: #dce0e8;
+    --ink-code-bg: #e6e9ef;
+    --ink-sidebar-bg: #eff1f5;
+    --ink-sidebar-hover: #e6e9ef;
+    --ink-sidebar-active: #dce0e8;
+  }
+  &[data-theme="dark"] {
+    --ink-bg: #1e1e2e;
+    --ink-fg: #cdd6f4;
+    --ink-fg-muted: #a6adc8;
+    --ink-link: #89b4fa;
+    --ink-rule: #313244;
+    --ink-code-bg: #181825;
+    --ink-sidebar-bg: #1e1e2e;
+    --ink-sidebar-hover: #282839;
+    --ink-sidebar-active: #313244;
+  }
+
+
+  --bg-primary: #eff1f5;
+  --bg-secondary: #e6e9ef;
+  --bg-tertiary: #dce0e8;
+  --bg-code: #eff1f5;
+
+
+  --text-primary: #4c4f69;
+  --text-secondary: #5c5f77;
+  --text-muted: #9ca0b0;
+  --text-code: #4c4f69;
+
+
+  --accent-blue: #1e66f5;
+  --accent-teal: #179299;
+  --accent-purple: #8839ef;
+  --accent-orange: #fe640b;
+  --accent-green: #40a02b;
+  --accent-red: #d20f39;
+
+
+  --border-light: #dce0e8;
+  --border-medium: #ccd0da;
+  --border-dark: #bcc0cc;
+
+
+  --shadow-subtle: 0 1px 3px rgba(76, 79, 105, 0.08);
+  --shadow-medium: 0 2px 8px rgba(76, 79, 105, 0.12);
+
+
+  --bg-color: var(--bg-primary);
+  --text-color: var(--text-primary);
+  --md-char-color: var(--text-muted);
+  --meta-content-color: var(--accent-teal);
+  --primary-color: var(--accent-blue);
+  --primary-btn-border-color: var(--accent-blue);
+  --primary-btn-text-color: #eff1f5;
+  --window-border: 1px solid var(--border-light);
+  --active-file-bg-color: var(--bg-tertiary);
+  --active-file-text-color: var(--accent-blue);
+  --active-file-border-color: var(--accent-blue);
+  --side-bar-bg-color: var(--bg-secondary);
+  --item-hover-bg-color: var(--bg-tertiary);
+  --item-hover-text-color: var(--accent-blue);
+  --control-text-color: var(--text-secondary);
+  --control-text-hover-color: var(--accent-blue);
+  --search-select-bg-color: rgba(30, 102, 245, 0.15);
+  --rawblock-edit-panel-bd: rgba(76, 79, 105, 0.04);
+  --monospace: "JetBrains Mono", "JetBrains Mono NL", monospace;
+  --select-text-bg-color: rgba(30, 102, 245, 0.15);
+  .ink-doc.ink-doc.ink-doc {
+    font-size: 16px;
+  }
+
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", sans-serif;
+    font-weight: 400;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .ink-doc.ink-doc.ink-doc {
+    max-width: min(92%, 81rem);
+    padding: 3rem 2rem;
+    margin: 0 auto;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 2.5rem 0 0 0;
+    padding: 0;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 {
+    font-size: calc(var(--ink-font-size, 16px) * 2.2);
+    font-weight: 700;
+    color: rgba(30, 102, 245, 0.85);
+    margin: 3.5rem 0 0 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1:first-child {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 + h2,
+  .ink-doc.ink-doc.ink-doc h1 + h3,
+  .ink-doc.ink-doc.ink-doc h2 + h3,
+  .ink-doc.ink-doc.ink-doc h2 + h4,
+  .ink-doc.ink-doc.ink-doc h3 + h4,
+  .ink-doc.ink-doc.ink-doc h3 + h5,
+  .ink-doc.ink-doc.ink-doc h4 + h5,
+  .ink-doc.ink-doc.ink-doc h4 + h6,
+  .ink-doc.ink-doc.ink-doc h5 + h6 {
+    margin-top: 0.7rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.8);
+    font-weight: 600;
+    color: rgba(30, 102, 245, 0.65);
+    margin: 3rem 0 0 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.5);
+    font-weight: 500;
+    color: rgba(30, 102, 245, 0.45);
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.3);
+    color: var(--text-primary);
+  }
+
+  .ink-doc.ink-doc.ink-doc h5 {
+    font-size: calc(var(--ink-font-size, 16px) * 1.15);
+    color: var(--text-secondary);
+  }
+
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-size: calc(var(--ink-font-size, 16px) * 1);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ink-doc.ink-doc.ink-doc p {
+    margin: 0.8rem 0;
+    line-height: 1.8;
+  }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: var(--accent-blue);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .ink-doc.ink-doc.ink-doc a:hover,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link:hover {
+    color: var(--accent-teal);
+    border-bottom-color: var(--accent-teal);
+  }
+
+  .ink-doc.ink-doc.ink-doc strong,
+  .ink-doc.ink-doc.ink-doc b {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc em,
+  .ink-doc.ink-doc.ink-doc i {
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul,
+  .ink-doc.ink-doc.ink-doc ol {
+    padding-left: 2rem;
+    margin: 1.2rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul li,
+  .ink-doc.ink-doc.ink-doc ol li {
+    margin: 0.15rem 0;
+    line-height: 1.5;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul li::marker,
+    .ink-doc.ink-doc.ink-doc ul .list-item > .label-wrapper .label {
+    color: var(--accent-blue);
+  }
+
+  .ink-doc.ink-doc.ink-doc ol li::marker,
+    .ink-doc.ink-doc.ink-doc ol .list-item > .label-wrapper .label {
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul ul,
+  .ink-doc.ink-doc.ink-doc ol ol,
+  .ink-doc.ink-doc.ink-doc ul ol,
+  .ink-doc.ink-doc.ink-doc ol ul {
+    margin: 0.3rem 0;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+  .ink-doc.ink-doc.ink-doc code,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: #e6e9ef;
+    border: 1px solid rgba(76, 79, 105, 0.08);
+    color: var(--text-code);
+    font-family: var(--monospace);
+    font-size: calc(var(--ink-font-size, 16px) * 0.875);
+    border-radius: 6px;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    padding: 2rem;
+    margin: 2rem 0;
+    background: #e6e9ef;
+    border: 1px solid rgba(76, 79, 105, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    word-wrap: normal;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar {
+    height: 6px;
+    background: transparent;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb {
+    background: rgba(76, 79, 105, 0.15);
+    border-radius: 3px;
+  }
+
+  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb:hover {
+    background: rgba(76, 79, 105, 0.25);
+  }
+
+  .ink-doc.ink-doc.ink-doc code {
+    padding: 0.2em 0.5em;
+    font-size: calc(var(--ink-font-size, 16px) * 0.875);
+  }
+
+  .ink-doc.ink-doc.ink-doc p code,
+  .ink-doc.ink-doc.ink-doc li code {
+    background: #e6e9ef;
+    border: 1px solid rgba(76, 79, 105, 0.08);
+    color: var(--accent-purple);
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    border-left: 4px solid var(--accent-blue);
+    background: var(--bg-tertiary);
+    padding: 1rem 1.5rem;
+    /* 2rem upstream, which put 32px after a list against the 19px before it — leaving a list
+       felt like leaving a section. Matched to the theme's own paragraph rhythm instead. */
+    margin: 1.2rem 0;
+    color: var(--text-secondary);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote p {
+    margin: 0.5rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote p:first-child {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote p:last-child {
+    margin-bottom: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc hr {
+    border: none;
+    height: 1px;
+    background: var(--border-light);
+    margin: 3rem 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 + table,
+  .ink-doc.ink-doc.ink-doc h1 + pre,
+  .ink-doc.ink-doc.ink-doc h2 + table,
+  .ink-doc.ink-doc.ink-doc h2 + pre,
+  .ink-doc.ink-doc.ink-doc h3 + table,
+  .ink-doc.ink-doc.ink-doc h3 + pre,
+  .ink-doc.ink-doc.ink-doc h4 + table,
+  .ink-doc.ink-doc.ink-doc h4 + pre,
+  .ink-doc.ink-doc.ink-doc h1 + .milkdown-code-block,
+  .ink-doc.ink-doc.ink-doc h2 + .milkdown-code-block,
+  .ink-doc.ink-doc.ink-doc h3 + .milkdown-code-block,
+  .ink-doc.ink-doc.ink-doc h4 + .milkdown-code-block {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 2rem 0;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(76, 79, 105, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+  }
+
+  .ink-doc.ink-doc.ink-doc th,
+  .ink-doc.ink-doc.ink-doc td {
+    border: 1px solid rgba(76, 79, 105, 0.06);
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+
+  .ink-doc.ink-doc.ink-doc th {
+    background: rgba(255, 255, 255, 0.3);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc tr:nth-child(even) {
+    background: rgba(76, 79, 105, 0.03);
+  }
+
+  .ink-doc.ink-doc.ink-doc tr:hover {
+    background: rgba(76, 79, 105, 0.05);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::selection,
+  .ink-doc.ink-doc.ink-doc *::selection {
+    background: var(--search-select-bg-color);
+    color: var(--text-primary);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-moz-selection {
+    background: var(--search-select-bg-color);
+    color: var(--text-primary);
+  }
+
+  .ink-doc.ink-doc.ink-doc .task-list {
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc li {
+    padding-left: 1.5rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc li > input {
+    -webkit-appearance: none;
+    top: auto;
+    margin-right: 0.5rem;
+    margin-left: -1.5rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc li > input:before {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border-medium);
+    background: var(--bg-primary);
+    border-radius: 3px;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc li > input:checked:before {
+    content: "\2713";
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #eff1f5;
+    text-align: center;
+    line-height: 1rem;
+    font-size: calc(var(--ink-font-size, 16px) * 0.75);
+    font-weight: 700;
+  }
+
+  .ink-doc.ink-doc.ink-doc footer {
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 5px;
+  }
+
+  .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-dark);
+  }
+
+  .ink-doc.ink-doc.ink-doc .on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) * {
+    color: var(--text-muted) !important;
+    opacity: 0.5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .on-focus-mode .md-focus,
+  .ink-doc.ink-doc.ink-doc .on-focus-mode .md-focus-container {
+    color: var(--text-primary);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-header,
+  .ink-doc.ink-doc.ink-doc .cm-header {
+    color: #1e66f5;
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-link,
+  .ink-doc.ink-doc.ink-doc .cm-link {
+    color: #1e66f5;
+    text-decoration: underline;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-url {
+    color: #209fb5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-string,
+  .ink-doc.ink-doc.ink-doc .cm-string {
+    color: #40a02b;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-comment,
+  .ink-doc.ink-doc.ink-doc .cm-comment {
+    color: #9ca0b0;
+    font-style: italic;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-keyword,
+  .ink-doc.ink-doc.ink-doc .cm-keyword {
+    color: #8839ef;
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable,
+  .ink-doc.ink-doc.ink-doc .cm-variable {
+    color: #4c4f69;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-2 {
+    color: #d20f39;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-3,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-type {
+    color: #df8e1d;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-tag,
+  .ink-doc.ink-doc.ink-doc .cm-tag {
+    color: #1e66f5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-attribute,
+  .ink-doc.ink-doc.ink-doc .cm-attribute {
+    color: #df8e1d;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-number,
+  .ink-doc.ink-doc.ink-doc .cm-number {
+    color: #fe640b;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-operator,
+  .ink-doc.ink-doc.ink-doc .cm-operator {
+    color: #04a5e5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-def,
+  .ink-doc.ink-doc.ink-doc .cm-def {
+    color: #1e66f5;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-property,
+  .ink-doc.ink-doc.ink-doc .cm-property {
+    color: #179299;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-builtin,
+  .ink-doc.ink-doc.ink-doc .cm-builtin {
+    color: #d20f39;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-qualifier {
+    color: #df8e1d;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-atom {
+    color: #fe640b;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-meta {
+    color: #ea76cb;
+  }
+
+  .ink-doc.ink-doc.ink-doc mark {
+    background: rgba(223, 142, 29, 0.2);
+    color: var(--text-primary);
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+  }
+
+  .ink-doc.ink-doc.ink-doc .typora-node {
+    background: var(--bg-primary);
+  }
+
+
+
+  /* The upstream ships its dark side as a separate file, as Typora themes do. */
+  &[data-theme="dark"] {
+
+
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #181825;
+    --bg-tertiary: #313244;
+    --bg-code: #1e1e2e;
+
+
+    --text-primary: #cdd6f4;
+    --text-secondary: #bac2de;
+    --text-muted: #6c7086;
+    --text-code: #cdd6f4;
+
+
+    --accent-blue: #89b4fa;
+    --accent-teal: #94e2d5;
+    --accent-purple: #cba6f7;
+    --accent-orange: #fab387;
+    --accent-green: #a6e3a1;
+    --accent-red: #f38ba8;
+
+
+    --border-light: #313244;
+    --border-medium: #45475a;
+    --border-dark: #585b70;
+
+
+    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+
+    --bg-color: var(--bg-primary);
+    --text-color: var(--text-primary);
+    --md-char-color: var(--text-muted);
+    --meta-content-color: var(--accent-teal);
+    --primary-color: var(--accent-blue);
+    --primary-btn-border-color: var(--accent-blue);
+    --primary-btn-text-color: var(--bg-secondary);
+    --window-border: 1px solid var(--border-light);
+    --active-file-bg-color: var(--bg-tertiary);
+    --active-file-text-color: var(--accent-blue);
+    --active-file-border-color: var(--accent-blue);
+    --side-bar-bg-color: var(--bg-secondary);
+    --item-hover-bg-color: var(--bg-tertiary);
+    --item-hover-text-color: var(--accent-blue);
+    --control-text-color: var(--text-secondary);
+    --control-text-hover-color: var(--accent-blue);
+    --search-select-bg-color: rgba(137, 180, 250, 0.2);
+    --rawblock-edit-panel-bd: rgba(205, 214, 244, 0.04);
+    --monospace: 'JetBrains Mono', 'JetBrains Mono NL', monospace;
+    --select-text-bg-color: rgba(137, 180, 250, 0.2);
+    .ink-doc.ink-doc.ink-doc {
+      font-size: 16px;
+    }
+
+    .ink-doc.ink-doc.ink-doc,
+    .ink-doc.ink-doc.ink-doc {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      font-weight: 400;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .ink-doc.ink-doc.ink-doc {
+      max-width: min(92%, 81rem);
+      padding: 3rem 2rem;
+      margin: 0 auto;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1,
+    .ink-doc.ink-doc.ink-doc h2,
+    .ink-doc.ink-doc.ink-doc h3,
+    .ink-doc.ink-doc.ink-doc h4,
+    .ink-doc.ink-doc.ink-doc h5,
+    .ink-doc.ink-doc.ink-doc h6 {
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 2.5rem 0 0 0;
+      padding: 0;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1 {
+      font-size: calc(var(--ink-font-size, 16px) * 2.2);
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin: 3.5rem 0 0 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1:first-child {
+      margin-top: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1 + h2,
+    .ink-doc.ink-doc.ink-doc h1 + h3,
+    .ink-doc.ink-doc.ink-doc h2 + h3,
+    .ink-doc.ink-doc.ink-doc h2 + h4,
+    .ink-doc.ink-doc.ink-doc h3 + h4,
+    .ink-doc.ink-doc.ink-doc h3 + h5,
+    .ink-doc.ink-doc.ink-doc h4 + h5,
+    .ink-doc.ink-doc.ink-doc h4 + h6,
+    .ink-doc.ink-doc.ink-doc h5 + h6 {
+      margin-top: 0.7rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc h2 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.8);
+      font-weight: 600;
+      color: var(--accent-blue);
+      filter: brightness(0.85);
+      margin: 3rem 0 0 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc h3 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.5);
+      font-weight: 500;
+      color: var(--accent-blue);
+      filter: brightness(0.7);
+    }
+
+    .ink-doc.ink-doc.ink-doc h4 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.3);
+      color: var(--text-primary);
+    }
+
+    .ink-doc.ink-doc.ink-doc h5 {
+      font-size: calc(var(--ink-font-size, 16px) * 1.15);
+      color: var(--text-secondary);
+    }
+
+    .ink-doc.ink-doc.ink-doc h6 {
+      font-size: calc(var(--ink-font-size, 16px) * 1);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ink-doc.ink-doc.ink-doc p {
+      margin: 0.8rem 0;
+      line-height: 1.8;
+    }
+
+    .ink-doc.ink-doc.ink-doc a,
+
+    .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+      color: var(--accent-blue);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .ink-doc.ink-doc.ink-doc a:hover,
+
+    .ink-doc.ink-doc.ink-doc .vditor-ir__link:hover {
+      color: var(--accent-teal);
+      border-bottom-color: var(--accent-teal);
+    }
+
+    .ink-doc.ink-doc.ink-doc strong,
+    .ink-doc.ink-doc.ink-doc b {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc em,
+    .ink-doc.ink-doc.ink-doc i {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .ink-doc.ink-doc.ink-doc ul,
+    .ink-doc.ink-doc.ink-doc ol {
+      padding-left: 2rem;
+      margin: 1.2rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc ul li,
+    .ink-doc.ink-doc.ink-doc ol li {
+      margin: 0.15rem 0;
+      line-height: 1.5;
+    }
+
+    .ink-doc.ink-doc.ink-doc ul li::marker,
+      .ink-doc.ink-doc.ink-doc ul .list-item > .label-wrapper .label {
+      color: var(--accent-blue);
+    }
+
+    .ink-doc.ink-doc.ink-doc ol li::marker,
+      .ink-doc.ink-doc.ink-doc ol .list-item > .label-wrapper .label {
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc ul ul,
+    .ink-doc.ink-doc.ink-doc ol ol,
+    .ink-doc.ink-doc.ink-doc ul ol,
+    .ink-doc.ink-doc.ink-doc ol ul {
+      margin: 0.3rem 0;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+    .ink-doc.ink-doc.ink-doc code,
+    .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+      background: #181825;
+      border: 1px solid rgba(205, 214, 244, 0.06);
+      color: var(--text-code);
+      font-family: var(--monospace);
+      font-size: calc(var(--ink-font-size, 16px) * 0.875);
+      border-radius: 6px;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+    .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+      padding: 2rem;
+      margin: 2rem 0;
+      background: #181825;
+      border: 1px solid rgba(205, 214, 244, 0.06);
+      border-top: 1px solid rgba(205, 214, 244, 0.1);
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre;
+      word-wrap: normal;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar {
+      height: 6px;
+      background: transparent;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb {
+      background: rgba(205, 214, 244, 0.15);
+      border-radius: 3px;
+    }
+
+    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb:hover {
+      background: rgba(205, 214, 244, 0.25);
+    }
+
+    .ink-doc.ink-doc.ink-doc code {
+      padding: 0.2em 0.5em;
+      font-size: calc(var(--ink-font-size, 16px) * 0.875);
+    }
+
+    .ink-doc.ink-doc.ink-doc p code,
+    .ink-doc.ink-doc.ink-doc li code {
+      background: #181825;
+      border: 1px solid rgba(205, 214, 244, 0.06);
+      color: var(--accent-purple);
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote {
+      border-left: 4px solid var(--accent-blue);
+      background: var(--bg-tertiary);
+      padding: 1rem 1.5rem;
+      /* 2rem upstream, which put 32px after a list against the 19px before it — leaving a list
+       felt like leaving a section. Matched to the theme's own paragraph rhythm instead. */
+    margin: 1.2rem 0;
+      color: var(--text-secondary);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote p {
+      margin: 0.5rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote p:first-child {
+      margin-top: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc hr {
+      border: none;
+      height: 1px;
+      background: var(--border-light);
+      margin: 3rem 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc h1 + table,
+    .ink-doc.ink-doc.ink-doc h1 + pre,
+    .ink-doc.ink-doc.ink-doc h2 + table,
+    .ink-doc.ink-doc.ink-doc h2 + pre,
+    .ink-doc.ink-doc.ink-doc h3 + table,
+    .ink-doc.ink-doc.ink-doc h3 + pre,
+    .ink-doc.ink-doc.ink-doc h4 + table,
+    .ink-doc.ink-doc.ink-doc h4 + pre,
+    .ink-doc.ink-doc.ink-doc h1 + .milkdown-code-block,
+    .ink-doc.ink-doc.ink-doc h2 + .milkdown-code-block,
+    .ink-doc.ink-doc.ink-doc h3 + .milkdown-code-block,
+    .ink-doc.ink-doc.ink-doc h4 + .milkdown-code-block {
+      margin-top: 0;
+    }
+
+    .ink-doc.ink-doc.ink-doc table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1rem 0 2rem 0;
+      background: rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(205, 214, 244, 0.06);
+      border-top: 1px solid rgba(205, 214, 244, 0.1);
+      border-radius: 6px;
+    }
+
+    .ink-doc.ink-doc.ink-doc th,
+    .ink-doc.ink-doc.ink-doc td {
+      border: 1px solid rgba(205, 214, 244, 0.03);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    .ink-doc.ink-doc.ink-doc th {
+      background: rgba(0, 0, 0, 0.1);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc tr:nth-child(even) {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .ink-doc.ink-doc.ink-doc tr:hover {
+      background: rgba(137, 180, 250, 0.05);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::selection,
+    .ink-doc.ink-doc.ink-doc *::selection {
+      background: var(--search-select-bg-color);
+      color: var(--text-primary);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-moz-selection {
+      background: var(--search-select-bg-color);
+      color: var(--text-primary);
+    }
+
+    .ink-doc.ink-doc.ink-doc .task-list {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .ink-doc.ink-doc.ink-doc li {
+      padding-left: 1.5rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc li > input {
+      -webkit-appearance: none;
+      top: auto;
+      margin-right: 0.5rem;
+      margin-left: -1.5rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc li > input:before {
+      content: '';
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid var(--border-medium);
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    .ink-doc.ink-doc.ink-doc li > input:checked:before {
+      content: '\2713';
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: var(--bg-secondary);
+      text-align: center;
+      line-height: 1rem;
+      font-size: calc(var(--ink-font-size, 16px) * 0.75);
+      font-weight: 700;
+    }
+
+    .ink-doc.ink-doc.ink-doc footer {
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 5px;
+    }
+
+    .ink-doc.ink-doc.ink-doc ::-webkit-scrollbar-thumb:hover {
+      background: var(--border-dark);
+    }
+
+    .ink-doc.ink-doc.ink-doc .on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) * {
+      color: var(--text-muted) !important;
+      opacity: 0.5;
+    }
+
+    .ink-doc.ink-doc.ink-doc .on-focus-mode .md-focus,
+    .ink-doc.ink-doc.ink-doc .on-focus-mode .md-focus-container {
+      color: var(--text-primary);
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-header,
+    .ink-doc.ink-doc.ink-doc .cm-header {
+      color: #89b4fa;
+      font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-link,
+    .ink-doc.ink-doc.ink-doc .cm-link {
+      color: #89b4fa;
+      text-decoration: underline;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-url {
+      color: #74c7ec;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-string,
+    .ink-doc.ink-doc.ink-doc .cm-string {
+      color: #a6e3a1;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-comment,
+    .ink-doc.ink-doc.ink-doc .cm-comment {
+      color: #6c7086;
+      font-style: italic;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-keyword,
+    .ink-doc.ink-doc.ink-doc .cm-keyword {
+      color: #cba6f7;
+      font-weight: 600;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable,
+    .ink-doc.ink-doc.ink-doc .cm-variable {
+      color: #cdd6f4;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-2 {
+      color: #f38ba8;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-variable-3,
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-type {
+      color: #f9e2af;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-tag,
+    .ink-doc.ink-doc.ink-doc .cm-tag {
+      color: #89b4fa;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-attribute,
+    .ink-doc.ink-doc.ink-doc .cm-attribute {
+      color: #f9e2af;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-number,
+    .ink-doc.ink-doc.ink-doc .cm-number {
+      color: #fab387;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-operator,
+    .ink-doc.ink-doc.ink-doc .cm-operator {
+      color: #89dceb;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-def,
+    .ink-doc.ink-doc.ink-doc .cm-def {
+      color: #89b4fa;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-property,
+    .ink-doc.ink-doc.ink-doc .cm-property {
+      color: #94e2d5;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-builtin,
+    .ink-doc.ink-doc.ink-doc .cm-builtin {
+      color: #f38ba8;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-qualifier {
+      color: #f9e2af;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-atom {
+      color: #fab387;
+    }
+
+    .ink-doc.ink-doc.ink-doc .cm-s-inner .cm-meta {
+      color: #f5c2e7;
+    }
+
+    .ink-doc.ink-doc.ink-doc mark {
+      background: rgba(249, 226, 175, 0.25);
+      color: var(--text-primary);
+      padding: 0.1rem 0.3rem;
+      border-radius: 2px;
+    }
+
+    .ink-doc.ink-doc.ink-doc .typora-node {
+      background: var(--bg-primary);
+    }
+
+
+  }
+
+  /* ---- standard finishing ---- */
+
+  .ink-editor .ink-doc.ink-doc.ink-doc {
+    /* The setting names the body size in every theme; upstream always sets its own. */
+    font-size: var(--ink-font-size, 16px);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  &[data-theme="dark"] .ink-editor .ink-doc.ink-doc.ink-doc {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+
+  /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
+     which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
+     block takes the theme's own code surface, which its shell tokens already declare. */
+  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--ink-code-bg);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  /* The block's box belongs to the <pre>, so the <code> inside it carries none of its own. */
+  .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* ---- corrections, applied by hand after rendering ----
+   *
+   * Vditor makes tables `display: block` so a wide one can scroll, which leaves the box filling the
+   * column while the rows shrink to their content. This theme paints the table itself, so the
+   * difference showed as a ~400px strip of colour beside it. Sizing the box to its content puts the
+   * fill back under the table; max-width keeps the scrolling that display:block was for.
+   *
+   * The rounded table border also had square cell borders running into it, so the grid lines were
+   * clipped part-way round the curve and left a notch at the corners. The perimeter belongs to the
+   * table's own border; the cells keep only the lines between them. */
+  .ink-editor .ink-doc.ink-doc.ink-doc table {
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:first-child > * { border-top: none; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:last-child > * { border-bottom: none; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr > *:first-child { border-left: none; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr > *:last-child { border-right: none; }
+
+  /* Removing the perimeter borders was not enough: the corner cells still paint a square fill over
+     the table's rounded corner. They carry its radius so the fill stops where the border does. */
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:first-child > *:first-child { border-top-left-radius: 6px; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:first-child > *:last-child { border-top-right-radius: 6px; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:last-child > *:first-child { border-bottom-left-radius: 6px; }
+  .ink-editor .ink-doc.ink-doc.ink-doc table tr:last-child > *:last-child { border-bottom-right-radius: 6px; }
+}

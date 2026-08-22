@@ -1,0 +1,65 @@
+/* The line under a pasted picture.
+ *
+ * It was plain text laid over the document, which put grey-on-grey words on whatever colour the
+ * picture happened to be — unreadable on a screenshot, and looking like part of the note rather
+ * than a passing remark about it. It is a pill now, in the same language as `.ink-gitnotice`: the
+ * one other transient thing in this application that appears, says what just happened, and goes.
+ *
+ * An overlay in `.ink-editor-stack`, in the coordinates the table bar uses — see `table.css`.
+ */
+
+.ink-paste-line {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  /* Hugging its own text: a full-width bar would read as a section of the note. */
+  width: max-content;
+  max-width: 100%;
+  gap: 7px;
+  margin-top: 6px;
+  padding: 6px 11px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--ink-fg);
+  color: var(--ink-bg);
+  font-family: var(--ink-font-body);
+  font-size: 12.5px;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
+  /* It is a remark, not a control. Clicks belong to the document underneath. */
+  pointer-events: none;
+  animation: ink-paste-in 140ms ease-out;
+}
+
+@keyframes ink-paste-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-paste-line { animation: none; }
+}
+
+/* The verb: what was done to the file, which is the reader's actual question. */
+.ink-paste-head {
+  flex: none;
+  font-weight: 600;
+}
+
+.ink-paste-detail {
+  min-width: 0;
+  overflow: hidden;
+  /* The same ink, stepped back — a second colour on a dark pill this small reads as two messages. */
+  opacity: 0.72;
+  text-overflow: ellipsis;
+}
+
+/* A refusal is the one state that has to be read rather than glanced at, so it is the one that
+   changes colour rather than merely wording. */
+.ink-paste-line--refused {
+  background: var(--ink-danger);
+  color: #ffffff;
+}

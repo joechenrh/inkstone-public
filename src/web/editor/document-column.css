@@ -1,0 +1,104 @@
+/*
+ * Where the text sits on the page — one rule, for whichever editor is mounted.
+ *
+ * **The measure is fixed and the left edge is fixed.** 750px of text, starting one gutter in from
+ * whatever is to its left — the sidebar, or the window. A side panel takes room from the margin
+ * first and from the text only when the margin has run out, which is why the same note wraps the
+ * same way on a laptop and on an external monitor, and why opening the drawer on a large screen
+ * costs nothing at all.
+ *
+ * Before this the drawer's 320px was reserved *unconditionally*, so that opening it could never
+ * move the text. The bill for that was paid entirely by the smaller screen: a 1280 laptop had 588px
+ * of text and 320px held empty for a panel that was not open.
+ *
+ * This was written twice, once per editor shell, and the two copies said different things: the
+ * Vditor column reserved the drawer's width and carried a 40px writing margin, the Crepe column was
+ * plainly centred. In the same window that is a 588px column against an 860px one, and it is not a
+ * small difference — every paragraph in a note wraps at a different place, so *every* block is a
+ * different height. Measured across the vault it was the single largest source of disagreement
+ * between the two renderings, and most of the rest were its consequences.
+ *
+ * So the geometry belongs to the document rather than to an engine. Both editors put `.ink-doc` on
+ * the element they scroll, which is exactly the element this describes.
+ *
+ * `!important` throughout, for a reason each engine supplies independently: in IR mode Vditor sets
+ * `padding` **inline** on the scroller, which only an author `!important` can override, and Crepe's
+ * theme sets its own measure. Beneath that, several document themes set `width` or `max-width`
+ * themselves — Forest asks for `width: 90%` — so both are pinned, not just `max-width`. Overriding
+ * one and not the other left Forest's own width in force and the column came out a third of its
+ * size, wrapping the title.
+ *
+ * The bottom `40vh` lets the last line scroll to the middle of the viewport, Typora-style.
+ */
+.ink-editor .ink-doc {
+  /*
+   * The left edge is fixed, and everything else gives way to it.
+   *
+   * `56px` is the floor the heading markers live in: Vditor floats `##` into this gutter with a
+   * negative margin, and Lapis's h2 pill overhangs its text column by a further 12.5px in both
+   * engines. At 40px the pill started 6px outside the scroller and was clipped by the pane edge.
+   */
+  --ink-gutter: 56px;
+  /* What the drawer is taking, which is nothing at all while it is shut. */
+  --ink-reserved: 0px;
+
+  max-width: none !important;
+  width: auto !important;
+  margin: 0 !important;
+
+  /*
+   * The padding is the gutter and the drawer, and nothing else. The last line scrolls to the
+   * middle of the viewport, Typora-style.
+   */
+  padding:
+    32px
+    calc(var(--ink-gutter) + var(--ink-reserved))
+    40vh
+    var(--ink-gutter) !important;
+
+  /* The drawer's own slide, so the text reads as making room rather than jumping. */
+  transition: padding-right 0.18s ease;
+}
+
+/*
+ * The measure, and what happens when there is not room for it.
+ *
+ * Capping the blocks rather than computing a padding around them. The obvious version —
+ * `padding-right: max(gutter + drawer, 100% - gutter - measure)` — is wrong in a way that only
+ * shows up in a real browser: a percentage padding resolves against the *containing block*, and
+ * here that box is 8.8px narrower than the scroller itself, so every note came out 8.8px wide of
+ * its own measure. There is no unit for "my own content width", and there does not need to be.
+ *
+ * A block is left-aligned in its parent's content box by definition, which is the whole of the
+ * left-anchoring: the text starts one gutter in from whatever is beside it and stays there. And
+ * the compression falls out — when the drawer's reservation leaves less than the measure, the
+ * blocks simply have less room and take it.
+ */
+.ink-editor .ink-doc > * {
+  max-width: var(--ink-content-width) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-editor .ink-doc { transition: none; }
+}
+
+/* Open, and taking room from the margin. The drawer floats — it is `position: absolute` and takes
+   no space in the grid — so without this the text would simply be underneath it. */
+.ink-center--drawer .ink-editor .ink-doc {
+  --ink-reserved: var(--ink-right-width);
+}
+
+/* On a phone the column is the screen.
+ *
+ * The reservation above is 320px of drawer plus a 56px gutter on each side, which at 390px of
+ * viewport leaves the text a negative width — measured, the document came out 432px wide inside a
+ * 390px screen and scrolled sideways, with the text squeezed to nothing. The drawer is not a
+ * floating panel at this size and there is no second column to keep clear of.
+ *
+ * This lived in the Vditor shell and so applied to one engine, which is why only one of them was
+ * usable on a phone. */
+@media (max-width: 719px) {
+  .ink-editor .ink-doc {
+    padding: 16px 16px 30vh !important;
+  }
+}

@@ -1,0 +1,65 @@
+import { useLayoutEffect, useRef } from 'preact/hooks'
+import { content, editContent } from '../state/document.js'
+import { readOnly } from '../state/settings.js'
+import './source.css'
+
+/**
+ * The raw markdown, for the edits the renderer is in the way of.
+ *
+ * A plain `<textarea>`, deliberately. Selection, undo, IME composition, find-in-page and every
+ * accessibility affordance are the browser's to get right, and this is the one view whose whole
+ * purpose is being trusted with the exact bytes — a hand-built editor would have to re-earn all of
+ * it. The alternative that looked free, a highlighted layer behind a transparent textarea, needs
+ * two elements to wrap and measure identically forever; one CJK line or one font fallback slides
+ * the highlight off the text.
+ *
+ * Rendered over the editor column rather than instead of it, so VditorEditor stays mounted: it is
+ * expensive to rebuild and it holds its own state. It does not re-render while this is open.
+ */
+export function SourceEditor() {
+  const areaRef = useRef<HTMLTextAreaElement>(null)
+  const gutterRef = useRef<HTMLDivElement>(null)
+  const text = content.value
+
+  // Focus on open, and put the caret at the start rather than selecting the document — this mode
+  // is entered to change one thing, not to replace everything.
+  useLayoutEffect(() => {
+    const area = areaRef.current
+    if (!area || readOnly.value) return
+    area.focus()
+    area.setSelectionRange(0, 0)
+    // Focusing a textarea leaves it scrolled wherever the browser last had it — measured 346px
+    // into a document whose caret was at character 0.
+    area.scrollTop = 0
+    if (gutterRef.current) gutterRef.current.scrollTop = 0
+  }, [])
+
+  // The gutter is a separate element, so it has to be scrolled by hand. Line numbers count
+  // *lines*, not visual rows: a wrapped line is still one line, which is what a line number means
+  // and what an error message would quote.
+  const syncScroll = () => {
+    if (gutterRef.current && areaRef.current) {
+      gutterRef.current.scrollTop = areaRef.current.scrollTop
+    }
+  }
+
+  const lines = text.split('\n')
+
+  return (
+    <div class="ink-source" role="region" aria-label="Markdown source">
+      <div class="ink-source-gutter" ref={gutterRef} aria-hidden="true">
+        {lines.map((_, i) => <div key={i}>{i + 1}</div>)}
+      </div>
+      <textarea
+        ref={areaRef}
+        class="ink-source-area"
+        aria-label="Markdown source"
+        spellcheck={false}
+        readOnly={readOnly.value}
+        value={text}
+        onScroll={syncScroll}
+        onInput={(e) => { editContent((e.target as HTMLTextAreaElement).value) }}
+      />
+    </div>
+  )
+}

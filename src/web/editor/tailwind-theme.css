@@ -1,0 +1,1193 @@
+/* tailwind — converted from a Typora theme, then assembled by scripts/assemble-theme.mjs.
+ *
+ * Shell tokens are filled in from the theme's own resolved colours, so the sidebar and the
+ * page stay one surface. Everything below the marker is the standard finishing every
+ * conversion needs; see the script for why each line exists.
+ */
+:root[data-doc-theme="tailwind"] {
+  /* Shell tokens: the chrome takes the theme's own page. Nested under [data-theme] because
+     tokens.css declares the defaults at `:root[data-theme="dark"]` and a bare wrapper only ties. */
+  &[data-theme="light"] {
+    --ink-bg: #ffffff;
+    --ink-fg: #334155;
+    --ink-fg-muted: #64748b;
+    --ink-link: #0f172a;
+    --ink-rule: #e2e8f0;
+    --ink-code-bg: #1e293b;
+    --ink-sidebar-bg: #ffffff;
+    --ink-sidebar-hover: #f1f5f9;
+    --ink-sidebar-active: #e2e8f0;
+  }
+  &[data-theme="dark"] {
+    --ink-bg: #0f172a;
+    --ink-fg: #cbd5e1;
+    --ink-fg-muted: #94a3b8;
+    --ink-link: #e2e8f0;
+    --ink-rule: #1e293b;
+    --ink-code-bg: #1e293b;
+    --ink-sidebar-bg: #0f172a;
+    --ink-sidebar-hover: #1e293b;
+    --ink-sidebar-active: #263449;
+  }
+
+
+  --theme-0: #fff;
+
+
+  --theme-50: #f8fafc;
+  --theme-100: #f1f5f9;
+  --theme-200: #e2e8f0;
+  --theme-300: #cbd5e1;
+  --theme-400: #94a3b8;
+  --theme-500: #64748b;
+  --theme-600: #475569;
+  --theme-700: #334155;
+  --theme-800: #1e293b;
+  --theme-900: #0f172a;
+
+
+  --sky-50: #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+  --sky-800: #075985;
+  --sky-900: #0c4a6e;
+  --sky-950: #082f49;
+  --sky-975: #012438;
+
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+  --green-950: #052e16;
+  --green-975: #18211c;
+
+  --indigo-50: #eef2ff;
+  --indigo-100: #e0e7ff;
+  --indigo-200: #c7d2fe;
+  --indigo-300: #a5b4fc;
+  --indigo-400: #818cf8;
+  --indigo-500: #6366f1;
+  --indigo-600: #4f46e5;
+  --indigo-700: #4338ca;
+  --indigo-800: #3730a3;
+  --indigo-900: #312e81;
+  --indigo-950: #1e1b4b;
+  --indigo-975: #01123b;
+
+  --yellow-50: #fefce8;
+  --yellow-100: #fef9c3;
+  --yellow-200: #fef08a;
+  --yellow-300: #fde047;
+  --yellow-400: #facc15;
+  --yellow-500: #eab308;
+  --yellow-600: #ca8a04;
+  --yellow-700: #a16207;
+  --yellow-800: #854d0e;
+  --yellow-900: #713f12;
+  --yellow-950: #422006;
+  --yellow-975: #1f1f10;
+
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+  --red-950: #450a0a;
+  --red-975: #291a1a;
+
+
+  --tw-primary: var(--sky-300);
+
+  --tw-prose-body: var(--theme-700);
+  --tw-prose-headings: var(--theme-900);
+  --tw-prose-lead: var(--theme-600);
+  --tw-prose-links: var(--theme-900);
+  --tw-prose-bold: var(--theme-900);
+  --tw-prose-counters: var(--theme-500);
+  --tw-prose-bullets: var(--theme-300);
+  --tw-prose-hr: var(--theme-200);
+  --tw-prose-quotes: var(--theme-900);
+  --tw-prose-quote-borders: var(--theme-200);
+  --tw-prose-captions: var(--theme-500);
+  --tw-prose-code: var(--theme-900);
+  --tw-prose-pre-code: var(--theme-100);
+  --tw-prose-pre-bg: var(--theme-800);
+  --tw-prose-th-borders: var(--theme-300);
+  --tw-prose-td-borders: var(--theme-200);
+  --tw-prose-bg: var(--theme-0);
+  --tw-prose-meta: var(--theme-500);
+  --tw-prose-meta-bg: var(--theme-100);
+
+  --tw-prose-invert-body: var(--theme-300);
+  --tw-prose-invert-headings: var(--theme-0);
+  --tw-prose-invert-lead: var(--theme-400);
+  --tw-prose-invert-links: var(--theme-0);
+  --tw-prose-invert-bold: var(--theme-0);
+  --tw-prose-invert-counters: var(--theme-400);
+  --tw-prose-invert-bullets: var(--theme-600);
+  --tw-prose-invert-hr: var(--theme-700);
+  --tw-prose-invert-quotes: var(--theme-100);
+  --tw-prose-invert-quote-borders: var(--theme-700);
+  --tw-prose-invert-captions: var(--theme-400);
+  --tw-prose-invert-code: var(--theme-0);
+  --tw-prose-invert-pre-bg: var(--theme-900);
+  --tw-prose-invert-th-borders: var(--theme-600);
+  --tw-prose-invert-td-borders: var(--theme-700);
+  --tw-prose-invert-bg: var(--theme-900);
+  --tw-prose-invert-meta: var(--theme-400);
+  --tw-prose-invert-meta-bg: var(--theme-700);
+
+  --tw-highlight-color: var(--yellow-300);
+  --tw-drop-shadow-md: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07))
+  drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+  --tw-button-hover-bg: var(--theme-100);
+
+  --tw-button-hover-bg-inverted: var(--theme-700);
+
+
+
+  --select-text-bg-color: #7dd3fc80;
+  --select-text-bg-color-dark: #0ea5e980;
+  --select-text-font-color: var(--theme-900);
+  --select-text-font-color-dark: var(--theme-50);
+
+  --background: var(--tw-prose-bg);
+  --bg-color: var(--tw-prose-bg);
+  --text-color: var(--tw-prose-body);
+  --primary-color: var(--tw-primary);
+  --md-char-color: var(--theme-400);
+  --meta-content-color: var(--theme-500);
+  --typora-source-body: var(--theme-800);
+  --heading-char-color: var(--md-char-color);
+  --mermaid-theme: neutral;
+  --active-toggle-btn-color: var(--theme-200);
+
+  --md-char-color-inverted: var(--theme-500);
+  --meta-content-color-inverted: var(--theme-400);
+  --typora-source-body-inverted: var(--theme-300);
+  --mermaid-theme-inverted: dark;
+  --active-toggle-btn-color-inverted: var(--theme-400);
+
+
+  --side-bar-bg-color: var(--tw-prose-bg);
+  --active-file-bg-color: var(--theme-100);
+  --active-file-text-color: var(--tw-prose-bold);
+  --active-file-border-color: var(--theme-100);
+  --panel-border-color: var(--theme-300);
+  --blur-text-color: var(--theme-300);
+  --window-border: 1px solid var(--theme-200);
+  --item-hover-bg-color: var(--theme-100);
+  --search-hit-text-bg-color: var(--theme-200);
+  --search-hit-text-font-color: inherit;
+  --search-select-text-color: var(--select-text-font-color);
+  --search-select-bg-color: var(--select-text-bg-color);
+
+  --blur-text-color-inverted: var(--theme-500);
+  --panel-border-color-inverted: var(--theme-700);
+  --active-file-bg-color-inverted: var(--theme-700);
+  --window-border-inverted: 1px solid var(--theme-700);
+  --search-hit-text-bg-color-inverted: var(--theme-700);
+  --search-hit-text-font-color-inverted: var(--theme-0);
+  --search-select-bg-color-inverted: var(--theme-400);
+  --rawblock-edit-panel-bd: var(--tw-prose-pre-bg);
+  --item-hover-bg-color-inverted: var(--theme-700);
+
+  --monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+  "Liberation Mono", "Courier New", monospace;
+
+
+  --footnote: var(--tw-prose-body);
+
+  --footnote-bg: #94a3b855;
+  --button-bg: var(--theme-200);
+
+  --button-bg-inverted: var(--theme-600);
+
+  --md-grid-header: var(--theme-100);
+  --md-grid-header-ext: var(--theme-400);
+  --md-grid-ext: var(--theme-300);
+  --md-grid-header-active: var(--theme-500);
+  --md-grid-active: var(--theme-400);
+  --md-grid-border-color: var(--theme-500);
+
+  --md-grid-header-inverted: var(--theme-600);
+  --md-grid-header-ext-inverted: var(--theme-500);
+  --md-grid-ext-inverted: var(--theme-600);
+  --md-grid-header-active-inverted: var(--theme-400);
+  --md-grid-active-inverted: var(--theme-500);
+  --md-grid-border-color-inverted: var(--theme-200);
+
+  --code-blocks-font-size: 0.9em;
+  --inline-code-font-size: 0.9em;
+
+  --alert-heading: var(--theme-800);
+  --alert-heading-inverted: var(--theme-200);
+  --code-neutral: var(--theme-800);
+  --code-cursor: var(--theme-900);
+  --code-string: rgb(14, 165, 233);
+  --code-number: rgb(245, 158, 11);
+  --code-tag: rgb(236, 72, 153);
+  --code-variable: var(--theme-700);
+  --code-operator: var(--theme-600);
+  --code-comment: var(--theme-500);
+  --code-bracket: var(--theme-500);
+  --code-citation: var(--theme-500);
+
+  --code-neutral-inverted: var(--theme-100);
+  --code-cursor-inverted: var(--theme-50);
+  --code-string-inverted: #7dd4fc;
+  --code-number-inverted: #fde68a;
+  --code-tag-inverted: #f472b5;
+  --code-variable-inverted: var(--theme-200);
+  --code-operator-inverted: var(--theme-400);
+  --code-comment-inverted: var(--theme-400);
+  --code-bracket-inverted: var(--theme-500);
+  --code-citation-inverted: var(--theme-400);
+  .ink-doc.ink-doc.ink-doc .md-alert {
+    --tw-prose-invert-bg: var(--theme-975);
+    --tw-prose-body: var(--theme-900);
+    --tw-prose-invert-body: var(--theme-200);
+    --tw-prose-bullets: var(--theme-400);
+    --tw-prose-quote-borders: var(--theme-400);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-note {
+    --theme-0: var(--sky-50);
+    --theme-50: var(--sky-50);
+    --theme-100: var(--sky-100);
+    --theme-200: var(--sky-200);
+    --theme-300: var(--sky-300);
+    --theme-400: var(--sky-400);
+    --theme-500: var(--sky-500);
+    --theme-600: var(--sky-600);
+    --theme-700: var(--sky-700);
+    --theme-800: var(--sky-800);
+    --theme-900: var(--sky-900);
+    --theme-950: var(--sky-950);
+    --theme-975: var(--sky-975);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-tip {
+    --theme-0: var(--green-50);
+    --theme-50: var(--green-50);
+    --theme-100: var(--green-100);
+    --theme-200: var(--green-200);
+    --theme-300: var(--green-300);
+    --theme-400: var(--green-400);
+    --theme-500: var(--green-500);
+    --theme-600: var(--green-600);
+    --theme-700: var(--green-700);
+    --theme-800: var(--green-800);
+    --theme-900: var(--green-900);
+    --theme-950: var(--green-950);
+    --theme-975: var(--green-975);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-important {
+    --theme-0: var(--indigo-50);
+    --theme-50: var(--indigo-50);
+    --theme-100: var(--indigo-100);
+    --theme-200: var(--indigo-200);
+    --theme-300: var(--indigo-300);
+    --theme-400: var(--indigo-400);
+    --theme-500: var(--indigo-500);
+    --theme-600: var(--indigo-600);
+    --theme-700: var(--indigo-700);
+    --theme-800: var(--indigo-800);
+    --theme-900: var(--indigo-900);
+    --theme-950: var(--indigo-950);
+    --theme-975: var(--indigo-975);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-warning {
+    --theme-0: var(--yellow-50);
+    --theme-50: var(--yellow-50);
+    --theme-100: var(--yellow-100);
+    --theme-200: var(--yellow-200);
+    --theme-300: var(--yellow-300);
+    --theme-400: var(--yellow-400);
+    --theme-500: var(--yellow-500);
+    --theme-600: var(--yellow-600);
+    --theme-700: var(--yellow-700);
+    --theme-800: var(--yellow-800);
+    --theme-900: var(--yellow-900);
+    --theme-950: var(--yellow-950);
+    --theme-975: var(--yellow-975);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert.md-alert-caution {
+    --theme-0: var(--red-50);
+    --theme-50: var(--red-50);
+    --theme-100: var(--red-100);
+    --theme-200: var(--red-200);
+    --theme-300: var(--red-300);
+    --theme-400: var(--red-400);
+    --theme-500: var(--red-500);
+    --theme-600: var(--red-600);
+    --theme-700: var(--red-700);
+    --theme-800: var(--red-800);
+    --theme-900: var(--red-900);
+    --theme-950: var(--red-950);
+    --theme-975: var(--red-975);
+  }
+
+  .ink-doc.ink-doc.ink-doc *,
+  .ink-doc.ink-doc.ink-doc ::before,
+  .ink-doc.ink-doc.ink-doc ::after {
+    box-sizing: border-box;
+
+    border-width: 0;
+
+    border-style: solid;
+
+    border-color: currentColor;
+  }
+
+  .ink-doc.ink-doc.ink-doc ::before,
+  .ink-doc.ink-doc.ink-doc ::after {
+    --tw-content: "";
+  }
+
+  .ink-doc.ink-doc.ink-doc #text {
+    line-height: 1.5;
+
+    -webkit-text-size-adjust: 100%;
+
+    -moz-tab-size: 4;
+
+    -o-tab-size: 4;
+    tab-size: 4;
+  }
+
+  .ink-doc.ink-doc.ink-doc #text {
+    margin: 0;
+
+    line-height: inherit;
+  }
+
+  .ink-doc.ink-doc.ink-doc hr {
+    height: 0;
+
+    color: inherit;
+
+    border-top-width: 1px;
+  }
+
+  .ink-doc.ink-doc.ink-doc abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  .ink-doc.ink-doc.ink-doc b,
+  .ink-doc.ink-doc.ink-doc strong {
+    font-weight: bolder;
+  }
+
+  .ink-doc.ink-doc.ink-doc code,
+  .ink-doc.ink-doc.ink-doc kbd,
+  .ink-doc.ink-doc.ink-doc samp,
+  .ink-doc.ink-doc.ink-doc pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    font-family: var(--monospace);
+
+    font-size: 1em;
+  }
+
+  .ink-doc.ink-doc.ink-doc small {
+    font-size: 80%;
+  }
+
+  .ink-doc.ink-doc.ink-doc sub,
+  .ink-doc.ink-doc.ink-doc sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+
+  .ink-doc.ink-doc.ink-doc sub {
+    bottom: -0.25em;
+  }
+
+  .ink-doc.ink-doc.ink-doc sup {
+    top: -0.5em;
+  }
+
+  .ink-doc.ink-doc.ink-doc table {
+    text-indent: 0;
+
+    border-color: inherit;
+
+    border-collapse: collapse;
+  }
+
+  .ink-doc.ink-doc.ink-doc button,
+  .ink-doc.ink-doc.ink-doc input,
+  .ink-doc.ink-doc.ink-doc optgroup,
+  .ink-doc.ink-doc.ink-doc select,
+  .ink-doc.ink-doc.ink-doc textarea {
+    font-family: inherit;
+
+    font-size: 100%;
+
+    line-height: inherit;
+
+    color: inherit;
+
+    margin: 0;
+
+    padding: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote,
+  .ink-doc.ink-doc.ink-doc dl,
+  .ink-doc.ink-doc.ink-doc dd,
+  .ink-doc.ink-doc.ink-doc h1,
+  .ink-doc.ink-doc.ink-doc h2,
+  .ink-doc.ink-doc.ink-doc h3,
+  .ink-doc.ink-doc.ink-doc h4,
+  .ink-doc.ink-doc.ink-doc h5,
+  .ink-doc.ink-doc.ink-doc h6,
+  .ink-doc.ink-doc.ink-doc hr,
+  .ink-doc.ink-doc.ink-doc figure,
+  .ink-doc.ink-doc.ink-doc p,
+  .ink-doc.ink-doc.ink-doc pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    margin: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc fieldset {
+    margin: 0;
+    padding: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc legend {
+    padding: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol,
+  .ink-doc.ink-doc.ink-doc ul,
+  .ink-doc.ink-doc.ink-doc menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc textarea {
+    resize: vertical;
+  }
+
+  .ink-doc.ink-doc.ink-doc {
+    font-size: calc(var(--ink-font-size, 16px) * 1.25) ;
+    line-height: 1.8;
+  }
+
+  .ink-doc.ink-doc.ink-doc,
+  .ink-doc.ink-doc.ink-doc {
+    font-family: "Inter";
+  }
+
+  .ink-doc.ink-doc.ink-doc content,
+  .ink-doc.ink-doc.ink-doc titlebar {
+    background: var(--tw-prose-bg);
+  }
+
+  .ink-doc.ink-doc.ink-doc {
+    padding-top: 100px;
+    padding-bottom: 100px;
+    color: var(--tw-prose-body);
+    max-width: 60ch;
+  }
+
+  .ink-doc.ink-doc.ink-doc > :where(:first-child) {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc > :where(:last-child) {
+    margin-bottom: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 {
+    color: var(--tw-prose-headings);
+    font-weight: 800;
+    font-size: 2.8em;
+    margin-top: 0;
+    margin-bottom: 0.8571429em;
+    line-height: 1;
+  }
+
+  .ink-doc.ink-doc.ink-doc h1 strong {
+    font-weight: 900;
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 {
+    color: var(--tw-prose-headings);
+    font-weight: 700;
+    font-size: 1.8em;
+    margin-top: 1.5555556em;
+    margin-bottom: 0.8888889em;
+    line-height: 1.1111111;
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 strong {
+    font-weight: 800;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 {
+    color: var(--tw-prose-headings);
+    font-weight: 600;
+    font-size: 1.5em;
+    margin-top: 1.6em;
+    margin-bottom: 0.6666667em;
+    line-height: 1.3333333;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 strong {
+    font-weight: 700;
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 {
+    color: var(--tw-prose-headings);
+    font-weight: 600;
+    margin-top: 1.8em;
+    margin-bottom: 0.6em;
+    line-height: 1.6;
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 strong {
+    font-weight: 700;
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 code {
+    font-size: 0.8611111em;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 code {
+    font-size: 0.9em;
+  }
+
+  .ink-doc.ink-doc.ink-doc h2 + * {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h3 + * {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc h4 + * {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc table {
+    width: 100%;
+    table-layout: auto;
+    text-align: left;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    font-size: 0.9em;
+    line-height: 1.5555556;
+  }
+
+  .ink-doc.ink-doc.ink-doc thead {
+    border-bottom-width: 1px;
+    border-bottom-color: var(--tw-prose-th-borders);
+  }
+
+  .ink-doc.ink-doc.ink-doc thead th {
+    color: var(--tw-prose-headings);
+    font-weight: 600;
+    vertical-align: bottom;
+    /* Upstream sets padding on three sides only; the fourth fell through to Vditor's own 6px
+       default, so the header text sat 6px from the top of its cell and 12.8px from the bottom and
+       read as shifted up. Matched to the bottom, which is the theme's own scale. */
+    padding-top: 0.8888889em;
+    padding-right: 0.6666667em;
+    padding-bottom: 0.8888889em;
+    padding-left: 0.6666667em;
+  }
+
+  .ink-doc.ink-doc.ink-doc thead th:first-child {
+    padding-left: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc thead th:last-child {
+    padding-right: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc tbody tr {
+    border-bottom-width: 1px;
+    border-bottom-color: var(--tw-prose-td-borders);
+  }
+
+  .ink-doc.ink-doc.ink-doc tbody tr:last-child {
+    border-bottom-width: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc tbody td {
+    vertical-align: top;
+    padding-top: 0.8888889em;
+    padding-right: 0.6666667em;
+    padding-bottom: 0.8888889em;
+    padding-left: 0.6666667em;
+  }
+
+  .ink-doc.ink-doc.ink-doc tbody td:first-child {
+    padding-left: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc tbody td:last-child {
+    padding-right: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol {
+    list-style-type: decimal;
+    padding-left: 1.6em;
+  }
+
+  .ink-doc.ink-doc.ink-doc li {
+    margin-top: 0.6em;
+    margin-bottom: 0.6em;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul {
+    list-style-type: disc;
+    padding-left: 1.6em;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul.task-list {
+    padding-left: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc lili {
+    padding-left: 0.4em;
+  }
+
+  .ink-doc.ink-doc.ink-doc input[type="checkbox"] {
+    margin-left: -1em;
+  }
+
+  .ink-doc.ink-doc.ink-doc input[checked] ~ * {
+    opacity: 0.7;
+    text-decoration: line-through;
+  }
+
+  .ink-doc.ink-doc.ink-doc ol > li::marker,
+    .ink-doc.ink-doc.ink-doc ol > .list-item > .label-wrapper .label {
+    font-weight: 400;
+    color: var(--tw-prose-counters);
+  }
+
+  .ink-doc.ink-doc.ink-doc ul > li::marker,
+    .ink-doc.ink-doc.ink-doc ul > .list-item > .label-wrapper .label {
+    color: var(--tw-prose-bullets);
+  }
+
+  .ink-doc.ink-doc.ink-doc ul > li,
+  .ink-doc.ink-doc.ink-doc ol > li {
+    padding-left: 0.4em;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul > li p,
+  .ink-doc.ink-doc.ink-doc ol > li p {
+    margin-top: 0.8em;
+    margin-bottom: 0.8em;
+  }
+
+  .ink-doc.ink-doc.ink-doc > ul > li > :not(input):first-child,
+  .ink-doc.ink-doc.ink-doc > ol > li > :not(input):first-child,
+  .ink-doc.ink-doc.ink-doc > ul > li > input + *,
+  .ink-doc.ink-doc.ink-doc > ol > li > input + * {
+    margin-top: 1.2em;
+  }
+
+  .ink-doc.ink-doc.ink-doc > ul > li > *:last-child,
+  .ink-doc.ink-doc.ink-doc > ol > li > *:last-child {
+    margin-bottom: 1.2em;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul > li > p:only-child,
+  .ink-doc.ink-doc.ink-doc ol > li > p:only-child,
+  .ink-doc.ink-doc.ink-doc ul > li > input + p:last-child,
+  .ink-doc.ink-doc.ink-doc ol > li > input + p:last-child {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc ul ul,
+  .ink-doc.ink-doc.ink-doc ul ol,
+  .ink-doc.ink-doc.ink-doc ol ul,
+  .ink-doc.ink-doc.ink-doc ol ol {
+    margin-top: 0.8em;
+    margin-bottom: 0.8em;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote {
+    font-weight: 500;
+    font-style: italic;
+    color: var(--tw-prose-quotes);
+    border-left-width: 0.25rem;
+    border-left-color: var(--tw-prose-quote-borders);
+    quotes: "\201C""\201D""\2018""\2019";
+    margin-top: 1.6em;
+    margin-bottom: 1.6em;
+    padding-left: 1.0666667em;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote strong {
+    font-weight: 700;
+  }
+
+  /* The quote's own paragraphs, and only those. Without the child combinator this reached every
+     `p` under the quote — and one engine wraps each list item's content in a `p`, so every bullet
+     inside a quoted list came out wearing its own pair of quotation marks. */
+  .ink-doc.ink-doc.ink-doc blockquote > p:first-of-type::before {
+    content: open-quote;
+  }
+
+  .ink-doc.ink-doc.ink-doc blockquote > p:last-of-type::after {
+    content: close-quote;
+  }
+
+  .ink-doc.ink-doc.ink-doc hr {
+    border-color: var(--tw-prose-hr);
+    border-top-width: 1px;
+  }
+
+  .ink-doc.ink-doc.ink-doc [mdtype="hr"] {
+    margin-top: 2.8em;
+    margin-bottom: 2.8em;
+  }
+
+  .ink-doc.ink-doc.ink-doc p {
+    margin-top: 1.2em;
+    margin-bottom: 1.2em;
+  }
+
+  .ink-doc.ink-doc.ink-doc .footnotes {
+    font-size: 0.85em;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area a,
+
+  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area .vditor-ir__link {
+    font-family: "Inter";
+    text-decoration: none;
+    color: var(--tw-primary);
+    border-radius: 3px;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area a:hover,
+
+  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area .vditor-ir__link:hover {
+    background-color: var(--item-hover-bg-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .footnotes-area hr {
+    margin: 5rem 0 2rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc .footnote-line {
+    font-size: 0.85em;
+    color: var(--tw-prose-body);
+  }
+
+  .ink-doc.ink-doc.ink-doc a.reversefootnote {
+    text-decoration: none;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="inline-math"] script {
+    color: var(--tw-prose-code);
+  }
+
+  .ink-doc.ink-doc.ink-doc g[data-mml-node="merror"] > rect[data-background] {
+    fill: var(--tw-highlight-color) !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc g[data-mml-node="merror"] > g {
+    fill: #000 !important;
+    stroke: #000 !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-htmlblock-container,
+  .ink-doc.ink-doc.ink-doc .md-math-container {
+    border-radius: 0.5rem 0 0.5rem 0.5rem;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-raw-inline,
+  .ink-doc.ink-doc.ink-doc [md-inline="linebreak"] {
+    font-size: var(--code-blocks-font-size);
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    color: var(--tw-prose-pre-code);
+    background-color: var(--tw-prose-pre-bg);
+    font-weight: 400;
+    font-size: var(--code-blocks-font-size);
+    line-height: 1.7777778;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    border-radius: 0.5rem ;
+    padding: 1.1111111em 1.3333333em;
+  }
+
+  .vditor-ir .vditor-reset .vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview.md-focus {
+    border-bottom-right-radius: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc pre code,
+
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    background-color: transparent;
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    font-weight: inherit;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+  }
+
+  .ink-doc.ink-doc.ink-doc pre code::before {
+    content: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc pre code::after {
+    content: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner {
+    --code-neutral: var(--code-neutral-inverted);
+    --code-cursor: var(--code-cursor-inverted);
+    --code-string: var(--code-string-inverted);
+    --code-number: var(--code-number-inverted);
+    --code-tag: var(--code-tag-inverted);
+    --code-variable: var(--code-variable-inverted);
+    --code-operator: var(--code-operator-inverted);
+    --code-comment: var(--code-comment-inverted);
+    --code-bracket: var(--code-bracket-inverted);
+    --code-citation: var(--code-citation-inverted);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-string {
+    color: var(--code-string);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-number {
+    color: var(--code-number);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-tag,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-keyword,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-qualifier {
+    color: var(--code-tag);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-comment.cm-def,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-comment.cm-type,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-builtin,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-type,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-header,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-link,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-error {
+    background: transparent;
+    color: var(--code-neutral);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-attribute,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-property,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable-2,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable-3,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-type,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-atom,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-def {
+    color: var(--code-variable);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-comment {
+    color: var(--code-comment);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-operator {
+    color: var(--code-operator);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-bracket,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-tag.cm-bracket,
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-meta {
+    color: var(--code-bracket);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-link {
+    text-decoration: underline;
+  }
+
+  .ink-doc.ink-doc.ink-doc code {
+    color: var(--tw-prose-code);
+    font-weight: 600;
+    font-size: var(--inline-code-font-size);
+  }
+
+  .ink-doc.ink-doc.ink-doc code::before {
+    content: "`";
+  }
+
+  .ink-doc.ink-doc.ink-doc code::after {
+    content: "`";
+  }
+
+  .ink-doc.ink-doc.ink-doc a code {
+    color: var(--tw-prose-links);
+  }
+
+  .ink-doc.ink-doc.ink-doc strong {
+    color: var(--tw-prose-bold);
+    font-weight: 600;
+  }
+
+  .ink-doc.ink-doc.ink-doc a,
+
+  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    color: var(--tw-prose-links);
+    text-decoration: underline;
+    font-weight: 500;
+  }
+
+  .ink-doc.ink-doc.ink-doc p > img:only-child {
+    margin-top: 0.8em !important;
+    margin-bottom: 0.8em !important;
+  }
+
+  .ink-doc.ink-doc.ink-doc mark {
+    border-radius: 3px;
+    padding: 0 2px;
+    background-color: var(--tw-highlight-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert {
+    padding: 1em;
+    padding-left: 3em;
+    font-size: 0.9em;
+    border-radius: 0.375rem;
+    border: none;
+    color: var(--tw-prose-body);
+    background-color: var(--tw-prose-bg);
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert > *:first-child {
+    margin-top: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert-text {
+    color: var(--alert-heading);
+    font-size: inherit;
+  }
+
+  .ink-doc.ink-doc.ink-doc .md-alert-text svg {
+    display: none;
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source {
+    font-family: var(--monospace);
+    color: var(--typora-source-body);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-header {
+    color: var(--code-tag);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-link {
+    color: var(--code-string);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-string {
+    color: var(--code-string);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-comment {
+    color: var(--code-comment);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-atom {
+    color: var(--code-citation);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-tag {
+    color: var(--code-tag);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-attribute {
+    color: var(--code-variable);
+  }
+
+  .ink-doc.ink-doc.ink-doc #typora-source .cm-bracket {
+    color: var(--code-bracket);
+  }
+
+
+
+  /* The upstream ships its dark side as a separate file, as Typora themes do. */
+  &[data-theme="dark"] {
+
+
+    --tw-prose-body: var(--tw-prose-invert-body);
+    --tw-prose-headings: var(--tw-prose-invert-headings);
+    --tw-prose-lead: var(--tw-prose-invert-lead);
+    --tw-prose-links: var(--tw-prose-invert-links);
+    --tw-prose-bold: var(--tw-prose-invert-bold);
+    --tw-prose-counters: var(--tw-prose-invert-counters);
+    --tw-prose-bullets: var(--tw-prose-invert-bullets);
+    --tw-prose-hr: var(--tw-prose-invert-hr);
+    --tw-prose-quotes: var(--tw-prose-invert-quotes);
+    --tw-prose-quote-borders: var(--tw-prose-invert-quote-borders);
+    --tw-prose-code: var(--tw-prose-invert-code);
+    --tw-prose-captions: var(--tw-prose-invert-captions);
+    --tw-prose-pre-bg: var(--tw-prose-invert-pre-bg);
+    --tw-prose-th-borders: var(--tw-prose-invert-th-borders);
+    --tw-prose-td-borders: var(--tw-prose-invert-td-borders);
+    --tw-prose-bg: var(--tw-prose-invert-bg);
+    --tw-prose-meta: var(--tw-prose-invert-meta);
+    --tw-prose-meta-bg: var(--tw-prose-invert-meta-bg);
+
+    --tw-button-hover-bg: var(--tw-button-hover-bg-inverted);
+
+    --select-text-bg-color: var(--select-text-bg-color-dark);
+    --select-text-font-color: var(--select-text-font-color-dark);
+
+    --md-char-color: var(--md-char-color-inverted);
+    --meta-content-color: var(--meta-content-color-inverted);
+    --panel-border-color: var(--panel-border-color-inverted);
+    --active-file-bg-color: var(--active-file-bg-color-inverted);
+    --window-border: var(--window-border-inverted);
+    --search-hit-text-bg-color: var(--search-hit-text-bg-color-inverted);
+    --search-hit-text-font-color: var(--search-hit-text-font-color-inverted);
+    --search-select-bg-color: var(--search-select-bg-color-inverted);
+    --blur-text-color: var(--blur-text-color-inverted);
+    --item-hover-bg-color: var(--item-hover-bg-color-inverted);
+    --typora-source-body: var(--typora-source-body-inverted);
+    --mermaid-theme: var(--mermaid-theme-inverted);
+    --active-toggle-btn-color: var(--active-toggle-btn-color-inverted);
+
+    --code-neutral: var(--code-neutral-inverted);
+    --code-cursor: var(--code-cursor-inverted);
+    --code-string: var(--code-string-inverted);
+    --code-number: var(--code-number-inverted);
+    --code-tag: var(--code-tag-inverted);
+    --code-variable: var(--code-variable-inverted);
+    --code-operator: var(--code-operator-inverted);
+    --code-comment: var(--code-comment-inverted);
+    --code-bracket: var(--code-bracket-inverted);
+    --code-citation: var(--code-citation-inverted);
+
+    --button-bg: var(--button-bg-inverted);
+
+    --md-grid-header: var(--md-grid-header-inverted);
+    --md-grid-header-ext: var(--md-grid-header-ext-inverted);
+    --md-grid-ext: var(--md-grid-ext-inverted);
+    --md-grid-header-active: var(--md-grid-header-active-inverted);
+    --md-grid-active: var(--md-grid-active-inverted);
+    --md-grid-border-color: var(--md-grid-border-color-inverted);
+
+    --alert-heading: var(--alert-heading-inverted);
+
+  }
+
+  /* The upstream's dark file overrides variables only and never restates the page, and its
+     --tw-prose-bg chain resolves to nothing in dark. */
+  &[data-theme="dark"] .ink-editor .ink-doc.ink-doc.ink-doc {
+    background: #0f172a;
+    color: #cbd5e1;
+  }
+
+  &[data-theme="dark"] .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  &[data-theme="dark"] .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: #1e293b;
+  }
+
+  /* ---- standard finishing ---- */
+
+  .ink-editor .ink-doc.ink-doc.ink-doc {
+    /* The setting names the body size in every theme; upstream always sets its own. */
+    font-size: var(--ink-font-size, 16px);
+    color: var(--tw-prose-body);
+  }
+
+
+  /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
+     which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
+     block takes the theme's own code surface, which its shell tokens already declare. */
+  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
+  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block {
+    background: var(--ink-code-bg);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+
+  /* The block's box belongs to the <pre>, so the <code> inside it carries none of its own. */
+  .ink-editor .ink-doc.ink-doc.ink-doc pre code,
+  .ink-doc.ink-doc.ink-doc .milkdown-code-block .cm-scroller {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* ---- correction, applied by hand after rendering ----
+   *
+   * Tailwind Typography's prose tables are full width, and this one rendered 189px wide in an
+   * 840px column. Vditor sets `display: block` on tables so a wide one can scroll, which wraps the
+   * rows in an anonymous table box that shrink-wraps to its content: `width: 100%` then widens the
+   * outer block and never the columns. Restoring `display: table` makes the width apply to the
+   * table itself.
+   *
+   * The trade is this theme's alone: a table wider than the column overflows rather than scrolling
+   * inside itself. That is the right way round here — a theme whose tables are meant to span the
+   * measure should span it. */
+  .ink-editor .ink-doc.ink-doc.ink-doc table {
+    display: table;
+    width: 100%;
+  }
+}

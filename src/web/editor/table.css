@@ -1,0 +1,187 @@
+/* The band the bar lives in.
+ *
+ * Reserved above every table whether the bar is showing or not. It costs one line of space per
+ * table and buys the thing that has gone wrong three times already — the code block's language
+ * marker, the math block's render, the expanding fence — where a control appearing pushed the
+ * document down under the pointer that was aiming at it.
+ *
+ * On the node rather than the table, so a theme's own table margins still apply on top.
+ *
+ * Named by the surface, so the band is there for whichever engine is mounted — the bar is the same
+ * bar now, and without the band it was drawn over whatever sat above the table. */
+:root[data-doc-theme] .ink-editor .ink-doc.ink-doc.ink-doc table {
+  margin-top: 26px;
+}
+
+.ink-table-bar {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  /* Positioned in editor coordinates; the height is the band above the table. */
+  height: 22px;
+  margin-top: -26px;
+}
+
+/* The delete button sits at the far right of the table, away from everything else: it is the one
+   control here that cannot be undone by pressing it again. */
+.ink-table-bar .danger {
+  margin-left: auto;
+  color: var(--ink-fg-muted);
+}
+
+.ink-table-bar .danger:hover,
+.ink-table-bar .danger:focus-visible {
+  color: var(--ink-danger);
+  background: color-mix(in srgb, var(--ink-danger) 12%, transparent);
+}
+
+.ink-table-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-fg-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.ink-table-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ink-table-btn:hover,
+.ink-table-btn:focus-visible {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+  outline: none;
+}
+
+/* Current state, not just a pressed look: this is how the bar says what the column's alignment is. */
+.ink-table-btn.on {
+  background: var(--ink-sidebar-active);
+  color: var(--ink-fg);
+}
+
+.ink-table-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--ink-rule);
+  margin: 0 5px;
+}
+
+.ink-table-size {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  z-index: 3;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+}
+
+.ink-table-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 15px);
+  gap: 3px;
+}
+
+.ink-table-cell {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid var(--ink-rule);
+  border-radius: 2px;
+  background: none;
+  cursor: pointer;
+}
+
+.ink-table-cell.sel {
+  background: var(--ink-link);
+  border-color: var(--ink-link);
+}
+
+.ink-table-size-label {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink-fg-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The overlay's containing block. The editor host itself cannot be it: Vditor owns that element's
+   children, and an overlay inside it would be inside the contenteditable — where it would become
+   part of the document and be written to the file. */
+.ink-editor-stack {
+  position: relative;
+  /* Takes over the flex sizing `.ink-editor` had before this wrapper existed, and passes it
+     straight back down — the editor is the flex child that owns the scroll, and breaking that
+     chain silently stopped the outline from being able to scroll the document. */
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The context menu is the file tree's menu, positioned from the pointer instead of a trigger. */
+.ink-table-menu {
+  min-width: 210px;
+}
+
+.ink-table-menu .ink-menu-item {
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.ink-table-menu .ink-menu-item[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Present only where a key exists, on the same rule as the empty editor's keycaps: a chip naming
+   a key that does nothing is worse than no chip. */
+.ink-menu-keys {
+  font-size: 11px;
+  color: var(--ink-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ink-menu-sep {
+  border: none;
+  border-top: 1px solid var(--ink-rule);
+  margin: 4px 2px;
+}
+
+/* Stepping aside, not blinking out.
+ *
+ * The bar hides while the document scrolls, because an overlay outside the scroll container can
+ * only move when the main thread runs and is otherwise drawn trailing the table it belongs to.
+ * Without a fade that read as a glitch — gone, then back instantly. Out quickly so it is clear of
+ * the way before the first frame of a fling; back slowly enough to look deliberate.
+ *
+ * `visibility` as well as opacity, so a bar that is out of the way cannot be clicked.
+ */
+.ink-table-bar {
+  transition: opacity 130ms ease, visibility 130ms;
+}
+
+/* Out instantly, in gently. A fade on the way out leaves the bar partly visible while the table
+   has already moved — measured 4 frames of it — and disappearing abruptly is nothing anyone
+   notices. Appearing abruptly is: that was the complaint. */
+.ink-table-bar.away {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-table-bar,
+  .ink-table-bar.away { transition: none; }
+}

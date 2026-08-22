@@ -1,0 +1,70 @@
+/* The faces the document themes render in. Vendored, never from a CDN — see the invariant in
+ * architecture.md.
+ *
+ * `unicode-range` is what keeps them off the wire. Without it a browser downloads a face the
+ * moment any character selects it, and `empty-state.css` names the CJK serif first, so opening the
+ * app with no note yet fetched eight megabytes to set one English sentence. Declared this way, a
+ * note with no Chinese in it never touches the CJK face at all, and a note with Chinese never
+ * touches it for its Latin.
+ *
+ * The CJK faces carry GB2312 level 1 — 3,755 hanzi, the standard common set — and nothing else;
+ * `scripts/subset-fonts.py` explains what that trade buys and what falls through to Songti SC.
+ *
+ * The URLs are relative on purpose. From `public/` these files kept one name for ever, and the
+ * server marks what it serves `immutable, max-age=1y` — so a replaced font was unreachable behind
+ * every cache between here and the reader, which is how a subset that cut 15MB went out and
+ * changed nothing. Imported from `src/` instead, Vite content-addresses them: a new file is a new
+ * URL, and `immutable` becomes true rather than merely fast.
+ */
+
+/* Latin. Small enough that the range is a nicety rather than a saving. */
+@font-face {
+  font-family: "Cantarell";
+  src: url("./fonts/cantarell-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+20A0-20CF, U+2190-21FF, U+2200-22FF;
+}
+
+@font-face {
+  font-family: "Cantarell";
+  src: url("./fonts/cantarell-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+20A0-20CF, U+2190-21FF, U+2200-22FF;
+}
+
+/* Chinese, and the punctuation it is set with. A megabyte each, so the range earns its keep:
+ * anything outside it — including every Latin character — is served by the faces above. */
+@font-face {
+  font-family: "Source Han Serif CN";
+  src: url("./fonts/source-han-serif-cn-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+2014, U+2018-201D, U+2026, U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF01-FF60;
+}
+
+@font-face {
+  font-family: "Source Han Serif CN";
+  src: url("./fonts/source-han-serif-cn-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+2014, U+2018-201D, U+2026, U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF01-FF60;
+}
+
+/* Code. Latin only by nature; a CJK comment in a fenced block falls to the faces above. */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./fonts/jetbrains-mono-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+2190-21FF, U+2200-22FF;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./fonts/jetbrains-mono-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+2000-206F, U+2190-21FF, U+2200-22FF;
+}

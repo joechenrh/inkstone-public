@@ -36,9 +36,25 @@ import type { EditorView } from '@milkdown/kit/prose/view'
  * own DOM — by then the selection has already moved.
  */
 
-/** The two node types that leave nowhere to stand. */
+/**
+ * The node types you cannot type *beside*.
+ *
+ * A fence and a table hold their own caret and have no position next to them at all. A quote is
+ * the third: its lines take an ordinary caret, so Up out of one lands in whatever is above and
+ * that always worked — but there is no way to make a line *between* a quote and a fence, or
+ * between two quotes, because the arrow that would go there steps inside the next block instead.
+ * Reported as "the quote needs handling too", after the same thing had been fixed for the other
+ * two.
+ *
+ * It costs one keystroke in the other direction: Up from a fence under a quote now opens a line
+ * rather than landing in the quote's last line, which is one more press to get there. Nothing
+ * becomes unreachable — the press after it goes in — and the line can now be made from either
+ * side, which is the property that was missing.
+ */
 function isWall(node: Node, ctx: Ctx): boolean {
-  return node.type === codeBlockSchema.type(ctx) || node.type === tableSchema.type(ctx)
+  return node.type === codeBlockSchema.type(ctx)
+    || node.type === tableSchema.type(ctx)
+    || node.type === blockquoteSchema.type(ctx)
 }
 
 interface Wall {
@@ -60,15 +76,10 @@ function wallAtEdge(view: EditorView, ctx: Ctx, dir: -1 | 1, event: KeyboardEven
 }
 
 /**
- * A quote against the edge of the document.
+ * A quote asked through the selection: its paragraphs are ordinary textblocks.
  *
- * A quote is *not* a wall: its paragraphs hold an ordinary caret, so Up out of one lands in
- * whatever is above and Down out of one lands in whatever is below, both correctly. Only the
- * document's own edge is missing — a note that opens with a quote, which an alert is, had no way
- * to be given a line above it, reported as "cannot move up to make an empty line". That is the
- * whole of what this adds, and the neighbour test is here rather than in `isWall` on purpose:
- * calling a quote a wall would make Up from a fence *below* one open a line instead of stepping
- * into it, which is a position the caret can already reach.
+ * Whether a line is opened is not decided here — `openLineBesideWall` asks what is on that side,
+ * and the answer is a line only when that is another wall or nothing at all.
  */
 function quoteAtEdge(view: EditorView, ctx: Ctx, dir: -1 | 1): Wall | null {
   const type = blockquoteSchema.type(ctx)
@@ -81,10 +92,7 @@ function quoteAtEdge(view: EditorView, ctx: Ctx, dir: -1 | 1): Wall | null {
     if (dir < 0 ? index !== 0 : index !== node.childCount - 1) return null
     // And only on that block's own edge line: a paragraph in a quote can wrap.
     if (!view.endOfTextblock(dir < 0 ? 'up' : 'down')) return null
-    const before = $from.before(depth)
-    const outside = view.state.doc.resolve(dir < 0 ? before : before + node.nodeSize)
-    if ((dir < 0 ? outside.nodeBefore : outside.nodeAfter) !== null) return null
-    return { node, before }
+    return { node, before: $from.before(depth) }
   }
   return null
 }
@@ -253,6 +261,91 @@ export function deleteLineBesideWall(view: EditorView, ctx: Ctx, event: Keyboard
   const tr = view.state.tr.delete(at, at + line.nodeSize)
   // Back where the line was made from: the last cell, or the end of the code.
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(at, tr.doc.content.size)), -1))
+  view.dispatch(tr.scrollIntoView())
+  view.focus()
+  return true
+}
+
+/**
+ * Backspace at the very start of a quote or a fence takes the block away and keeps what was in it.
+ *
+ * Both did nothing at all before, measured: in a quote ProseMirror had nowhere to join the first
+ * paragraph *to*, and in a fence the key never left CodeMirror, which has no answer for Backspace
+ * at the first column of the first line. So the two blocks whose whole job is to wrap something
+ * were the two you could not unwrap.
+ *
+ * What comes out is what was in: a quote's paragraphs become paragraphs, and a fence's lines become
+ * one paragraph each — which is what its text *is*, once nothing is holding it in a code block.
+ * Neither is a delete, and nothing typed is lost.
+ */
+export function unwrapBlockOnBackspace(view: EditorView, ctx: Ctx, event: KeyboardEvent): boolean {
+  if (event.key !== 'Backspace' || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) return false
+  return unwrapQuote(view, ctx, event) || unwrapFence(view, ctx, event)
+}
+
+/** The whole quote, not the one line the caret is on: what is asked for is "remove the quote". */
+function unwrapQuote(view: EditorView, ctx: Ctx, event: KeyboardEvent): boolean {
+  const { $from, empty } = view.state.selection
+  if (!empty || $from.parentOffset !== 0) return false
+
+  const type = blockquoteSchema.type(ctx)
+  let depth = -1
+  for (let d = $from.depth; d > 0; d--) {
+    if ($from.node(d).type === type) { depth = d; break }
+  }
+  if (depth < 0) return false
+  // Only from its first line. Anywhere else Backspace is for the line it is on.
+  if ($from.index(depth) !== 0) return false
+
+  const quote = $from.node(depth)
+  const before = $from.before(depth)
+  event.preventDefault()
+  event.stopPropagation()
+  const tr = view.state.tr.replaceWith(before, before + quote.nodeSize, quote.content)
+  tr.setSelection(TextSelection.near(tr.doc.resolve(before)))
+  view.dispatch(tr.scrollIntoView())
+  view.focus()
+  return true
+}
+
+/** A fence's lines become paragraphs — its text, with nothing holding it in a code block. */
+function unwrapFence(view: EditorView, ctx: Ctx, event: KeyboardEvent): boolean {
+  const target = event.target as Element | null
+  const block = target?.closest?.('.milkdown-code-block')
+  if (!block) return false
+
+  // The first column of the first line, which is where "the start of the block" is. CodeMirror
+  // owns the caret in here, so this is a DOM question rather than a ProseMirror one.
+  const selection = document.getSelection()
+  const node = selection?.anchorNode
+  if (!node || selection?.anchorOffset !== 0) return false
+  const line = (node instanceof Element ? node : node.parentElement)?.closest?.('.cm-line')
+  if (!line || line.previousElementSibling !== null) return false
+  if (node !== line && line.firstChild !== null && !line.firstChild.contains(node) && line.firstChild !== node) return false
+
+  let pos: number
+  try {
+    pos = view.posAtDOM(block, 0)
+  } catch {
+    return false
+  }
+  const $inside = view.state.doc.resolve(pos)
+  if ($inside.depth === 0) return false
+  const fence = $inside.node($inside.depth)
+  if (fence.type !== codeBlockSchema.type(ctx)) return false
+
+  const paragraph = paragraphSchema.type(ctx)
+  const lines = fence.textContent.split('\n')
+  // A trailing newline is how the last line ends, not a line of its own.
+  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop()
+  const blocks = (lines.length === 0 ? [''] : lines)
+    .map((text) => paragraph.create(null, text === '' ? null : view.state.schema.text(text)))
+
+  event.preventDefault()
+  event.stopPropagation()
+  const before = $inside.before($inside.depth)
+  const tr = view.state.tr.replaceWith(before, before + fence.nodeSize, blocks)
+  tr.setSelection(TextSelection.near(tr.doc.resolve(before)))
   view.dispatch(tr.scrollIntoView())
   view.focus()
   return true

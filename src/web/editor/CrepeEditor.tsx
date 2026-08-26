@@ -16,7 +16,7 @@ import { codeCompletion, codeHighlighting, codeIndent } from './code-highlight.j
 import { linkInputRule, linkPasteRule } from './link-input.js'
 import { tableRowInput } from './table-input.js'
 import { fenceInput } from './fence-input.js'
-import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall } from './block-escape.js'
+import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall, unwrapBlockOnBackspace } from './block-escape.js'
 import { setHeadingLevel, unwrapHeadingOnBackspace } from './headings.js'
 import { marksEndAtTheirMarker } from './mark-inclusivity.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
@@ -416,6 +416,8 @@ export function CrepeEditor() {
         // A heading is made and unmade in one keystroke; see `headings.ts`.
         if (setHeadingLevel(view, c, e)) return
         if (unwrapHeadingOnBackspace(view, c, e)) return
+        // Backspace at the start of a quote or a fence unwraps it; see `block-escape.ts`.
+        if (unwrapBlockOnBackspace(view, c, e)) return
         deleteEmptyTable(view, c, e)
       })
     }

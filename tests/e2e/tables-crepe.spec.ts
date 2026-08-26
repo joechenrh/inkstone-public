@@ -337,3 +337,85 @@ test('up inside a quote still moves inside it', async ({ page }) => {
   await page.waitForTimeout(300)
   expect(await blockNames(page)).toEqual(before)
 })
+
+/**
+ * A quote is a wall too.
+ *
+ * Its lines take an ordinary caret, so leaving one always worked — but there was no way to make a
+ * line *between* a quote and a fence, or between two quotes, because the arrow that would go there
+ * steps into the next block instead. Reported after the same thing had been fixed for the other two.
+ */
+async function caretInQuoteLine(page: Page, index: number, end: boolean) {
+  await page.locator('.ink-doc blockquote p').nth(index).click()
+  await page.keyboard.press(end ? 'End' : 'Home')
+  await page.waitForTimeout(250)
+}
+
+test('down opens a line between a quote and a fence', async ({ page }) => {
+  await openNote(page, 'quotewall-crepe.md', 'After.')
+  await caretInQuoteLine(page, 0, true)
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.type('between')
+  await page.waitForTimeout(400)
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+  // The word is its own line, not a line of the code.
+  expect(await noteText(page, 'notes/quotewall-crepe.md')).toContain('\n\nbetween\n\n```js')
+})
+
+test('and between two quotes', async ({ page }) => {
+  await openNote(page, 'quotewall-crepe.md', 'After.')
+  // The second quote's own first line is where Up is asked from.
+  await page.locator('.ink-doc blockquote').last().locator('p').first().click()
+  await page.keyboard.press('Home')
+  await page.waitForTimeout(250)
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.type('gap')
+  await page.waitForTimeout(400)
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+  expect(await noteText(page, 'notes/quotewall-crepe.md')).toContain('\n\ngap\n\n> another quote')
+})
+
+/**
+ * Backspace at the start of a quote or a fence takes the block and keeps what was in it.
+ *
+ * Both did nothing at all before: in a quote ProseMirror had nowhere to join the first paragraph
+ * *to*, and in a fence the key never left CodeMirror, which has no answer for Backspace at the
+ * first column. So the two blocks whose whole job is to wrap something were the two that could not
+ * be unwrapped.
+ */
+test('backspace at the start of a quote unwraps the whole quote', async ({ page }) => {
+  await openNote(page, 'unwrap-crepe.md', 'After.')
+  await expect(page.locator('.ink-doc blockquote')).toHaveCount(1)
+
+  await caretInQuoteLine(page, 0, false)
+  await page.keyboard.press('Backspace')
+  await page.waitForTimeout(400)
+
+  await expect(page.locator('.ink-doc blockquote')).toHaveCount(0)
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+  const saved = await noteText(page, 'notes/unwrap-crepe.md')
+  // Both lines survive, neither is quoted.
+  expect(saved).toContain('first quoted line')
+  expect(saved).toContain('second quoted line')
+  expect(saved).not.toContain('> first quoted line')
+})
+
+test('backspace at the start of a fence turns its lines into text', async ({ page }) => {
+  await openNote(page, 'unwrap-crepe.md', 'After.')
+  await caretInFence(page, 0)
+  await page.keyboard.press('Home')
+  await page.waitForTimeout(250)
+  await page.keyboard.press('Backspace')
+  await page.waitForTimeout(400)
+
+  await expect(page.locator('.ink-doc .milkdown-code-block')).toHaveCount(0)
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+  const saved = await noteText(page, 'notes/unwrap-crepe.md')
+  expect(saved).toContain('const x = 1')
+  expect(saved).toContain('const y = 2')
+  expect(saved).not.toContain('```')
+})

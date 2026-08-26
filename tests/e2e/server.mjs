@@ -198,6 +198,20 @@ for (const n of [1, 2, 3, 4]) {
   fs.writeFileSync(path.join(root, 'notes', `steps${n}-crepe.md`), 'x `a`+ *b*\n')
 }
 
+// A quote against a fence and a quote against a quote: the two pairs with no position between
+// them that the first version of the wall rule did not cover.
+fs.writeFileSync(
+  path.join(root, 'notes', 'quotewall-crepe.md'),
+  ['> quoted line', '', '```js', 'const x = 1', '```', '', '> another quote', '', 'After.', ''].join('\n'),
+)
+
+// A quote and a fence to unwrap with Backspace, each with two lines in it so that what comes out
+// can be seen to be all of it.
+fs.writeFileSync(
+  path.join(root, 'notes', 'unwrap-crepe.md'),
+  ['> first quoted line', '>', '> second quoted line', '', '```js', 'const x = 1', 'const y = 2', '```', '', 'After.', ''].join('\n'),
+)
+
 // A heading, a paragraph, a fence and a table: the four places the heading keys have to answer
 // differently. Its own note, because the tests change the block types in it.
 fs.writeFileSync(

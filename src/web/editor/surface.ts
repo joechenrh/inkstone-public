@@ -20,13 +20,20 @@ export function documentRoot(): HTMLElement | null {
 /**
  * The text of one rendered block, with any syntax the editor shows stripped out.
  *
- * Vditor keeps the literal `## ` in a marker span that is collapsed visually but still present in
- * `textContent`; ProseMirror shows no syntax at all, so the same call is simply the text. Cloning
- * rather than mutating, because the live node is the reader's document.
+ * Both engines put syntax in the block and both hide it from this: Vditor keeps the literal `## `
+ * in a marker span that is collapsed visually but still present in `textContent`, and Crepe's
+ * heading marker is a widget drawn in the gutter — `.ink-marker`, see `marker-reveal.ts`. The
+ * second one was missed, so the moment the caret entered a heading the outline entry became
+ * "## Title" and the anchor a `#heading` link resolves against changed with it. Reported as "the
+ * outline picks the marker up too".
+ *
+ * Cloning rather than mutating, because the live node is the reader's document.
  */
+const SYNTAX = '.vditor-ir__marker, .ink-marker'
+
 export function blockText(el: HTMLElement): string {
-  if (el.querySelector('.vditor-ir__marker') === null) return (el.textContent ?? '').trim()
+  if (el.querySelector(SYNTAX) === null) return (el.textContent ?? '').trim()
   const clone = el.cloneNode(true) as HTMLElement
-  for (const marker of Array.from(clone.querySelectorAll('.vditor-ir__marker'))) marker.remove()
+  for (const marker of Array.from(clone.querySelectorAll(SYNTAX))) marker.remove()
   return (clone.textContent ?? '').trim()
 }

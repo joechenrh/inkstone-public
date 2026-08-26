@@ -16,3 +16,6 @@ playwright-report/
 
 # Throwaway measurement scripts. Never committed.
 *.tmp.mjs
+
+# Which private commit the public copy was last synced from. Local to this clone.
+.public-sync

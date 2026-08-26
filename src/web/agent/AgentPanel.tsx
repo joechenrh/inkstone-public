@@ -126,7 +126,7 @@ export function AgentPanel() {
           )
           : <span class="ink-agent-where">{conn.machine}</span>}
         {/* After the machine name, not before it: `margin-left: auto` on a first child only pushes
-            it as far as the next one, so the two ended up jammed together as "NewJOECHENRH.LOCAL".
+            it as far as the next one, so the two ended up jammed together as "NewOCTOCAT.LOCAL".
 
             Starting over has to be cheap, or one thread ends up carrying three subjects. A word
             rather than a button because it is rare and throws something away, and it is here only

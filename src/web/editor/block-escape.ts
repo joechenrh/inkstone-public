@@ -168,7 +168,7 @@ export function openLineBesideWall(view: EditorView, ctx: Ctx, event: KeyboardEv
 }
 
 /**
- * Backspace in the top-left cell of an empty table takes the table away.
+ * Backspace in an empty table takes the table away.
  *
  * Typora and the previous engine both do this, and it is the only way to delete a table without
  * knowing where its menu is: you empty it, and then the next Backspace — the one that would
@@ -201,14 +201,58 @@ export function deleteEmptyTable(view: EditorView, ctx: Ctx, event: KeyboardEven
   // …but it must not reach out of the table, where Backspace is deleting something real.
   if ($to.depth < depth || $to.before(depth) !== $from.before(depth)) return false
 
-  // The top-left cell: anywhere else Backspace is for the cell, not the table.
-  if ($from.index(depth) !== 0 || $from.index(depth + 1) !== 0) return false
+  /*
+   * Any cell of it, not only the top-left one.
+   *
+   * The first version asked for the top-left cell, which is how the behaviour was described and is
+   * a distinction the reader cannot make: an empty table is a grid of identical empty boxes, and
+   * the first row of one with no header text in it looks exactly like the second. Reported as "this
+   * table cannot be deleted" by someone whose caret was in the first *body* cell — where Backspace
+   * did nothing at all, because there is nothing anywhere in an empty table to delete.
+   *
+   * That is the whole argument: `textContent` is empty, so no cell has anything Backspace could be
+   * for, and there is nothing to lose whichever one it is pressed in.
+   */
 
   event.preventDefault()
   event.stopPropagation()
   const before = $from.before(depth)
   const tr = view.state.tr.delete(before, before + table.nodeSize)
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(before, tr.doc.content.size)), -1))
+  view.dispatch(tr.scrollIntoView())
+  view.focus()
+  return true
+}
+
+/**
+ * Backspace in an empty line beside a wall takes the line, not the wall.
+ *
+ * The other half of `openLineBesideWall`: a line it made has to be as easy to take back, and it was
+ * not. ProseMirror's own answer to Backspace in an empty paragraph after a table is `joinBackward`,
+ * which cannot join a paragraph into a table and so *selects the table* instead — so the line stayed
+ * where it was, the caret jumped into the grid, and the next Backspace, the one the reader pressed
+ * because the first had done nothing they could see, deleted the whole table. Measured, in that
+ * order. Reported as "it only moves into the table instead of deleting the empty line".
+ */
+export function deleteLineBesideWall(view: EditorView, ctx: Ctx, event: KeyboardEvent): boolean {
+  if (event.key !== 'Backspace' || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) return false
+  const { $from, empty } = view.state.selection
+  if (!empty || $from.depth !== 1) return false
+
+  const line = $from.parent
+  // An empty line of its own: a paragraph with anything in it is being edited, and one nested in a
+  // list or a quote has its own Backspace behaviour that works.
+  if (line.type !== paragraphSchema.type(ctx) || line.content.size !== 0) return false
+
+  const at = $from.before(1)
+  const before = view.state.doc.resolve(at).nodeBefore
+  if (before === null || !isWall(before, ctx)) return false
+
+  event.preventDefault()
+  event.stopPropagation()
+  const tr = view.state.tr.delete(at, at + line.nodeSize)
+  // Back where the line was made from: the last cell, or the end of the code.
+  tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(at, tr.doc.content.size)), -1))
   view.dispatch(tr.scrollIntoView())
   view.focus()
   return true

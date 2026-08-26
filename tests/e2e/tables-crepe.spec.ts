@@ -196,7 +196,7 @@ test('up opens a line above a wall that starts the note', async ({ page }) => {
   expect(await noteText(page, 'notes/topwall-crepe.md')).toMatch(/^above\n/)
 })
 
-test('backspace in the top-left cell removes an empty table, and only an empty one', async ({ page }) => {
+test('backspace in an empty table removes it, and only an empty one', async ({ page }) => {
   await openNote(page, 'walls-crepe.md', 'After.')
   const before = await visibleTables(page)
 
@@ -211,6 +211,55 @@ test('backspace in the top-left cell removes an empty table, and only an empty o
   await page.keyboard.press('Backspace')
   await page.waitForTimeout(300)
   expect(await visibleTables(page)).toBe(before - 1)
+})
+
+test('and from any cell of it, because they all look the same', async ({ page }) => {
+  // Reported as "this table cannot be deleted" by someone whose caret was in the first *body*
+  // cell: an empty table is a grid of identical empty boxes and the top-left one is not a place
+  // the reader can pick out. Nothing in any of them is a thing Backspace could otherwise be for.
+  await openNote(page, 'emptytable-crepe.md', 'After.')
+  expect(await visibleTables(page)).toBe(1)
+
+  await page.evaluate(() => {
+    const cells = document.querySelectorAll('.ink-doc table td, .ink-doc table th')
+    const range = document.createRange()
+    range.selectNodeContents(cells[cells.length - 1]!)
+    range.collapse(true)
+    const selection = getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+  })
+  await page.waitForTimeout(250)
+  await page.keyboard.press('Backspace')
+  await page.waitForTimeout(400)
+  expect(await visibleTables(page)).toBe(0)
+})
+
+/**
+ * The other half of opening a line beside a wall: taking it back.
+ *
+ * ProseMirror answers Backspace in an empty paragraph after a table by *selecting the table* — it
+ * cannot join one into the other — so the line stayed, the caret jumped into the grid, and the next
+ * Backspace, pressed because the first appeared to do nothing, took the whole table. Measured in
+ * that order.
+ */
+test('backspace takes back a line opened beside a wall', async ({ page }) => {
+  await openNote(page, 'walls2-crepe.md', 'After.')
+  const tables = await visibleTables(page)
+  const blocks = () => page.$$eval('.ink-doc > *', (nodes) => nodes.length)
+  const before = await blocks()
+
+  // Between the first two tables, where there was nowhere to stand.
+  await caretInFirstCell(page, 1)
+  await page.keyboard.press('ArrowUp')
+  await page.waitForTimeout(300)
+  expect(await blocks()).toBe(before + 1)
+
+  await page.keyboard.press('Backspace')
+  await page.waitForTimeout(400)
+  expect(await blocks()).toBe(before)
+  // And the table it was beside is still there.
+  expect(await visibleTables(page)).toBe(tables)
 })
 
 test('a click into an empty cell still counts as being in it', async ({ page }) => {

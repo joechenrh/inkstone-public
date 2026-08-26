@@ -198,6 +198,28 @@ for (const n of [1, 2, 3, 4]) {
   fs.writeFileSync(path.join(root, 'notes', `steps${n}-crepe.md`), 'x `a`+ *b*\n')
 }
 
+// A heading, a paragraph, a fence and a table: the four places the heading keys have to answer
+// differently. Its own note, because the tests change the block types in it.
+fs.writeFileSync(
+  path.join(root, 'notes', 'headings-crepe.md'),
+  ['### Three', '', 'A plain paragraph.', '', '```js', 'const x = 1', '```', '',
+   '| a | b |', '| - | - |', '| 1 | 2 |', ''].join('\n'),
+)
+
+// Two tables against each other, for the line that can be opened between them and taken back. Its
+// own note: the tests above write into `walls-crepe.md`, so by the time this one ran there was
+// already a paragraph where it was about to make one.
+fs.writeFileSync(
+  path.join(root, 'notes', 'walls2-crepe.md'),
+  ['| a | b |', '| - | - |', '| 1 | 2 |', '', '| c | d |', '| - | - |', '| 3 | 4 |', '', 'After.', ''].join('\n'),
+)
+
+// A table with nothing in it, for deleting from a cell that is not the top-left one.
+fs.writeFileSync(
+  path.join(root, 'notes', 'emptytable-crepe.md'),
+  ['|   |', '| - |', '|   |', '|   |', '|   |', '', 'After.', ''].join('\n'),
+)
+
 // A code run with text after it, for backspacing from the end of the line into it.
 fs.writeFileSync(path.join(root, 'notes', 'deltail-crepe.md'), '`aaa`111\n')
 

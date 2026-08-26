@@ -1,4 +1,5 @@
 import { remarkStringifyOptionsCtx } from '@milkdown/kit/core'
+import { remarkGFMPlugin } from '@milkdown/kit/preset/gfm'
 import type { Ctx } from '@milkdown/kit/ctx'
 
 /**
@@ -60,6 +61,38 @@ export function writeWhatWasTyped(ctx: Ctx): void {
         // The space at the end (or start) of a line, which markdown has no way to hold.
         .replace(/^(?:&#x(?:20|9);)+/i, '')
         .replace(/(?:&#x(?:20|9);)+$/i, '')
-    return { ...options, handlers: { ...handlers, text } }
+    return {
+      ...options,
+      /*
+       * How the file is spelled, where markdown allows more than one spelling.
+       *
+       * Opening a note and saving it rewrites whatever the serialiser spells differently from the
+       * person who typed it, and in a vault kept in git that is a diff full of lines nobody edited.
+       * Measured on a real 120-line document: 58 changed lines, of which 44 were tables being
+       * re-padded and every one of the other 14 was a `-` bullet becoming a `*`.
+       *
+       * Both are settings rather than behaviour, so both are set to what people write:
+       *
+       * - `bullet: '-'` — the dash is what this vault's notes use, what GitHub's own editor emits
+       *   and what `prettier` writes.
+       * The table's own spelling is not here — it belongs to the gfm plugin rather than to the
+       * serialiser's options, and setting it here did nothing. See `writeTablesAsTyped`.
+       */
+      bullet: '-' as const,
+      handlers: { ...handlers, text },
+    }
   })
+}
+
+/**
+ * A table's pipes are not padded into a grid.
+ *
+ * `| a | b |` typed by hand came back as `| a    | b   |`, columns aligned to their widest cell —
+ * correct markdown, a different file, and on a note with three tables in it most of the diff. The
+ * option belongs to the gfm plugin, not to the serialiser: passing `tablePipeAlign` alongside
+ * `bullet` in `remarkStringifyOptionsCtx` type-checks, runs, and changes nothing, which is worth
+ * writing down because it looks exactly like it should work.
+ */
+export function writeTablesAsTyped(ctx: Ctx): void {
+  ctx.set(remarkGFMPlugin.options.key, { tablePipeAlign: false })
 }

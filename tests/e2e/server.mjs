@@ -198,6 +198,21 @@ for (const n of [1, 2, 3, 4]) {
   fs.writeFileSync(path.join(root, 'notes', `steps${n}-crepe.md`), 'x `a`+ *b*\n')
 }
 
+// A shortcode already in a file, which must survive being opened and saved.
+fs.writeFileSync(path.join(root, 'notes', 'emoji-crepe.md'), 'An existing :smile: stays.\n')
+
+// Thirty paragraphs, so that "where you were" is somewhere a scroll away from the top.
+fs.writeFileSync(
+  path.join(root, 'notes', 'long-crepe.md'),
+  Array.from({ length: 30 }, (_, i) => `Paragraph number ${i + 1} with some words in it.`).join('\n\n') + '\n',
+)
+
+// A diagram and a formula, the two languages whose fenced block draws something.
+fs.writeFileSync(
+  path.join(root, 'notes', 'diagram-crepe.md'),
+  ['Before.', '', '```mermaid', 'graph TD', '  A-->B', '```', '', '```js', 'const x = 1', '```', '', 'After.', ''].join('\n'),
+)
+
 // A quote against a fence and a quote against a quote: the two pairs with no position between
 // them that the first version of the wall rule did not cover.
 fs.writeFileSync(

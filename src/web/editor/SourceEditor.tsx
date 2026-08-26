@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef } from 'preact/hooks'
 import { content, editContent } from '../state/document.js'
 import { readOnly } from '../state/settings.js'
+import { blockAtOffset, caretBlockIndex, lineAtOffset, offsetOfBlock, placeCaretInBlock } from './source-sync.js'
+import { documentRoot } from './surface.js'
 import './source.css'
 
 /**
@@ -21,17 +23,51 @@ export function SourceEditor() {
   const gutterRef = useRef<HTMLDivElement>(null)
   const text = content.value
 
-  // Focus on open, and put the caret at the start rather than selecting the document — this mode
-  // is entered to change one thing, not to replace everything.
+  /*
+   * Your place, on the way in and on the way back out.
+   *
+   * This used to open at character zero and return you to the top of the note, so in a long one the
+   * cost of *looking* at the markdown was losing your place twice. Typora keeps it, and what is
+   * kept here is the block: the fourth paragraph is the fourth paragraph in both views, which is
+   * close enough to land you where you were and cannot drift into a wrong answer the way matching
+   * offsets between a rendering and its source would. See `source-sync.ts`.
+   *
+   * The caret is not selected into: this mode is entered to change one thing, not to replace
+   * everything.
+   */
   useLayoutEffect(() => {
     const area = areaRef.current
-    if (!area || readOnly.value) return
-    area.focus()
-    area.setSelectionRange(0, 0)
+    if (!area) return
+
+    const root = documentRoot()
+    const from = root === null ? null : caretBlockIndex(root)
+    const at = from === null ? 0 : offsetOfBlock(area.value, from)
+    if (!readOnly.value) {
+      area.focus()
+      area.setSelectionRange(at, at)
+    }
     // Focusing a textarea leaves it scrolled wherever the browser last had it — measured 346px
-    // into a document whose caret was at character 0.
-    area.scrollTop = 0
-    if (gutterRef.current) gutterRef.current.scrollTop = 0
+    // into a document whose caret was at character 0 — and a textarea has no "scroll to the
+    // caret", so the line is put where a reader would expect to find it.
+    const line = lineAtOffset(area.value, at)
+    const height = parseFloat(getComputedStyle(area).lineHeight) || 24
+    area.scrollTop = Math.max(0, line * height - area.clientHeight / 3)
+    if (gutterRef.current) gutterRef.current.scrollTop = area.scrollTop
+
+    return () => {
+      // On the way back, from whatever the reader left the caret on — including a line they have
+      // just typed, which is why the textarea's own value is read rather than the signal's.
+      const back = blockAtOffset(area.value, area.selectionStart ?? 0)
+      const surface = documentRoot()
+      if (surface === null) return
+      // After the mode has actually changed: this runs while the source is still on screen.
+      requestAnimationFrame(() => {
+        const live = documentRoot()
+        if (live === null) return
+        placeCaretInBlock(live, back)
+        live.focus()
+      })
+    }
   }, [])
 
   // The gutter is a separate element, so it has to be scrolled by hand. Line numbers count

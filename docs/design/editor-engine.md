@@ -30,7 +30,7 @@ Three things in that table decide it.
 
 **Undo and deletion.** Both alternatives do unaided what Vditor needed custom interception for. That is the bug class, gone rather than papered over.
 
-**Round-trip fidelity.** This is the one that matters most for an application whose truth is a `.md` file in somebody's git repository, and it is the one where Crepe is weakest.
+**Round-trip fidelity.** This is the one that matters most for an application whose truth is a `.md` file in somebody's git repository, and it is the one where Crepe is weakest. (Re-measured later, it is the one where Crepe is *strongest*; see the last section.)
 
 ## The round trip
 
@@ -74,7 +74,7 @@ One difference is Crepe's and it is not cosmetic: a fenced block is a real **Cod
 | Delete a code block | two custom capture handlers | works unaided |
 | Typing, long note | 41.7 ms | 16.6 ms |
 | Inside a fence | the raw source expands | a code editor with a language picker |
-| **Markdown syntax revealed at the caret** | **yes — `##` goes 0 → 24 px on entry** | **never shown** |
+| **Markdown syntax revealed at the caret** | **yes — `##` goes 0 → 24 px on entry** | **never shown** (no longer true; see the last section) |
 
 The last row is the one real loss, and it is the Typora signature: put the caret in a heading and the `##` appears, editable in place.
 
@@ -118,3 +118,61 @@ By the stated criteria — rendering and editing — it wins editing outright an
 The reformat is done **deliberately**: a normalise pass that is its own commit, per note, so it is never discovered in a diff.
 
 CodeMirror 6 is not chosen, and the reason is the criterion rather than its quality: out of the box it is a source view with line numbers. Obsidian's live preview is built on it — built being the point. That is months of decoration work, and the criterion was the editing experience, not the foundation.
+
+## What changed since, measured again
+
+The decision above was taken with two costs attached. Both were re-measured after the Crepe engine
+had been worked on for a while, by rendering one deliberately hostile note and one real document in
+each engine and reading the files back. Neither cost survived.
+
+### The one capability that was lost is back
+
+"Markdown syntax revealed at the caret — Vditor yes, Crepe never shown" was the one row Vditor won
+outright. Crepe now shows the syntax of the run the caret is in, as **real text** rather than as
+decorations, which is what `source-reveal.ts` already did for links: the marks become `` `a` `` or
+`**bold**` while the caret is in them and go back to being code or bold when it leaves. Widgets
+were tried first and could not be made to work — a document position maps to one DOM point, so
+"inside the closing backtick" and "after it" are one caret that cannot be drawn twice, a click
+carries no side, and Backspace cannot reach a marker that is not in the document. Headings keep
+their `#`s in the gutter, which is a decoration because nothing is ever typed beside them.
+
+### Round-trip fidelity is now Crepe's, not Vditor's
+
+The table said "the DOM *is* the source" for Vditor and "rewrites 59 lines" for Crepe. On a note of
+hostile constructs, opening and saving:
+
+| | Vditor | Crepe |
+|---|---|---|
+| Lines changed | 15 | 12 |
+| A hard break (two trailing spaces) | **dropped** | written as `\` |
+| A footnote definition | **moved to the end of the file** | left where it was |
+| `- [x]` | rewritten `- [X]` | untouched |
+| A bare URL | untouched | written `<…>` |
+
+Every one of Crepe's changes preserves meaning. Two of Vditor's do not.
+
+On a real 120-line, table-dense document the churn was 47 lines for Vditor and 58 for Crepe — until
+two settings closed most of it. `bullet: '-'` stops `-` bullets becoming `*`, and the gfm plugin's
+`tablePipeAlign: false` stops a hand-written `| a | b |` being padded into a grid. **Crepe's churn
+on that document is now 6 lines**, all of them the delimiter row's spelling (`|---|` written as
+`| - |`), for which there is no option. Vditor's is unchanged.
+
+### What Crepe still does not do
+
+Re-measured feature by feature against the same note. Task lists, tables and their alignments,
+alerts, inline and block maths, images, hard breaks, the outline, source mode, search, note links
+and heading anchors are all a tie. Footnotes and bare URLs are Crepe's. Definition lists are
+neither's. What was left, and what was then done about it:
+
+| | Then | Now |
+|---|---|---|
+| Mermaid and the other diagram languages | Vditor drew them, Crepe showed the source | Mermaid draws, through the same preview panel the formula block uses. The rest of Vditor's diagram languages — graphviz, plantuml, echarts, abc — are still Vditor's alone |
+| `:smile:` | Vditor rendered it | Typed, it becomes the emoji; one already in a file is left alone, because rendering it would write the emoji into the note on the next save |
+| The caret's place when the source opens | Neither kept it | Kept, by block, in both directions |
+
+On a phone, the Crepe suite passes eleven of the phone suite's twelve tests and the twelfth is the
+suite's own timing: it measures the document's width during the screen transition, where Crepe is
+visible a frame earlier than Vditor. Given a moment to settle, both measure the same 358 px.
+
+**Not measured, and so not claimed**: a real touchscreen (Playwright's emulation is not iOS
+Safari), IME composition, pasting rich HTML from a web page, printing.

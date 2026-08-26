@@ -71,10 +71,14 @@ test('alignment applies to the whole column and reaches the file', async ({ page
   await expect.poll(async () => (await columnAlignments(page))[0]).toBe('right')
 
   await page.keyboard.press('ControlOrMeta+s')
+  // The marker, not its padding: the file no longer pads a table's pipes into a grid, so what this
+  // is about is the `:` that says which side — see `writeTablesAsTyped`.
   await expect.poll(async () => {
     const res = await page.request.get('/api/file?path=notes/grid-crepe.md')
-    return (await res.json() as { content: string }).content
-  }).toContain('| ---:')
+    const lines = (await res.json() as { content: string }).content.split('\n')
+    const delimiter = lines.find((line) => /^\s*\|[\s:|-]+\|\s*$/.test(line)) ?? ''
+    return delimiter.replace(/[\s|]/g, '')
+  }).toMatch(/^-+:/)
 })
 
 test('the size grid resizes from the end and keeps what was there', async ({ page }) => {

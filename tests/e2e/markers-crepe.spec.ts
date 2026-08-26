@@ -358,3 +358,27 @@ test('backspacing into a run opens it, and the next one takes a marker', async (
   await page.waitForTimeout(700)
   expect(await read(page, 'notes/deltail-crepe.md')).toContain('`aaa')
 })
+
+/**
+ * `:tada:` becomes an emoji as it is typed, and a shortcode already in a file does not.
+ *
+ * The other engine renders both, which means writing the emoji back into the note on the next save
+ * — the file rewritten for something nobody typed today. The shortcut helps you write one; what is
+ * on disk stays what was typed.
+ */
+test('a shortcode typed becomes an emoji, and one already written stays', async ({ page }) => {
+  await open(page, 'emoji-crepe.md', 'An existing')
+
+  await page.locator('.ink-doc p').first().click()
+  await page.keyboard.press('End')
+  await page.keyboard.type(' typed :tada: here', { delay: 40 })
+  await page.waitForTimeout(400)
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+
+  const saved = await read(page, 'notes/emoji-crepe.md')
+  // What was typed became the character, with the space in front of it intact.
+  expect(saved).toContain('typed 🎉 here')
+  // And what was already there is untouched.
+  expect(saved).toContain('An existing :smile: stays.')
+})

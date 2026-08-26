@@ -649,3 +649,39 @@
   line-height: inherit;
   white-space: nowrap;
 }
+
+/* A diagram, centred in its panel like the formula block above it. `svg` carries its own size, and
+   the one thing it must not do is push the document wider than the measure. */
+.milkdown .ink-doc .ink-mermaid {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.milkdown .ink-doc .ink-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* A diagram's labels are HTML inside the SVG — `<foreignObject><p>A</p></foreignObject>` — which
+   puts them inside `.ink-doc`, where the document's own paragraph rhythm applies to them. A 12px
+   top margin on a label measured at 24px tall pushed the text out of its own box, and the letters
+   came out as slivers: `A` read as `∧`. The document's rules stop at the diagram's edge. */
+/* Written at the same weight as the rule it is answering. `document-conformance.css` gives every
+   block in the document `margin-block: 0.75em !important` behind `:root[data-doc-theme]` and four
+   repetitions of `.ink-doc`, so a rule with less specificity than that loses even with its own
+   `!important` — measured: the label sat 12px low, which is exactly 0.75em at 16px. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc .ink-mermaid :is(p, span, div) {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Half-typed mermaid is the normal state of a diagram being written, so this is a note rather than
+   an alarm: the same muted face as the rest of the block's chrome. */
+.milkdown .ink-doc .ink-mermaid-error {
+  padding: 8px 12px;
+  color: var(--ink-fg-muted);
+  font-family: var(--ink-font-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+}

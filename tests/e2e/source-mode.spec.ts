@@ -145,3 +145,70 @@ test('the document controls are not there when there is no document', async ({ p
   await page.getByTitle('Markdown source (Cmd/Ctrl+Alt+M)').click()
   await expect(source(page)).toBeVisible()
 })
+
+/**
+ * Your place, on the way into the source and on the way back.
+ *
+ * It used to open at character zero and return you to the top of the note, so in a long one the
+ * cost of *looking* at the markdown was losing your place twice. Typora keeps it. What is kept
+ * here is the block — the twentieth paragraph is the twentieth paragraph in both views — because
+ * the two do not agree about offsets and never can: `**bold**` is eight characters in one and four
+ * in the other.
+ */
+async function openLong(page: Page) {
+  await page.addInitScript(() => { localStorage.setItem('inkstone.editorEngine', 'crepe') })
+  await page.goto('/')
+  await page.getByPlaceholder('Password').fill('e2e-password')
+  await page.getByRole('button', { name: 'Enter' }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: /^long-crepe\.md$/ }).click()
+  await expect(page.locator('.ink-doc')).toContainText('Paragraph number 30', { timeout: 15_000 })
+}
+
+test('the source opens where the caret was, and comes back where it was left', async ({ page }) => {
+  await openLong(page)
+
+  // Into the twentieth paragraph.
+  await page.evaluate(() => {
+    const block = document.querySelectorAll('.ink-doc > p')[19]!
+    const text = document.createTreeWalker(block, NodeFilter.SHOW_TEXT).nextNode()!
+    const range = document.createRange()
+    range.setStart(text, 5)
+    range.collapse(true)
+    const selection = getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+  })
+  await page.waitForTimeout(200)
+  await page.keyboard.press('ControlOrMeta+Alt+m')
+  await expect(source(page)).toBeVisible()
+  await page.waitForTimeout(400)
+
+  const landed = await page.evaluate(() => {
+    const area = document.querySelector('.ink-source-area') as HTMLTextAreaElement
+    return { at: area.value.slice(area.selectionStart, area.selectionStart + 20), scrolled: area.scrollTop }
+  })
+  expect(landed.at).toContain('Paragraph number 20')
+  // And it is on screen rather than at the top of a document that scrolls.
+  expect(landed.scrolled).toBeGreaterThan(0)
+
+  // Somewhere else in the source, and back.
+  await page.evaluate(() => {
+    const area = document.querySelector('.ink-source-area') as HTMLTextAreaElement
+    const at = area.value.indexOf('Paragraph number 7 ')
+    area.focus()
+    area.setSelectionRange(at + 3, at + 3)
+  })
+  await page.waitForTimeout(200)
+  await page.keyboard.press('ControlOrMeta+Alt+m')
+  await expect(source(page)).toBeHidden()
+  await page.waitForTimeout(500)
+
+  const back = await page.evaluate(() => {
+    const selection = getSelection()!
+    const node = selection.focusNode
+    const element = node instanceof Element ? node : node?.parentElement
+    return element?.closest('.ink-doc > *')?.textContent ?? null
+  })
+  expect(back).toContain('Paragraph number 7 ')
+})

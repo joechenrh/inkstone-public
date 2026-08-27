@@ -360,25 +360,72 @@ test('backspacing into a run opens it, and the next one takes a marker', async (
 })
 
 /**
- * `:tada:` becomes an emoji as it is typed, and a shortcode already in a file does not.
+ * `:tada:` is drawn as 🎉 and stays `:tada:` in the file.
  *
- * The other engine renders both, which means writing the emoji back into the note on the next save
- * — the file rewritten for something nobody typed today. The shortcut helps you write one; what is
- * on disk stays what was typed.
+ * The first version replaced the shortcode with the character as it was typed, which is not what
+ * Typora does and not what this application's rule allows: there the shortcode is the text, the
+ * emoji is drawn over it, and the caret in it shows `:tada:` in grey beside the picture — the same
+ * rule as every other bit of syntax here. So the bytes on disk are the six characters somebody
+ * typed, whichever editor opens them next.
  */
-test('a shortcode typed becomes an emoji, and one already written stays', async ({ page }) => {
+test('a shortcode is drawn as its emoji and stays in the file', async ({ page }) => {
+  await open(page, 'emoji-crepe.md', 'An existing')
+
+  // Drawn: the span carries the emoji, and the shortcode under it is collapsed to nothing.
+  const drawn = page.locator('.ink-doc .ink-emoji').first()
+  await expect(drawn).toHaveAttribute('data-emoji', '😄')
+  expect(await drawn.evaluate((el) => getComputedStyle(el).fontSize)).toBe('0px')
+  expect(await drawn.evaluate((el) => getComputedStyle(el, '::before').content)).toContain('😄')
+
+  // The caret in it shows the shortcode, in grey, beside what it draws.
+  await page.evaluate(() => {
+    const span = document.querySelector('.ink-emoji')!
+    const text = document.createTreeWalker(span, NodeFilter.SHOW_TEXT).nextNode()!
+    const range = document.createRange()
+    range.setStart(text, 3)
+    range.collapse(true)
+    const selection = getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+  })
+  await page.waitForTimeout(300)
+  await expect(page.locator('.ink-doc .ink-emoji--open')).toHaveCount(1)
+
+  // And the file is what it was.
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+  expect(await read(page, 'notes/emoji-crepe.md')).toContain('An existing :smile: stays.')
+})
+
+/**
+ * The list that offers shortcodes, because nobody remembers the name of an emoji.
+ *
+ * What it inserts is the shortcode rather than the character, for the reason above.
+ */
+test('typing a colon and two letters offers the shortcodes they start', async ({ page }) => {
   await open(page, 'emoji-crepe.md', 'An existing')
 
   await page.locator('.ink-doc p').first().click()
   await page.keyboard.press('End')
-  await page.keyboard.type(' typed :tada: here', { delay: 40 })
+  await page.keyboard.type(' :ta', { delay: 60 })
+  await page.waitForTimeout(500)
+
+  const menu = page.locator('.ink-emoji-menu')
+  await expect(menu).toBeVisible()
+  // Alphabetical, so the order is one a reader can predict.
+  await expect(menu.locator('.ink-emoji-row').first()).toContainText(':taco:')
+  await expect(menu.locator('.ink-emoji-row--active')).toHaveCount(1)
+
+  // Down to the second, and take it.
+  await page.keyboard.press('ArrowDown')
+  await page.waitForTimeout(200)
+  await expect(menu.locator('.ink-emoji-row--active')).toContainText(':tada:')
+  await page.keyboard.press('Enter')
   await page.waitForTimeout(400)
+
+  // Gone, and the shortcode is in the document — drawn, but spelled out in the file.
+  await expect(menu).toBeHidden()
   await page.keyboard.press('ControlOrMeta+s')
   await page.waitForTimeout(700)
-
-  const saved = await read(page, 'notes/emoji-crepe.md')
-  // What was typed became the character, with the space in front of it intact.
-  expect(saved).toContain('typed 🎉 here')
-  // And what was already there is untouched.
-  expect(saved).toContain('An existing :smile: stays.')
+  expect(await read(page, 'notes/emoji-crepe.md')).toContain(':tada:')
 })

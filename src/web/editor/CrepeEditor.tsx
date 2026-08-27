@@ -14,7 +14,8 @@ import { imageSchema, remarkPreserveEmptyLinePlugin } from '@milkdown/kit/preset
 import { replaceAll } from '@milkdown/kit/utils'
 import { codeCompletion, codeHighlighting, codeIndent } from './code-highlight.js'
 import { renderMermaid } from './mermaid-preview.js'
-import { emojiInputRule, loadEmojiNames } from './emoji-input.js'
+import { emojiReveal, loadEmojiNames } from './emoji.js'
+import { emojiMenu } from './emoji-menu.js'
 import { linkInputRule, linkPasteRule } from './link-input.js'
 import { tableRowInput } from './table-input.js'
 import { fenceInput } from './fence-input.js'
@@ -221,7 +222,7 @@ export function CrepeEditor() {
     // Before `create()`: a Milkdown editor takes its plugins while it is being built. See
     // `link-input.ts` — without these, `[1](2)` typed into a note is not a link and is saved
     // escaped, which is the only way this application could not write one.
-    crepe.editor.use(linkInputRule).use(linkPasteRule).use(sourceReveal).use(markerReveal).use(markReveal).use(alertReveal).use(tableRowInput).use(fenceInput).use(emojiInputRule)
+    crepe.editor.use(linkInputRule).use(linkPasteRule).use(sourceReveal).use(markerReveal).use(markReveal).use(alertReveal).use(tableRowInput).use(fenceInput).use(emojiReveal).use(emojiMenu)
     // A run of emphasis ends where its closing `*` is; see `mark-inclusivity.ts`.
     for (const schema of marksEndAtTheirMarker) crepe.editor.use(schema)
     // Crepe has an upload button and no paste handler; see `image-paste.ts`.
@@ -239,7 +240,8 @@ export function CrepeEditor() {
     })
     // See `markdown-escapes.ts`: a literal `[` is written as one, and a trailing space is not
     // written as `&#x20;`.
-    // `:smile:` becomes an emoji as it is typed; the names are fetched in the background.
+    // `:tada:` is drawn as 🎉 and stays `:tada:` in the file; the names are fetched in the
+    // background. See `emoji.ts`.
     loadEmojiNames()
     crepe.editor.config(writeWhatWasTyped)
     // …and its tables the way they were typed; see `markdown-escapes.ts`.

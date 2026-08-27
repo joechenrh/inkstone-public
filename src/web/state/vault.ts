@@ -37,7 +37,7 @@ export function treeHas(path: string): boolean {
 
 export type PendingOp =
   | { kind: 'create-file' | 'create-dir'; parent: string }
-  | { kind: 'rename'; path: string; initialName: string }
+  | { kind: 'rename'; path: string; initialName: string; whole?: boolean }
 
 export const pendingOp: Signal<PendingOp | null> = signal<PendingOp | null>(null)
 
@@ -137,6 +137,18 @@ export function startRename(path: string): void {
   pendingOp.value = { kind: 'rename', path, initialName: name }
 }
 
+/**
+ * The same edit, opened on the whole path.
+ *
+ * Moving a note was possible from the day the server took `rename(from, to)` as two paths and made
+ * the destination's parent — the tree just never offered it, because the field it opens holds a
+ * *name*. Renaming to something with a slash in it moves; this is the way to see that, with the
+ * path already there to edit.
+ */
+export function startMove(path: string): void {
+  pendingOp.value = { kind: 'rename', path, initialName: path, whole: true }
+}
+
 export function cancelPending(): void {
   pendingOp.value = null
 }
@@ -167,15 +179,28 @@ export async function commitRename(name: string): Promise<void> {
     pendingOp.value = null
     return
   }
+  /*
+   * A slash makes it a path from the root of the vault; without one it is a name in the folder the
+   * note is already in. That is the whole of "move": the server has always taken two paths and
+   * made the destination's parent, and it refuses to overwrite something that is already there.
+   */
+  const typed = name.trim().replace(/^\/+/, '')
   const slash = op.path.lastIndexOf('/')
-  const to = slash === -1 ? name : `${op.path.slice(0, slash)}/${name}`
+  const to = typed.includes('/')
+    ? typed
+    : slash === -1 ? typed : `${op.path.slice(0, slash)}/${typed}`
   pendingOp.value = null
+  if (to === op.path) return
   try {
     await backend.rename(op.path, to)
     if (currentPath.value === op.path) currentPath.value = to
+    // A move lands the note somewhere that may be collapsed, or not yet on screen at all.
+    expandAncestors(to)
     await refreshTree()
   } catch {
-    treeError.value = 'Failed to rename'
+    treeError.value = to.includes('/') && !op.path.startsWith(`${to.slice(0, to.lastIndexOf('/'))}/`)
+      ? 'Failed to move'
+      : 'Failed to rename'
   }
 }
 

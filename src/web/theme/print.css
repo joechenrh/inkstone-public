@@ -1,0 +1,97 @@
+/*
+ * The note, on paper.
+ *
+ * Printing had never been arranged, so `Cmd+P` produced the application: the sidebar, the top bar,
+ * the status bar and a scrolled slice of the note. This is the whole feature — a stylesheet — and
+ * it adds nothing to the screen: the browser's own print dialogue is also its "export to PDF",
+ * which is the way out of this application that costs nothing to build and nobody has to be taught.
+ *
+ * What is printed is the document as it reads. The editor's own furniture is not part of the note:
+ * the copy button on a fence, the language chip, the syntax the caret reveals, the table bar.
+ */
+@media print {
+  /* The shell is a grid; on paper there is one column and it is the note. */
+  .ink-left,
+  .ink-right,
+  .ink-topbar,
+  .ink-statusbar,
+  .ink-phonebar,
+  .ink-source-gutter,
+  .ink-table-bar,
+  .ink-emoji-menu,
+  .ink-doc .milkdown-code-block > .tools,
+  .ink-marker,
+  .ink-paste-line {
+    display: none !important;
+  }
+
+  .ink-shell,
+  .ink-center,
+  .ink-editor,
+  .ink-editor-stack {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /*
+   * The page is white. The *document's* own colours are not fought for here — a dark theme's
+   * background outranks anything this file can say, measured: an `!important` rule at higher
+   * specificity, injected into the page with no media query at all, did not move it. Printing
+   * switches the appearance to light instead, which is what `printsInLight` in `useTheme.ts` does
+   * and the only thing that actually works.
+   */
+  :root,
+  body {
+    background: #fff !important;
+  }
+
+  /* The measure is the paper's, and the document scrolls no more. */
+  .ink-doc {
+    max-width: none !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    font-size: 11pt;
+  }
+
+  /* A screenshot pasted at full size is wider than the paper. */
+  .ink-doc img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Nothing that is one thing should be split across two sheets. */
+  .ink-doc :is(pre, table, blockquote, figure, .milkdown-code-block, .ink-mermaid) {
+    break-inside: avoid;
+  }
+
+  /* A heading at the foot of a page is a heading in the wrong place. */
+  .ink-doc :is(h1, h2, h3, h4, h5, h6) {
+    break-after: avoid;
+  }
+
+  /* A fenced block on paper is its text: the editor draws it through a code editor, whose own
+     scroller would otherwise clip everything past the first screenful. */
+  .ink-doc .milkdown-code-block :is(.cm-editor, .cm-scroller, .cm-content) {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Where a link goes, since a printed one cannot be followed. Not for note links, whose target is
+     a file on the reader's own disk and whose path says nothing to anyone holding the paper. */
+  .ink-doc a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+}

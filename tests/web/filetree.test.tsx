@@ -210,6 +210,69 @@ describe('file tree operations', () => {
     await waitFor(() => expect(treeError.value).not.toBeNull())
   })
 
+  /*
+   * Moving. The server has always taken `rename(from, to)` as two full paths and made the
+   * destination's parent; the sidebar was the narrow part, offering a field that held a name.
+   */
+  it('a slash in the field is a path from the root of the vault, not a name', async () => {
+    tree.value = [{ name: 'notes', path: 'notes', type: 'dir', children: [
+      { name: 'a.md', path: 'notes/a.md', type: 'file' },
+    ] }]
+    expandedDirs.value = new Set(['notes'])
+    const rename = vi.spyOn(apiModule.backend, 'rename').mockResolvedValue()
+    vi.spyOn(apiModule.backend, 'tree').mockResolvedValue([])
+    render(<FileTree onOpenFile={() => {}} />)
+    rowAction('a.md', 'Rename')
+    const input = screen.getByRole('textbox')
+    fireEvent.input(input, { target: { value: 'archive/2026/a.md' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    await waitFor(() => expect(rename).toHaveBeenCalledWith('notes/a.md', 'archive/2026/a.md'))
+    // The destination is opened, or the note would land somewhere the tree does not show.
+    expect(expandedDirs.value.has('archive')).toBe(true)
+    expect(expandedDirs.value.has('archive/2026')).toBe(true)
+  })
+
+  it('without a slash the note stays in the folder it is in', async () => {
+    tree.value = [{ name: 'notes', path: 'notes', type: 'dir', children: [
+      { name: 'a.md', path: 'notes/a.md', type: 'file' },
+    ] }]
+    expandedDirs.value = new Set(['notes'])
+    const rename = vi.spyOn(apiModule.backend, 'rename').mockResolvedValue()
+    vi.spyOn(apiModule.backend, 'tree').mockResolvedValue([])
+    render(<FileTree onOpenFile={() => {}} />)
+    rowAction('a.md', 'Rename')
+    const input = screen.getByRole('textbox')
+    fireEvent.input(input, { target: { value: 'b.md' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    await waitFor(() => expect(rename).toHaveBeenCalledWith('notes/a.md', 'notes/b.md'))
+  })
+
+  it('"Move" opens the same field on the whole path, with the folder selected', async () => {
+    tree.value = [{ name: 'notes', path: 'notes', type: 'dir', children: [
+      { name: 'a.md', path: 'notes/a.md', type: 'file' },
+    ] }]
+    expandedDirs.value = new Set(['notes'])
+    render(<FileTree onOpenFile={() => {}} />)
+    rowAction('a.md', 'Move\u2026')
+    const input = screen.getByRole('textbox') as HTMLInputElement
+    expect(input.value).toBe('notes/a.md')
+    // Typing replaces the folder rather than the name, which is the part a move changes.
+    await waitFor(() => {
+      expect(input.value.slice(input.selectionStart!, input.selectionEnd!)).toBe('notes')
+    })
+  })
+
+  it('a rename that changes nothing closes the field and asks the server for nothing', async () => {
+    tree.value = [{ name: 'a.md', path: 'a.md', type: 'file' }]
+    const rename = vi.spyOn(apiModule.backend, 'rename').mockResolvedValue()
+    render(<FileTree onOpenFile={() => {}} />)
+    rowAction('a.md', 'Rename')
+    const input = screen.getByRole('textbox')
+    fireEvent.keyDown(input, { key: 'Enter' })
+    await waitFor(() => expect(pendingOp.value).toBeNull())
+    expect(rename).not.toHaveBeenCalled()
+  })
+
   it('when a rename starts, the input text is fully selected', async () => {
     tree.value = [{ name: 'a.md', path: 'a.md', type: 'file' }]
     render(<FileTree onOpenFile={() => {}} />)

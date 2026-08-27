@@ -2,7 +2,9 @@ import { render } from 'preact'
 import { githubIdentity } from './auth/github.js'
 import './theme/tokens.css'
 import './theme/base.css'
+import './theme/print.css'
 import { applyDocTheme, readDocTheme } from './theme/docThemes.js'
+import { printsInLight } from './theme/useTheme.js'
 import { applyThemeChoice, readThemeChoice } from './theme/useTheme.js'
 import { initSettings } from './state/settings.js'
 import { initViewport } from './state/ui.js'
@@ -55,6 +57,8 @@ function sharedNoteId(): string | null {
  * page people who do not use this app ever open, and it has no business downloading an editor.
  */
 async function start(): Promise<void> {
+  // Whatever page this turns out to be, it prints in the light appearance. See `printsInLight`.
+  printsInLight()
   const shared = sharedNoteId()
   if (shared !== null) {
     // This one page scrolls like a document. See the note at the top of `share/shared.css`.

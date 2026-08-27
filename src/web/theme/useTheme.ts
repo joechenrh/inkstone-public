@@ -148,3 +148,36 @@ export function selectDocTheme(id: string): void {
   applyDocTheme(id)
   applyThemeChoice(readThemeChoice())
 }
+
+/**
+ * Printing happens in the light appearance, whatever is on screen.
+ *
+ * A dark theme on paper is a rectangle of toner, and its light text on white paper is an empty
+ * sheet. The obvious fix — a print stylesheet that forces the colours back — does not work here
+ * and that was measured rather than assumed: an `!important` rule at higher specificity than the
+ * theme's, injected into the live page with no media query at all, did not move the document's
+ * background. The appearance is switched instead, which is what the browser gives this event for.
+ *
+ * Restored afterwards, including when the dialogue is cancelled: `afterprint` fires either way.
+ */
+export function printsInLight(): () => void {
+  if (typeof window === 'undefined') return () => {}
+  let before: string | null = null
+
+  const toLight = () => {
+    before = document.documentElement.getAttribute('data-theme')
+    if (before !== 'light') document.documentElement.setAttribute('data-theme', 'light')
+  }
+  const back = () => {
+    if (before === null) document.documentElement.removeAttribute('data-theme')
+    else document.documentElement.setAttribute('data-theme', before)
+    before = null
+  }
+
+  window.addEventListener('beforeprint', toLight)
+  window.addEventListener('afterprint', back)
+  return () => {
+    window.removeEventListener('beforeprint', toLight)
+    window.removeEventListener('afterprint', back)
+  }
+}

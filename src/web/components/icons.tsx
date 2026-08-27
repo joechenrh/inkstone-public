@@ -163,6 +163,17 @@ export const IconRename = (p: IconProps) =>
     p,
   )
 
+/** Moving a note to another folder: the folder of {@link IconFolder}, with the note going into it. */
+export const IconMove = (p: IconProps) =>
+  svg(
+    <>
+      <path d="M3 18.5V6A1.5 1.5 0 0 1 4.5 4.5H9l2 3h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z" />
+      <path d="M8.5 14h6" />
+      <path d="M12 11.5l2.5 2.5-2.5 2.5" />
+    </>,
+    p,
+  )
+
 export const IconTrash = (p: IconProps) =>
   svg(
     <>

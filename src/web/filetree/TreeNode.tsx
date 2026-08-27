@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'preact/hooks'
 import type { VaultEntry } from '../../shared/types.js'
-import { currentPath, isExpanded, toggleDir, startRename, commitRename, cancelPending, commitCreate, deleteEntry, pendingOp, startCreateIn } from '../state/vault.js'
+import { currentPath, isExpanded, toggleDir, startRename, startMove, commitRename, cancelPending, commitCreate, deleteEntry, pendingOp, startCreateIn } from '../state/vault.js'
 import { dirty } from '../state/document.js'
-import { IconFile, IconFolder, IconMore, IconRename, IconTrash, IconUnsavedDot } from '../components/icons.js'
+import { IconFile, IconFolder, IconMore, IconMove, IconRename, IconTrash, IconUnsavedDot } from '../components/icons.js'
 import { MenuButton, type MenuItem } from '../components/Menu.js'
 import { shareMenuItem } from '../share/menuItem.js'
 import { isAssetPath } from '../assets/paths.js'
@@ -41,7 +41,17 @@ export function TreeNode({ entry, depth, onOpenFile }: TreeNodeProps) {
     const input = renameInputRef.current
     if (!input) return
     input.focus()
-    input.select()
+    /*
+     * Renaming selects the name, so the first keystroke replaces it. A move opens the same field on
+     * the whole path, where that would mean retyping the file name to change only its folder — so
+     * the folder alone is selected, and a note at the root gets an empty selection to type into.
+     */
+    if (op?.kind === 'rename' && op.whole) {
+      // A note at the root has no folder to replace, so the caret goes in front of the name.
+      input.setSelectionRange(0, Math.max(input.value.lastIndexOf('/'), 0))
+    } else {
+      input.select()
+    }
   }, [isRenaming])
 
   /* `autoFocus` is ignored here. The attribute only takes effect while the document's autofocus
@@ -143,6 +153,13 @@ export function TreeNode({ entry, depth, onOpenFile }: TreeNodeProps) {
       label: 'Rename',
       icon: <IconRename size={15} />,
       onSelect: () => { startRename(entry.path) },
+    },
+    // Moving is the same edit as renaming, opened on the whole path: the server has always taken
+    // two paths and made the destination's parent, so a slash in that field is all it ever needed.
+    {
+      label: 'Move\u2026',
+      icon: <IconMove size={15} />,
+      onSelect: () => { startMove(entry.path) },
     },
     // A folder is not a document, so there is nothing to publish; this is also the only entry
     // point a desktop has, since its top bar carries no menu at all.

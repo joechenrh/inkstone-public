@@ -33,8 +33,17 @@ async function open(page: Page, engine: 'crepe') {
   return note
 }
 
-/** Paste it the way a screenshot arrives: a file on the clipboard and no text beside it. */
+/**
+ * Paste it the way a screenshot arrives: a file on the clipboard and no text beside it.
+ *
+ * Returns when the picture is actually in the note. The paste event returns long before that — the
+ * bytes are re-encoded, uploaded, and only then does the stored address replace the blob — and one
+ * vault serves the whole suite, so a note that already holds a picture answers "is there one with
+ * an address" straight away. Counted instead, which is the only question that distinguishes the
+ * picture just pasted from the ones the tests before left behind.
+ */
 async function pasteImage(page: Page, colour: string) {
+  const before = await page.locator('.ink-doc img[data-ink-asset]').count()
   await page.locator('.ink-doc').click()
   await page.keyboard.press('ControlOrMeta+End')
   await page.evaluate(async (fill) => {
@@ -50,11 +59,37 @@ async function pasteImage(page: Page, colour: string) {
     const target = document.querySelector('.ink-doc')!
     target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
   }, colour)
+  await expect
+    .poll(() => page.locator('.ink-doc img[data-ink-asset]').count(), { timeout: 15_000 })
+    .toBeGreaterThan(before)
+  await expect.poll(() => shownSrc(page), { timeout: 15_000 }).toMatch(/assets%2F[a-f0-9]{16}\./)
 }
 
-/** The picture in the document, as the browser resolved it — not as the markdown spells it. */
+/**
+ * The note as it is on disk.
+ *
+ * `Cmd+S` returns as soon as the request is away, so a read straight after it can answer with the
+ * version from before the save — which is how this suite failed about one run in three, showing the
+ * *previous* test's content and blaming the edit under test. Waited out on the unsaved dot, which
+ * is what says the write landed, and then read once.
+ */
+async function savedContent(page: Page, note: string): Promise<string> {
+  await expect(page.locator('.ink-tree-unsaved')).toHaveCount(0, { timeout: 10_000 })
+  return page.evaluate(async (path) => {
+    const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`)
+    return (await res.json() as { content: string }).content
+  }, `notes/${note}`)
+}
+
+/**
+ * The picture in the document, as the browser resolved it — not as the markdown spells it.
+ *
+ * The last one: the note is shared across the suite, and the picture a test cares about is the one
+ * it has just pasted, at the end.
+ */
 const shownSrc = (page: Page) => page.evaluate(() => {
   const img = Array.from(document.querySelectorAll<HTMLImageElement>('.ink-doc img'))
+    .reverse()
     .find((e) => (e.getAttribute('src') ?? '').includes('assets'))
   return img?.getAttribute('src') ?? null
 })
@@ -91,10 +126,7 @@ for (const engine of ['crepe'] as const) {
     // …and it goes away with the next keystroke.
     await expect(page.locator('.ink-paste-line')).toHaveCount(0)
 
-    const saved = await page.evaluate(async (path) => {
-      const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`)
-      return (await res.json() as { content: string }).content
-    }, `notes/${note}`)
+    const saved = await savedContent(page, note)
     expect(saved).toMatch(/!\[\]\(\/assets\/[a-f0-9]{16}\.\w+\)/)
     // Never a blob URL — a link into a tab that has since closed.
     expect(saved).not.toContain('blob:')
@@ -194,10 +226,7 @@ test('crepe: clicking a picture shows its markdown, and editing it sticks', asyn
   await expect(page.locator('.ink-doc img[alt="a screenshot"]')).toHaveCount(1)
 
   await page.keyboard.press('ControlOrMeta+s')
-  const saved = await page.evaluate(async (path) => {
-    const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`)
-    return (await res.json() as { content: string }).content
-  }, `notes/${note}`)
+  const saved = await savedContent(page, note)
   expect(saved).toMatch(/!\[a screenshot\]\(\/assets\/[a-f0-9]{16}\.\w+\)/)
   // Never the escaped form, which is what an open one would serialise to.
   expect(saved).not.toContain('\\[')
@@ -232,12 +261,8 @@ test('crepe: enter after clicking a picture closes it and makes a line', async (
   await page.keyboard.type('11')
   await page.waitForTimeout(400)
   await page.keyboard.press('ControlOrMeta+s')
-  await page.waitForTimeout(700)
 
-  const saved = await page.evaluate(async (path) => {
-    const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`)
-    return (await res.json() as { content: string }).content
-  }, `notes/${note}`)
+  const saved = await savedContent(page, note)
 
   // The picture, whole, with the line after it.
   expect(saved).toMatch(/!\[\]\(\/assets\/[a-f0-9]{16}\.\w+\)\n\n11/)

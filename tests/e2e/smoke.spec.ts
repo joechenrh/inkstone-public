@@ -896,6 +896,11 @@ test('layout: the top bar spans the full width in both sidebar states', async ({
   // readings in a row to agree before measuring anything against them. This failed once in a full
   // parallel run and passed three times alone; comparing the strings was not enough, because then
   // it was the string comparison that failed instead.
+  //
+  // Two readings agreeing is not by itself enough, either: `0 words 0 chars` is what the counts say
+  // before the document has been counted at all, and it is perfectly stable while that lasts. This
+  // note is not empty, so the count that matters is the one after it stops being zero.
+  await expect.poll(async () => (await read()).countsText).not.toMatch(/^0 words/)
   await expect.poll(async () => (await read()).countsText).toBe((await read()).countsText)
 
   const open = await read()

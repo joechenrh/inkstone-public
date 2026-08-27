@@ -36,6 +36,12 @@ COPY . .
 # Re-declared inside the stage: a global ARG is not visible to a build stage unless it asks.
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
+# Node sizes its own heap from the machine's memory, which on a small host is about 1 GB — and a
+# bundle with a diagram library in it needs more than that. Measured on a 1.8 GB host: the build
+# died with `FATAL ERROR: … JavaScript heap out of memory`, exit 134, *after* swap had been added,
+# so the kernel was no longer the one refusing. This is the ceiling, not an allocation: a build
+# that does not need it does not take it, and where the memory is not there, swap carries it.
+ENV NODE_OPTIONS=--max-old-space-size=3072
 RUN pnpm build
 
 FROM ${NODE_IMAGE}

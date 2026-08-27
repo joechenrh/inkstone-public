@@ -1,3 +1,4 @@
+import { LanguageDescription, LanguageSupport, StreamLanguage } from '@codemirror/language'
 import { resolvedTheme } from '../theme/useTheme.js'
 
 /**
@@ -98,3 +99,26 @@ export function renderMermaid(
     }
   })()
 }
+
+/**
+ * `mermaid`, in the list of languages a fenced block can be.
+ *
+ * Crepe fills the picker from `@codemirror/language-data`, which has 143 languages in it and no
+ * mermaid — because mermaid is not a CodeMirror language. So a diagram could be turned into C++ and
+ * never turned back: the name it needed was not on the list. Reported as exactly that.
+ *
+ * The entry carries no highlighting, and that is the honest thing rather than a shortcut: there is
+ * no mermaid mode to load, its source is only on screen while it is being edited, and the other
+ * engine did not colour it either. What the entry is *for* is the name — which is what goes into
+ * the fence, and what `renderMermaid` reads to draw the picture. It also makes the picker a way to
+ * start a diagram from an ordinary block.
+ */
+const plain = StreamLanguage.define({
+  token: (stream) => { stream.skipToEnd(); return null },
+})
+
+export const mermaidLanguage = LanguageDescription.of({
+  name: 'mermaid',
+  alias: ['mermaid'],
+  load: () => Promise.resolve(new LanguageSupport(plain)),
+})

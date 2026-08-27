@@ -55,3 +55,45 @@ test('a diagram label sits inside its own box', async ({ page }) => {
   expect(fits!.top).toBeGreaterThanOrEqual(0)
   expect(fits!.bottom).toBeGreaterThanOrEqual(0)
 })
+
+/**
+ * `mermaid` is on the list of languages a block can be.
+ *
+ * Crepe fills the picker from `@codemirror/language-data` — 143 languages, and no mermaid, because
+ * mermaid is not a CodeMirror language. So a diagram could be turned into C++ and never turned
+ * back: the name it needed was not on the list. Reported as exactly that.
+ */
+test('the language picker offers mermaid, and picking it draws the diagram', async ({ page }) => {
+  await open(page, 'diagram-crepe.md', 'const x = 1')
+
+  // The js block at the end, which draws nothing.
+  const fence = page.locator('.ink-doc .milkdown-code-block').last()
+  await fence.hover()
+  await fence.locator('.language-button').click()
+  await page.waitForTimeout(400)
+
+  const names = await page.$$eval('.language-list-item', (rows) => rows.map((r) => r.textContent?.trim()))
+  expect(names).toContain('mermaid')
+
+  // Picking it is what a reader does with a block that should have been a diagram.
+  await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('.language-list-item'))
+    const row = rows.find((r) => r.textContent?.trim() === 'mermaid')
+    row?.scrollIntoView({ block: 'center' })
+    ;(row as HTMLElement | undefined)?.click()
+  })
+  await page.waitForTimeout(900)
+
+  // The renderer has taken the block over. What it says is that `const x = 1` is not a diagram,
+  // which is the right answer and the proof that the language really changed — a fence that is
+  // still JavaScript has no preview at all.
+  await expect(page.locator('.ink-mermaid-error')).toHaveCount(1, { timeout: 15_000 })
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+  const saved = await page.evaluate(async () => {
+    const res = await fetch('/api/file?path=notes%2Fdiagram-crepe.md')
+    return (await res.json() as { content: string }).content
+  })
+  expect(saved).not.toContain('```js')
+  expect(saved.match(/```mermaid/g)?.length).toBe(2)
+})

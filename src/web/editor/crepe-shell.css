@@ -403,8 +403,11 @@
 }
 
 /* Small and quiet. A one-line fence is 58px tall, and a 36px card of chrome sitting on it is most
-   of the block — this is 24px, which is the size of an icon button everywhere else in the shell. */
-.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button) {
+   of the block — this is 24px, which is the size of an icon button everywhere else in the shell.
+   The preview toggle — the Edit/Hide on a diagram or a formula — is in here because it was not:
+   Crepe gives it 24px and a grey fill of its own, so beside two 20px transparent buttons it stood
+   a head taller and painted over the card's rounded corner. */
+.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button, .preview-toggle-button) {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -419,7 +422,7 @@
   line-height: 1;
 }
 
-.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button):hover {
+.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button, .preview-toggle-button):hover {
   background: var(--ink-sidebar-hover);
   color: var(--ink-fg);
 }

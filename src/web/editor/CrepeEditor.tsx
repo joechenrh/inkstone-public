@@ -13,7 +13,8 @@ import { TextSelection } from '@milkdown/kit/prose/state'
 import { imageSchema, remarkPreserveEmptyLinePlugin } from '@milkdown/kit/preset/commonmark'
 import { replaceAll } from '@milkdown/kit/utils'
 import { codeCompletion, codeHighlighting, codeIndent } from './code-highlight.js'
-import { renderMermaid } from './mermaid-preview.js'
+import { mermaidLanguage, renderMermaid } from './mermaid-preview.js'
+import { languages as codeLanguages } from '@codemirror/language-data'
 import { emojiReveal, loadEmojiNames } from './emoji.js'
 import { emojiMenu } from './emoji-menu.js'
 import { linkInputRule, linkPasteRule } from './link-input.js'
@@ -206,6 +207,9 @@ export function CrepeEditor() {
           // See `mermaid-preview.ts`; the formula feature wraps this, so what it declines lands
           // here and what this declines lands back on Crepe's own default.
           renderPreview: renderMermaid,
+          // Crepe fills the picker from `@codemirror/language-data`, which has no mermaid in it —
+          // so a diagram could be turned into C++ and never turned back. See `mermaid-preview.ts`.
+          languages: [...codeLanguages, mermaidLanguage],
           // A formula block is its formula, the way Typora shows one: the source is what you get
           // when you go into it. Crepe's default opens both at once, so `$$…$$` was a fenced block
           // of backslashes with the rendered maths underneath it — twice the height and neither

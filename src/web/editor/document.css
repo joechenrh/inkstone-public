@@ -5,7 +5,7 @@
  * something similar. Keeping the list here means a theme added later reaches both without anyone
  * remembering to add it twice.
  *
- * The order matters: the face, then Vditor's own base, then the themes that override it.
+ * The order matters: the face, then this application's own base, then the themes that override it.
  *
  * The themes are scoped `.ink-doc.ink-doc.ink-doc` — three classes on one element, which is a
  * specificity dial rather than a hack. Two was not enough: Crepe's own theme reaches its document
@@ -13,7 +13,6 @@
  * order, and headings came out at weight 400 where Lapis asks for 600. Three classes settle it
  * without an `!important` on nine hundred rules. */
 @import "./fonts.css";
-@import "vditor/dist/index.css";
 @import "./document-base.css";
 @import "./lapis-theme.css";
 @import "./plain-theme.css";

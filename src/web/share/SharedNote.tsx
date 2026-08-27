@@ -180,15 +180,12 @@ function Body({ markdown, id }: { markdown: string; id: string }) {
   }, [markdown])
 
   // `ink-doc` is what every document theme is scoped to, so wearing it is what makes this page look
-  // like the editor rather than merely similar to it. It used to wear `vditor-ir vditor-reset` for
-  // the same reason, back when the themes named an engine — this page has no editor anywhere near
-  // it, and should never have had to say which one it was not.
-  //
-  // `vditor-reset` stays for one thing only: Vditor's own stylesheet gives it the `overflow: auto`
-  // that makes this a scroll container, which `shared.css` depends on.
+  // like the editor rather than merely similar to it. It used to wear `vditor-reset` beside it —
+  // not for the theme, but for the `overflow: auto` that made it a scroll container, which came
+  // from the editor's own stylesheet. That editor is gone and the rule is `shared.css`'s own now.
   return (
     <div class="ink-shared-body">
-      <div ref={host} class="ink-doc vditor-reset" />
+      <div ref={host} class="ink-doc ink-shared-scroller" />
     </div>
   )
 }

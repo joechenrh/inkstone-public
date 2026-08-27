@@ -125,18 +125,6 @@ export function deleteTable(table: HTMLTableElement): void {
   table.remove()
 }
 
-/**
- * Tell Vditor the document changed.
- *
- * Its IR input handler is what re-serialises the DOM through lute and hands the markdown to our
- * own `input` callback, so without this a rewritten table is on screen but not in `content`, and
- * the next save would write the old text.
- */
-export function notifyEdited(table: HTMLTableElement): void {
-  const surface = table.closest('.vditor-ir')?.querySelector('pre.vditor-reset')
-  surface?.dispatchEvent(new InputEvent('input', { bubbles: true }))
-}
-
 /** The cell the caret is in, or null when the selection is not inside a table. */
 export function cellAtCaret(): { table: HTMLTableElement; cell: HTMLTableCellElement } | null {
   const anchor = document.getSelection()?.anchorNode

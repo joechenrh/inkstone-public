@@ -12,30 +12,15 @@ import type { Page } from '@playwright/test'
  */
 
 async function openTight(page: Page) {
-  await useVditor(page)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
   await page.locator('.ink-tree-name').filter({ hasText: /^tight\.md$/ }).click()
-  await expect(page.locator('.vditor-ir .vditor-reset table')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc td').first()).toBeVisible({ timeout: 15_000 })
 }
 
 const source = (page: Page) => page.locator('.ink-source-area')
-
-/**
- * Which editor these tests are about.
- *
- * Both engines are mounted while the move to Crepe is judged (`docs/design/editor-engine.md`), and
- * these specs reach into Vditor's own DOM — `.vditor-ir`, `pre.vditor-reset`, its markers. So they
- * say so, rather than testing whichever engine happened to be the default that week. A Crepe suite
- * grows beside them; when one engine goes, so does the line below and the other suite.
- */
-async function useVditor(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('inkstone.editorEngine', 'vditor')
-  })
-}
 
 test('Cmd+Alt+M shows the markdown exactly as it is on disk', async ({ page }) => {
   await openTight(page)
@@ -82,7 +67,7 @@ test('text typed as source reaches the file exactly as typed', async ({ page }) 
 
   // Back through the renderer once, then out again: the tight table must have survived the trip.
   await page.keyboard.press('ControlOrMeta+Alt+KeyM')
-  await expect(page.locator('.vditor-ir .vditor-reset table')).toBeVisible()
+  await expect(page.locator('.ink-doc td').first()).toBeVisible()
   await page.keyboard.press('ControlOrMeta+Alt+KeyM')
   const after = await source(page).inputValue()
   expect(after).toContain('|Left|Centre|')
@@ -97,7 +82,7 @@ test('a source edit shows up in the rendered view', async ({ page }) => {
   await page.keyboard.type('\n## Added from source\n')
 
   await page.keyboard.press('ControlOrMeta+Alt+KeyM')
-  await expect(page.locator('.vditor-ir .vditor-reset h2')).toContainText('Added from source')
+  await expect(page.locator('.ink-doc h2')).toContainText('Added from source')
 })
 
 // Edit, read and source are one setting with three values, so asking for reading while in source
@@ -125,7 +110,6 @@ test('the three views are exclusive', async ({ page }) => {
 // already followed alone, now applied to the view group, the panel toggle and the word count.
 // Settings and the file-tree toggle stay: they are the app, not the file.
 test('the document controls are not there when there is no document', async ({ page }) => {
-  await useVditor(page)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()

@@ -16,38 +16,6 @@ function coerce(raw: string | null, allowed: number[], fallback: number): number
   return allowed.includes(n) ? n : fallback
 }
 
-/**
- * Which editor engine is mounted.
- *
- * Both are here while the move is being judged, because the only useful comparison is the same
- * note in the same application — `docs/design/editor-engine.md` has the measurements, but the
- * question it cannot answer is whether writing in it feels right. Crepe is the decision; Vditor
- * stays reachable until it has been lived in.
- *
- * This is not a feature. When the answer is in, one of the two is deleted along with the setting.
- */
-export type EditorEngine = 'crepe' | 'vditor'
-
-const ENGINE_KEY = 'inkstone.editorEngine'
-
-/**
- * Vditor unless someone has chosen otherwise.
- *
- * The newer engine is the one being judged, and judging it is opt-in: a deployment that defaults to
- * it would hand every reader an editor they did not ask to try, on notes they need to work. The
- * setting is two clicks away and the choice sticks.
- */
-export const editorEngine = signal<EditorEngine>(
-  safeGet(ENGINE_KEY) === 'crepe' ? 'crepe' : 'vditor',
-)
-
-export function setEditorEngine(next: EditorEngine): void {
-  editorEngine.value = next
-  safeSet(ENGINE_KEY, next)
-  // The editors do not share a DOM or an undo stack, so they are not swapped under a live
-  // document. A reload is honest and is what makes the comparison a comparison.
-  location.reload()
-}
 
 export const editorFontSize = signal(coerce(safeGet(EDITOR_KEY), EDITOR_SIZES, 16))
 

@@ -47,23 +47,20 @@ body {
  */
 .ink-left::-webkit-scrollbar,
 .ink-sidebar-view::-webkit-scrollbar,
-.ink-right::-webkit-scrollbar,
-.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar {
+.ink-right::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 .ink-left::-webkit-scrollbar-track,
 .ink-sidebar-view::-webkit-scrollbar-track,
-.ink-right::-webkit-scrollbar-track,
-.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar-track {
+.ink-right::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .ink-left::-webkit-scrollbar-thumb,
 .ink-sidebar-view::-webkit-scrollbar-thumb,
-.ink-right::-webkit-scrollbar-thumb,
-.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar-thumb {
+.ink-right::-webkit-scrollbar-thumb {
   background-color: var(--ink-scrollbar-thumb);
   border: 3px solid transparent;
   background-clip: padding-box;
@@ -72,8 +69,7 @@ body {
 
 .ink-left::-webkit-scrollbar-thumb:hover,
 .ink-sidebar-view::-webkit-scrollbar-thumb:hover,
-.ink-right::-webkit-scrollbar-thumb:hover,
-.ink-editor .vditor-ir .vditor-reset::-webkit-scrollbar-thumb:hover {
+.ink-right::-webkit-scrollbar-thumb:hover {
   background-color: var(--ink-scrollbar-thumb-hover);
 }
 

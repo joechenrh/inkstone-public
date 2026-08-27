@@ -57,14 +57,14 @@
 /*
  * The gutter, and why it is not on this element.
  *
- * `.vditor-reset` carries `overflow: auto` from Vditor's own stylesheet, which makes it a scroll
- * container — and a scroll container clips. Themes deliberately hang things into the left margin:
+ * The note itself is the scroll container — and a scroll container clips. Themes deliberately hang
+ * things into the left margin:
  * Lapis pulls its h2 pill 12.5px out so the pill's *text* lines up with h3–h6, Forest and Tailwind
  * place the H1…H6 markers outside the box entirely. With the padding out here on the parent, the
  * scroller's own edge sat flush against the text and sliced every one of them off.
  *
- * So the padding goes *inside* the scroller, which is exactly what `vditor-shell.css` does for the
- * editor and for the same reason. This element keeps the measure and the centring.
+ * So the padding goes *inside* the scroller, which is what the editor's own shell does and for the
+ * same reason. This element keeps the measure and the centring.
  */
 .ink-shared-body {
   /* Not grown to fill: the bar goes directly under the note, however short it is. Pinned to the
@@ -109,12 +109,17 @@
   display: none !important;
 }
 
-/* The document themes are all scoped to `.vditor-ir .vditor-reset`, which is why the body wears
-   both class names. Vditor's own stylesheet then supplies the base, exactly as in the editor. */
+/* The document themes are scoped to `.ink-doc`, which is why the note wears it. The base the
+   editor's own stylesheet used to supply is these three lines and the scrolling below. */
 .ink-shared-body .ink-doc {
   background: none;
   font-size: var(--ink-font-size);
   line-height: var(--ink-line-height);
+}
+
+/* What `.vditor-reset` used to carry: this element scrolls, and the padding above goes inside it. */
+.ink-shared-body .ink-shared-scroller {
+  overflow: auto;
 }
 
 .ink-shared-skel {

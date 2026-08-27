@@ -1,6 +1,5 @@
 node_modules/
 dist/
-public/vditor/
 .DS_Store
 *.log
 test-results/

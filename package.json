@@ -1,16 +1,13 @@
 {
   "name": "inkstone",
-  "version": "0.13.3",
+  "version": "0.14.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev:server": "tsx watch --env-file-if-exists=.env.local src/server/main.ts",
     "dev:web": "vite",
     "dev:agent": "tsx --env-file-if-exists=.env.local src/agent/main.ts",
-    "predev:web": "node scripts/prepare-assets.mjs",
     "build": "tsc -p tsconfig.server.json && vite build",
-    "prebuild": "node scripts/prepare-assets.mjs",
-    "prepare-assets": "node scripts/prepare-assets.mjs",
     "start": "node dist/server/main.js",
     "agent": "tsx src/agent/main.ts",
     "test": "vitest run",
@@ -28,7 +25,6 @@
     "preact": "^10.29.8",
     "simple-git": "^3.27.0",
     "subset-font": "^2.5.0",
-    "vditor": "^3.11.2",
     "ws": "^8.21.3"
   },
   "devDependencies": {
@@ -48,8 +44,16 @@
     "jsdom": "^26.0.0",
     "mermaid": "^11.17.2",
     "node-emoji": "^2.2.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
+    "unified": "^11.0.5",
     "vite": "^6.0.7",
     "vitest": "^3.0.2"
   },

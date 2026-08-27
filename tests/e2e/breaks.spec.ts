@@ -9,7 +9,7 @@ import { expect, test, type Page } from '@playwright/test'
  * the source. Two lines silently became one, wherever the note was read next.
  */
 
-async function open(page: Page, engine: 'vditor' | 'crepe', note: string) {
+async function open(page: Page, engine: 'crepe', note: string) {
   await page.addInitScript((e) => { localStorage.setItem('inkstone.editorEngine', e) }, engine)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')

@@ -12,7 +12,7 @@ import { expect, test, type Page } from '@playwright/test'
  * `notes/linked/target.md`. These tests are what stops that drifting.
  */
 
-async function open(page: Page, engine: 'vditor' | 'crepe', note = 'links.md', text = 'Links one') {
+async function open(page: Page, engine: 'crepe', note = 'links.md', text = 'Links one') {
   await page.addInitScript((e) => { localStorage.setItem('inkstone.editorEngine', e) }, engine)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
@@ -31,7 +31,7 @@ async function follow(page: Page, label: string) {
 
 const openNote = (page: Page) => page.locator('.ink-topbar').innerText()
 
-for (const engine of ['vditor', 'crepe'] as const) {
+for (const engine of ['crepe'] as const) {
   test(`${engine}: a relative link opens the note it names`, async ({ page }) => {
     await open(page, engine)
     await follow(page, 'the target')

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { readOutline } from '../../src/web/outline/outline.js'
 
 /**
- * Mirrors what Vditor's IR mode actually produces: headings are direct children
- * of .vditor-reset, and the literal "## " lives in a marker span that is hidden
- * visually but still present in textContent.
+ * Mirrors what the editor produces: headings are direct children of the document surface, and the
+ * `##` the caret reveals is a marker span — drawn in the gutter, still present in `textContent`,
+ * and not part of the heading's name.
  */
 function makeRoot(html: string): HTMLElement {
   const root = document.createElement('div')
@@ -13,7 +13,7 @@ function makeRoot(html: string): HTMLElement {
 }
 
 const h = (tag: string, marker: string, text: string) =>
-  `<${tag} class="vditor-ir__node"><span class="vditor-ir__marker vditor-ir__marker--heading">${marker}</span>${text}</${tag}>`
+  `<${tag}><span class="ink-marker ink-marker--heading">${marker}</span>${text}</${tag}>`
 
 describe('readOutline', () => {
   it('returns one item per heading, with the level from the tag name', () => {

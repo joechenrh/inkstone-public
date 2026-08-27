@@ -11,11 +11,9 @@ import { backend } from '../api/index.js'
  * last week taught: every rendering bug worth the name was a fact about the document written down
  * somewhere only one editor could read. An `<img>` is an `<img>` in both.
  *
- * Rewriting `src` in the document is safe in both engines, which is not obvious and was measured
- * rather than assumed. Crepe has a real document model, so its DOM is a rendering and nothing is
- * read back from it. Vditor's DOM *is* its markdown — but an image in IR mode keeps its path in a
- * `.vditor-ir__marker--link` span beside the `<img>`, and that span is what Lute serialises: a note
- * whose `src` was replaced with a `blob:` URL still saved the original path.
+ * Rewriting `src` in the document is safe: the editor has a real document model, so its DOM is a
+ * rendering of the note and nothing is ever read back out of it. A picture whose `src` has been
+ * pointed at a blob still saves the path the note was written with.
  */
 
 /** Every picture a note refers to, in the order it refers to them. Used when a note is shared. */
@@ -57,7 +55,7 @@ function resolveWithin(node: Node): void {
  * Keep every picture in `root` pointed at something the browser can fetch, until the returned
  * function is called.
  *
- * Both engines re-render an image node freely — a caret entering it, a keystroke near it — so this
+ * The editor re-renders an image node freely — a caret entering it, a keystroke near it — so this
  * has to be an observer rather than a pass over the document. `data-ink-asset` is both the record
  * of what was resolved and the guard against the loop our own write would otherwise cause.
  */

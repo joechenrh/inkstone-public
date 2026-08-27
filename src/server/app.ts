@@ -163,11 +163,11 @@ export function buildApp(deps: AppDeps): App {
           // exactly this reason, and land here too.
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
         } else {
-          // Everything else — chiefly Vditor's runtime assets, whose paths it hardcodes and which
-          // therefore keep one name for ever. Marking those `immutable` was a year-long promise
-          // this app cannot keep: replacing one leaves every cache between here and the reader
-          // serving the old bytes with no way to reach them. A day, then revalidate; a 304 costs a
-          // round trip and nothing else.
+          // Everything else: files served under a name of their own rather than a hashed one, so
+          // the bytes behind a name can change. Marking those `immutable` would be a year-long
+          // promise this app cannot keep — replacing one leaves every cache between here and the
+          // reader serving the old bytes with no way to reach them. A day, then revalidate; a 304
+          // costs a round trip and nothing else.
           res.setHeader('Cache-Control', 'public, max-age=86400, must-revalidate')
         }
       },

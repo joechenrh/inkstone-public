@@ -101,9 +101,7 @@
 
   .ink-doc.ink-doc.ink-doc p { margin: 0 0 0.9em; }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color: var(--plain-link);
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -140,8 +138,6 @@
 
   /* Fenced blocks: both the rendered <pre> and the expanded source, never a bare `pre` — that
      selector also hits the collapsed source and paints a sliver beside the fence. */
-  .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--plain-block);
     border-radius: 6px;

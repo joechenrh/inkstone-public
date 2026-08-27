@@ -176,3 +176,50 @@ visible a frame earlier than Vditor. Given a moment to settle, both measure the 
 
 **Not measured, and so not claimed**: a real touchscreen (Playwright's emulation is not iOS
 Safari), IME composition, pasting rich HTML from a web page, printing.
+
+## Vditor is gone
+
+Retired once the last of the gaps above was closed. What went with it:
+
+| | |
+|---|---|
+| `VditorEditor.tsx`, `vditor-shell.css` | 1,142 lines |
+| The engine setting, its storage key, the Settings row | — |
+| The `vditor` dependency and `public/vditor` | **23 MB** of runtime assets, and `scripts/prepare-assets.mjs` with them |
+| Dead selectors in the seven themes | 19 rules, 42 selector lists trimmed |
+| Vditor-only specs | `tables.spec.ts`, `editor-switch.spec.ts`, five IR-expansion tests in `smoke.spec.ts` |
+
+`dist/web` went from 36 MB to 11 MB.
+
+### The reader's page had to be rewritten first
+
+The share page rendered with `vditor/dist/method.js` — the rendering half of the editor — so the
+dependency could not go until that did. It renders with **the editor's own parser** now:
+`remark-parse` with gfm and math, which is what Milkdown reads a note with, so a shared link and the
+editor agree about what the markdown means rather than agreeing by coincidence. Two parsers for one
+file was itself a source of drift.
+
+Measured, per note, because the reader pays for it:
+
+| | Vditor | now |
+|---|---|---|
+| prose | 67 KB | 69 KB |
+| with a fenced block | 1,091 KB — Vditor ships every language it knows | **239 KB** |
+| with maths | +270 KB | +255 KB |
+| with a diagram | +2,604 KB | +643 KB |
+
+Highlighting and maths are fetched only when the note contains one, which is what keeps the prose
+case where it was. Raw HTML is not rendered at all: a shared link is a public page.
+
+### Two bugs the removal exposed
+
+Both had been there all along and were invisible while the default engine was the other one.
+
+- **Opening a note marked it unsaved.** `replaceAll` is followed by an update event carrying the
+  editor's *own* spelling of the same markdown — `|a|b|` comes back `| a | b |` — and against the
+  text that was pushed in, that reads as an edit nobody made. So opening a tightly written note
+  queued a reformat, which is exactly what "the reformat is done deliberately" above was written to
+  prevent. Recording the editor's spelling as what is synced makes the echo compare equal.
+- **Saving in source mode wrote the editor's serialisation**, not the bytes in the textarea. The
+  mode exists so that what is typed reaches the file as typed; its save handler now stands down
+  while it is open.

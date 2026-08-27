@@ -10,22 +10,7 @@ import type { Page } from '@playwright/test'
  * unreachable at all.
  */
 
-/**
- * Which editor these tests are about.
- *
- * Both engines are mounted while the move to Crepe is judged (`docs/design/editor-engine.md`), and
- * these specs reach into Vditor's own DOM — `.vditor-ir`, `pre.vditor-reset`, its markers. So they
- * say so, rather than testing whichever engine happened to be the default that week. A Crepe suite
- * grows beside them; when one engine goes, so does the line below and the other suite.
- */
-async function useVditor(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('inkstone.editorEngine', 'vditor')
-  })
-}
-
 async function login(page: Page) {
-  await useVditor(page)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()
@@ -36,8 +21,8 @@ async function login(page: Page) {
 async function makeAChange(page: Page, marker: string) {
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
   await page.locator('.ink-tree-name').filter({ hasText: /^welcome\.md$/ }).click()
-  await expect(page.locator('.vditor-ir pre[contenteditable="true"]')).toBeVisible({ timeout: 15_000 })
-  await page.locator('.vditor-ir .vditor-reset').click()
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
+  await page.locator('.ink-doc').click()
   await page.keyboard.press('ControlOrMeta+ArrowDown')
   await page.keyboard.type(`\n${marker}`)
   await page.keyboard.press('ControlOrMeta+s')
@@ -173,7 +158,7 @@ test.describe('on a phone', () => {
     await login(page)
     await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
     await page.locator('.ink-tree-name').filter({ hasText: /^welcome\.md$/ }).tap()
-    await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
     // The bottom bar is the view control and Save; the desktop's git footer is not rendered here,
     // so before this the vault could not be committed from a phone at all.

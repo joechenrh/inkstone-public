@@ -198,7 +198,7 @@ export function CrepeEditor() {
       featureConfigs: {
         // The gap cursor and the drop cursor stay; the pale caret does not. See the note above.
         [CrepeFeature.Cursor]: { virtual: false },
-        // The fenced block's colours, matched to the ones the other engine has always used. See
+        // The fenced block's colours, matched to the ones the previous engine used. See
         // `code-highlight.ts` — the values are read off Vditor's own highlight.js stylesheet.
         [CrepeFeature.CodeMirror]: {
           theme: codeHighlighting,
@@ -254,7 +254,7 @@ export function CrepeEditor() {
     // every empty paragraph. In a vault kept in git that is HTML appearing in a note nobody put
     // there — pressing Enter twice wrote two of them — and an empty cell in a new table came out as
     // `| <br /> |`. A blank line between two blocks is a separator in markdown and does not need
-    // preserving; the other engine writes nothing for it either.
+    // preserving; the engine this replaced wrote nothing for it either.
     crepe.editor.remove(remarkPreserveEmptyLinePlugin)
 
     crepe.on((listener) => {
@@ -280,7 +280,8 @@ export function CrepeEditor() {
     void crepe.create().then(() => {
       if (disposed) { void crepe.destroy(); return }
       readyRef.current = true
-      lastSyncedRef.current = mountedWith
+      // The editor's own spelling of what it was built with; see the note in the sync effect.
+      lastSyncedRef.current = crepe.getMarkdown()
       const surface = host.querySelector<HTMLElement>('.ProseMirror')
       surface?.classList.add(DOC_SURFACE)
       crepe.setReadonly(readOnly.value)
@@ -290,6 +291,16 @@ export function CrepeEditor() {
         lastSyncedRef.current = content.value
         try {
           crepe.editor.action(replaceAll(content.value, true))
+          /*
+           * What the editor calls this document, not what we handed it.
+           *
+           * `replaceAll` is followed by an update event carrying the editor's *own* spelling of the
+           * same note — `|a|b|` comes back `| a | b |` — and against the text we pushed that reads as
+           * an edit nobody made. Opening a tightly written note therefore marked it unsaved and queued
+           * a reformat, which is the one thing the move to this engine promised would be deliberate.
+           * Recording the editor's spelling as "what is synced" makes the echo compare equal.
+           */
+          lastSyncedRef.current = crepe.getMarkdown()
         } finally {
           settingRef.current = false
         }
@@ -304,6 +315,13 @@ export function CrepeEditor() {
       if (!(e.key === 's' && (e.metaKey || e.ctrlKey))) return
       const crepe = crepeRef.current
       if (!crepe) return
+      /*
+       * Not while the source is open. That mode exists so that what is typed reaches the file
+       * exactly as typed, and this handler would hand the save *the editor's* serialisation of the
+       * same note instead — a tight `|Left|Centre|` came back re-padded, which is the one thing the
+       * mode promises will not happen. The reader owns the text while they are looking at it.
+       */
+      if (sourceMode.value) return
       crepe.editor.action((c) => {
         collapseSource(c.get(editorViewCtx), c)
         collapseMarks(c.get(editorViewCtx), c)
@@ -365,7 +383,7 @@ export function CrepeEditor() {
         const box = at.dom.getBoundingClientRect()
         // The rows' width rather than the box's: a table that scrolls has a block box as wide as
         // the column and rows only as wide as their content, and the bar belongs over what is
-        // visible. The other engine's shell arrived at this the same way.
+        // visible. The previous engine's shell arrived at this the same way.
         const rowWidth = at.dom.rows[0]?.getBoundingClientRect().width ?? box.width
         tableRef.current = at
         setTable({
@@ -493,6 +511,16 @@ export function CrepeEditor() {
       // replaced wholesale (a file opened, a conflict resolved, an agent's proposal applied), and
       // a diff between two unrelated documents is slower than a rebuild as well as being wrong.
       crepe.editor.action(replaceAll(next, true))
+      /*
+       * What the editor calls this document, not what we handed it.
+       *
+       * `replaceAll` is followed by an update event carrying the editor's *own* spelling of the
+       * same note — `|a|b|` comes back `| a | b |` — and against the text we pushed that reads as
+       * an edit nobody made. Opening a tightly written note therefore marked it unsaved and queued
+       * a reformat, which is the one thing the move to this engine promised would be deliberate.
+       * Recording the editor's spelling as "what is synced" makes the echo compare equal.
+       */
+      lastSyncedRef.current = crepe.getMarkdown()
     } finally {
       settingRef.current = false
     }

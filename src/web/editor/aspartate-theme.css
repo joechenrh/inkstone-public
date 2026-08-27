@@ -251,17 +251,13 @@
     animation: toggleOnRadio 0.2s ease forwards;
   }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     font-weight: 700;
     color: var(--as-link-color);
     text-decoration: none;
   }
 
-  .ink-doc.ink-doc.ink-doc a:hover,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link:hover {
+  .ink-doc.ink-doc.ink-doc a:hover {
     color: var(--as-link-color);
     text-decoration: underline;
   }
@@ -294,8 +290,6 @@
   .ink-doc.ink-doc.ink-doc .nav-group-item.active {
     background: var(--as-nav-group-item-bg-color) !important;
   }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background-color: var(--code-block-bg-color);
@@ -381,8 +375,6 @@
    * The .ink-editor prefixes are load-bearing: highlight.js's content theme is injected into <head>
    * at runtime and wins ties against this bundled sheet, so without them the code kept its light
    * palette — #24292e text on a #282a36 block. */
-  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--code-block-bg-color);
     border-radius: 6px;

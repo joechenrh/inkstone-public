@@ -19,22 +19,7 @@ import type { Page } from '@playwright/test'
 // engine's; a real Safari check is still worth doing by hand.
 test.use({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true })
 
-/**
- * Which editor these tests are about.
- *
- * Both engines are mounted while the move to Crepe is judged (`docs/design/editor-engine.md`), and
- * these specs reach into Vditor's own DOM — `.vditor-ir`, `pre.vditor-reset`, its markers. So they
- * say so, rather than testing whichever engine happened to be the default that week. A Crepe suite
- * grows beside them; when one engine goes, so does the line below and the other suite.
- */
-async function useVditor(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('inkstone.editorEngine', 'vditor')
-  })
-}
-
 async function login(page: Page) {
-  await useVditor(page)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()
@@ -65,10 +50,13 @@ test('the document gets the width of the screen', async ({ page }) => {
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
+  // After the screen transition, not during it: the document is visible a frame before it has
+  // finished sliding in, and measured there it is 292px of a 390px screen.
+  await page.waitForTimeout(1500)
   const measured = await page.evaluate(() => {
-    const el = document.querySelector('.vditor-ir .vditor-reset')!
+    const el = document.querySelector('.ink-doc')!
     const cs = getComputedStyle(el)
     const rect = el.getBoundingClientRect()
     return {
@@ -85,7 +73,7 @@ test('a note opens in read, and editing is one tap away', async ({ page }) => {
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
   const lit = () => page.evaluate(() => document
     .querySelector('.ink-phonebar .ink-viewbtn[aria-pressed="true"]')?.getAttribute('title'))
@@ -99,7 +87,7 @@ test('the bottom bar carries Save, and reports whether there is anything to save
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
   // There is no Ctrl+S on a phone, so the button is the only route to disk.
   const save = page.locator('.ink-phonebar-save')
@@ -134,16 +122,16 @@ test('the outline is a sheet over the note, not a trip to the other screen', asy
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
   await page.locator('[aria-label="More"]').tap()
   await page.getByRole('menuitem', { name: 'Outline' }).tap()
   await expect(page.locator('.ink-sheet')).toBeVisible()
   // The note stays on screen behind it — that is what says this is over the document.
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible()
+  await expect(page.locator('.ink-doc')).toBeVisible()
 
   const scrolled = () => page.evaluate(() =>
-    Math.round(document.querySelector('.vditor-ir .vditor-reset')!.scrollTop))
+    Math.round(document.querySelector('.ink-doc')!.scrollTop))
   const before = await scrolled()
 
   // Picking a heading is the only reason to open this, so it closes on the way.
@@ -159,13 +147,13 @@ test('History is a sheet with a way out', async ({ page }) => {
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
   await page.locator('[aria-label="More"]').tap()
   await page.getByRole('menuitem', { name: 'History' }).tap()
   await expect(page.locator('.ink-sheet-title')).toHaveText('History')
   // The note stays behind it, and there are two ways out that are not the menu.
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible()
+  await expect(page.locator('.ink-doc')).toBeVisible()
   await expect(page.locator('[aria-label="Close history"]')).toBeVisible()
 
   await page.locator('.ink-sheet-scrim').tap({ position: { x: 195, y: 40 } })
@@ -180,7 +168,7 @@ test('the sheet opens at one height, whatever it is loading', async ({ page }) =
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
   await page.evaluate(() => {
     ;(window as unknown as { hs: number[] }).hs = []
@@ -255,7 +243,7 @@ test('the sheet is modal and the scrim dismisses it', async ({ page }) => {
   await login(page)
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
   await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
-  await expect(page.locator('.vditor-ir .vditor-reset')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
 
   await page.locator('[aria-label="More"]').tap()
   await page.getByRole('menuitem', { name: 'Outline' }).tap()

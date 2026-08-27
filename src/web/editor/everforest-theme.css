@@ -241,9 +241,7 @@
     transform: scale(1.05);
   }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color: var(--accent);
     text-decoration: none;
   }
@@ -307,8 +305,6 @@
     padding: 0.15rem 0.35rem;
     border-radius: 6px;
   }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--bg-panel);
@@ -596,8 +592,6 @@
     line-height: 1.2 !important;
   }
 
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
-
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
   }
@@ -611,8 +605,6 @@
     margin-bottom: 0.5rem !important;
     line-height: 1.2 !important;
   }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
@@ -646,33 +638,6 @@
   .ink-doc.ink-doc.ink-doc strong {
     color: var(--ef-green) !important;
     font-weight: 600;
-  }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"]:hover .md-math-container,
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-panel,
-  .ink-doc.ink-doc.ink-doc .md-mathjax-midline {
-    background: var(--bg-panel) !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-  }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathjax-preview {
-    background: var(--bg-panel) !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-  }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-input {
-    background: rgba(242, 239, 223, 0.9) !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-  }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG,
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG_Display,
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] svg {
-    color: var(--text) !important;
-    background: transparent !important;
   }
 
   .ink-doc.ink-doc.ink-doc .dialog,
@@ -922,9 +887,7 @@
       transform: scale(1.05);
     }
 
-    .ink-doc.ink-doc.ink-doc a,
-
-    .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    .ink-doc.ink-doc.ink-doc a {
       color: var(--accent);
       text-decoration: none;
     }
@@ -980,8 +943,6 @@
       padding: 0.15rem 0.35rem;
       border-radius: 6px;
     }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
     .ink-doc.ink-doc.ink-doc .milkdown-code-block {
       background: var(--bg-panel);
@@ -1293,8 +1254,6 @@
       line-height: 1.2 !important;
     }
 
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
-
     .ink-doc.ink-doc.ink-doc .milkdown-code-block {
       font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
     }
@@ -1308,8 +1267,6 @@
       margin-bottom: 0.5rem !important;
       line-height: 1.2 !important;
     }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
     .ink-doc.ink-doc.ink-doc .milkdown-code-block {
       font-size: calc(var(--ink-font-size, 16px) * 1.05) !important;
@@ -1337,33 +1294,6 @@
     .ink-doc.ink-doc.ink-doc .typora-export body {
       background: var(--bg) !important;
       color: var(--text) !important;
-    }
-
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"]:hover .md-math-container,
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-panel,
-    .ink-doc.ink-doc.ink-doc .md-mathjax-midline {
-      background: var(--bg-panel) !important;
-      color: var(--text) !important;
-      border-color: var(--border) !important;
-    }
-
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathjax-preview {
-      background: var(--bg-panel) !important;
-      color: var(--text) !important;
-      border-color: var(--border) !important;
-    }
-
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .md-mathblock-input {
-      background: rgba(63, 72, 77, 0.5) !important;
-      color: var(--text) !important;
-      border-color: var(--border) !important;
-    }
-
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG,
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] .MathJax_SVG_Display,
-    .vditor-ir .vditor-reset .vditor-ir__node[data-type="math-block"] svg {
-      color: var(--text) !important;
-      background: transparent !important;
     }
 
     .ink-doc.ink-doc.ink-doc .dialog,
@@ -1417,8 +1347,6 @@
   /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
      which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
      block takes the theme's own code surface, which its shell tokens already declare. */
-  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--ink-code-bg);
     border-radius: 6px;

@@ -153,8 +153,7 @@
   }
 
   /* Links */
-  .ink-doc.ink-doc.ink-doc a,
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color:                    var(--lapis-accent);
     text-decoration:          underline solid;
     text-underline-offset:    4px;
@@ -190,8 +189,6 @@
      box until the caret enters the block, so a bare `pre` selector hits both -- and the padding
      then leaks out of the collapsed source as a stray coloured box beside the ``` fence.
      Style each state explicitly instead. */
-  .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background:    var(--lapis-block-bg);
     border-radius: 10px;
@@ -314,14 +311,8 @@
   }
 
   /* Dark fenced code blocks — scoped to the two real states, never the collapsed source. */
-  &[data-theme="dark"] .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  &[data-theme="dark"] .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--lapis-block-bg);
-  }
-
-  &[data-theme="dark"] .vditor-ir .vditor-reset pre.vditor-ir__marker--pre {
-    background: transparent;
   }
 
   &[data-theme="dark"] .ink-editor .ink-doc.ink-doc.ink-doc pre code,
@@ -347,8 +338,7 @@
   }
 
   /* Dark links */
-  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc a,
-  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  &[data-theme="dark"] .ink-doc.ink-doc.ink-doc a {
     color: var(--lapis-accent);
   }
 

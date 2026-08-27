@@ -10,14 +10,14 @@ import './alerts.css'
 /**
  * Alerts in Crepe, as decorations.
  *
- * The other surfaces put a real span around the marker — see `alert-dom.ts` — and that is measured
- * safe there because Vditor's serialiser reads the text inside it. It would not be safe here:
+ * The reader's page puts a real span around the marker — see `alert-dom.ts` — and that is safe
+ * there because nothing reads that page's DOM back. It would not be safe here:
  * ProseMirror watches its own DOM and reads unexpected mutations back as edits, so a stylist
  * reaching into it can rewrite the document. Decorations are not in the document at all, so there
  * is nothing to serialise and nothing to keep in step.
  *
  * The classes and every line of the CSS are shared with the DOM half. Only the act of attaching
- * differs, and it differs because the two engines are differently dangerous.
+ * differs, and it differed because the two engines were differently dangerous.
  *
  * Top-level blocks only: an alert "cannot be nested within other elements", which is GitHub's rule
  * and happens also to make this walk the document's children rather than the whole tree.

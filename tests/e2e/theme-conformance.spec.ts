@@ -49,7 +49,7 @@ import { DOC_THEMES } from '../../src/web/theme/docThemes.js'
  * root-relative and the setting is not, so four of the five converted themes kept their headings
  * and fenced blocks frozen while the body text grew. At one size a frozen theme looks perfect.
  *
- * The fixes live in `vditor-shell.css` under "the typographic bar", except where the defect was
+ * The fixes live in `crepe-shell.css` under "the typographic bar", except where the defect was
  * one theme's alone. When this fails, fix the theme or the bar — do not widen a threshold to make
  * it pass.
  */
@@ -59,14 +59,13 @@ interface Violation { rule: string; where: string; detail: string }
 // Runs in the page. Returns every violation rather than throwing on the first, so one run tells
 // you everything that is wrong with a theme.
 function measure(): Violation[] {
-  const root = document.querySelector('.vditor-ir .vditor-reset')!
+  const root = document.querySelector('.ink-doc')!
   const num = (v: string) => Math.round(parseFloat(v) * 10) / 10
   const box = (el: Element) => el.getBoundingClientRect()
-  // Vditor wraps inline code in this span. A bare `code` would also match the <code> inside a
-  // fenced block, and the document root is itself a <pre>, so `closest('pre')` cannot tell them
-  // apart either.
+  // Inline code, and only inline code: a bare `code` would also match the one inside a fenced
+  // block, which the editor renders through CodeMirror.
   const inlineIn = (host: Element | null) =>
-    host?.querySelector('span[data-type="code"] > code') ?? null
+    host?.querySelector('code:not(.milkdown-code-block code)') ?? null
 
   const out: Violation[] = []
   const check = (rule: string, where: string, detail: string, ok: boolean) => {
@@ -118,8 +117,15 @@ function measure(): Violation[] {
     const el = root.querySelector(sel)
     if (!el) continue
     const cs = getComputedStyle(el)
+    // `flex` is allowed on a list item and nowhere else: the editor draws one as its marker
+    // beside its content, which is a row by construction. What the rule is against is a *theme*
+    // laying prose out in columns — Everforest's `display: flex` on a blockquote put a quote's
+    // paragraph and its list side by side and broke the reading order.
+    const flow = where === 'list item'
+      ? /^(block|list-item|flow-root|flex)$/
+      : /^(block|list-item|flow-root)$/
     check('prose-in-normal-flow', where, `display: ${cs.display}, columns: ${cs.columnCount}`,
-      /^(block|list-item|flow-root)$/.test(cs.display) && cs.columnCount === 'auto')
+      flow.test(cs.display) && cs.columnCount === 'auto')
   }
 
   for (const tag of ['h1', 'h2']) {
@@ -163,7 +169,9 @@ function measure(): Violation[] {
   }
 
   // ---- tables ----------------------------------------------------------------------------
-  const table = root.querySelector('table')
+  // The one with rows in it: the editor's table block also carries a sizing table with no cells,
+  // and `querySelector` finds that one first.
+  const table = Array.from(root.querySelectorAll('table')).find((t) => t.rows.length > 0) ?? null
   if (table) {
     // A column's alignment is the markdown's, not the theme's. BitClean forced every cell left, so
     // alignment never showed at all; Everforest and Lapis forced the header row, so a column set to
@@ -307,7 +315,7 @@ function measure(): Violation[] {
     }
   }
 
-  const blockCode = root.querySelector('pre.vditor-ir__preview code')
+  const blockCode = root.querySelector('pre.ink-doc code')
   if (blockCode) {
     const bf = num(getComputedStyle(blockCode).fontSize)
     const body = num(getComputedStyle(root).fontSize)
@@ -331,7 +339,7 @@ const format = (theme: string, appearance: string, v: Violation[]) =>
  */
 async function useVditor(page: import('@playwright/test').Page) {
   await page.addInitScript(() => {
-    localStorage.setItem('inkstone.editorEngine', 'vditor')
+    localStorage.setItem('inkstone.editorEngine', 'crepe')
   })
 }
 
@@ -343,7 +351,7 @@ for (const theme of DOC_THEMES) {
     await page.getByRole('button', { name: 'Enter' }).click()
     await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
     await page.locator('.ink-tree-name').filter({ hasText: /^conformance\.md$/ }).click()
-    await expect(page.locator('.vditor-ir .vditor-reset blockquote')).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('.ink-doc blockquote')).toBeVisible({ timeout: 15_000 })
 
     // A theme that ships one appearance is only ever seen in that one; forcing the other would
     // test a combination the app never renders (see clampAppearance).
@@ -365,13 +373,13 @@ for (const theme of DOC_THEMES) {
       // actually changing the setting, because at one size a frozen theme looks perfect.
       const sizesAt = (px: number) => page.evaluate((value) => {
         document.documentElement.style.setProperty('--ink-font-size', `${value}px`)
-        const root = document.querySelector('.vditor-ir .vditor-reset')!
+        const root = document.querySelector('.ink-doc')!
         const of = (sel: string) => {
           const el = root.querySelector(sel)
           return el ? Math.round(parseFloat(getComputedStyle(el).fontSize) * 10) / 10 : null
         }
         return { body: of(':scope'), h1: of('h1'), h2: of('h2'),
-          block: of('pre.vditor-ir__preview code'), quote: of('blockquote') }
+          block: of('.milkdown-code-block .cm-content'), quote: of('blockquote') }
       }, px)
 
       const small = await sizesAt(16)

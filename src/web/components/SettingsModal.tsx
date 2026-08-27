@@ -12,9 +12,7 @@ import {
 } from '../auth/identity.js'
 import { connection, forgetPairing, pairing, refresh, setPairing } from '../state/agent.js'
 import {
-  editorEngine,
   editorFontSize,
-  setEditorEngine,
   setEditorFontSize,
   setShowAssets,
   showAssets,
@@ -303,32 +301,6 @@ export function SettingsModal() {
             </span>
           </div>
         )}
-
-        {/* Temporary, and it says so. Both editors are mounted while the move to Crepe is being
-            judged, because the measurements in `docs/design/editor-engine.md` cannot answer whether
-            writing in it feels right — only the same note in the same application can. */}
-        <div class="ink-settings-row">
-          <span class="ink-settings-label">Editor</span>
-          <div class="ink-theme-control">
-            <button
-              type="button"
-              class="ink-theme-btn"
-              aria-pressed={editorEngine.value === 'crepe'}
-              onClick={() => { setEditorEngine('crepe') }}
-            >
-              Crepe
-            </button>
-            <button
-              type="button"
-              class="ink-theme-btn"
-              aria-pressed={editorEngine.value === 'vditor'}
-              onClick={() => { setEditorEngine('vditor') }}
-            >
-              Vditor
-            </button>
-            <span class="ink-theme-why">switching reloads</span>
-          </div>
-        </div>
 
         {/* One row, beside the other facts about this installation — not a screen and nothing in
             the top bar. It never says which backend it runs: see `src/agent/backend.ts`. */}

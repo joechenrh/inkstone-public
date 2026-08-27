@@ -21,7 +21,7 @@ import { expect, test, type Page } from '@playwright/test'
  * correctly told the picture was already here. Which is what the third test asserts on purpose.
  */
 
-async function open(page: Page, engine: 'vditor' | 'crepe') {
+async function open(page: Page, engine: 'crepe') {
   await page.addInitScript((e) => { localStorage.setItem('inkstone.editorEngine', e) }, engine)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
@@ -59,7 +59,7 @@ const shownSrc = (page: Page) => page.evaluate(() => {
   return img?.getAttribute('src') ?? null
 })
 
-for (const engine of ['vditor', 'crepe'] as const) {
+for (const engine of ['crepe'] as const) {
   test(`${engine}: a pasted picture is stored, linked and shown`, async ({ page }) => {
     const note = await open(page, engine)
     await pasteImage(page, engine === 'crepe' ? '#c02f2f' : '#2f5fc0')
@@ -102,7 +102,7 @@ for (const engine of ['vditor', 'crepe'] as const) {
 }
 
 test('a picture already in the vault is linked rather than written again', async ({ page }) => {
-  await open(page, 'vditor')
+  await open(page, 'crepe')
   await pasteImage(page, '#2fc05f')
   await expect(page.locator('.ink-paste-line')).toContainText('kept')
 
@@ -111,7 +111,7 @@ test('a picture already in the vault is linked rather than written again', async
 })
 
 test('the pictures are not in the file tree until the switch says so', async ({ page }) => {
-  await open(page, 'vditor')
+  await open(page, 'crepe')
   await pasteImage(page, '#c0a02f')
   await expect(page.locator('.ink-paste-line')).toContainText('kept')
   // Storage rather than notes, so not in the way by default.
@@ -141,7 +141,7 @@ test('on a phone, a photo from the library reaches the document', async ({ page 
   // The phone's button is nowhere near the editor — it is in the bottom bar, where a thumb is —
   // so this is as much a test of the wire between them as of the sheet.
   await page.setViewportSize({ width: 390, height: 844 })
-  await open(page, 'vditor')
+  await open(page, 'crepe')
   await page.locator('.ink-phonebar .ink-viewbtn').first().click()
   await page.locator('.ink-picture-btn').click()
   await expect(page.getByText('Photo library')).toBeVisible()

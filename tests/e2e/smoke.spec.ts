@@ -17,31 +17,16 @@ function treeItem(page: import('@playwright/test').Page, name: string) {
   return page.locator('.ink-tree-name').filter({ hasText: new RegExp(`^${name}$`) })
 }
 
-/**
- * Which editor these tests are about.
- *
- * Both engines are mounted while the move to Crepe is judged (`docs/design/editor-engine.md`), and
- * these specs reach into Vditor's own DOM — `.vditor-ir`, `pre.vditor-reset`, its markers. So they
- * say so, rather than testing whichever engine happened to be the default that week. A Crepe suite
- * grows beside them; when one engine goes, so does the line below and the other suite.
- */
-async function useVditor(page: import('@playwright/test').Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('inkstone.editorEngine', 'vditor')
-  })
-}
-
 async function login(page: import('@playwright/test').Page) {
-  await useVditor(page)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()
   await expect(treeItem(page, 'notes')).toBeVisible()
 }
 
-/** Wait for the Vditor IR editable area to be present and click into it. */
+/** Wait for the document to be present and click into it. */
 async function waitForEditor(page: import('@playwright/test').Page) {
-  const editable = page.locator('.vditor-ir pre[contenteditable="true"]')
+  const editable = page.locator('.ink-doc')
   await expect(editable).toBeVisible({ timeout: 15_000 })
   return editable
 }
@@ -82,7 +67,6 @@ test('cache-control headers: index.html no-store, hashed assets immutable', asyn
 })
 
 // ---------------------------------------------------------------------------
-// Migrated from CodeMirror → Vditor IR selectors
 // ---------------------------------------------------------------------------
 
 // Phase 0.5 removed autosave.  Saving now requires an explicit Ctrl+S.
@@ -95,8 +79,8 @@ test('log in, open a file, edit, save with Ctrl+S, content persists after reload
   await treeItem(page, 'notes').click()
   await treeItem(page, 'hello.md').click()
 
-  // Wait for Vditor IR to initialise and render the h1 from "# hello"
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  // Wait for the editor to render the h1 from "# hello"
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   const editable = await waitForEditor(page)
   await editable.click()
@@ -105,7 +89,7 @@ test('log in, open a file, edit, save with Ctrl+S, content persists after reload
   await page.keyboard.press('End')
   await page.keyboard.type(' persistence-test')
 
-  // The dirty dot must appear — this confirms Vditor registered our input
+  // The dirty dot must appear — this confirms the editor registered our input
   await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toBeVisible({ timeout: 10_000 })
 
   // Manual save (autosave was removed in Phase 0.5)
@@ -117,14 +101,13 @@ test('log in, open a file, edit, save with Ctrl+S, content persists after reload
   await treeItem(page, 'notes').click()
   await treeItem(page, 'hello.md').click()
 
-  // After reload, wait for Vditor IR to render then assert the typed text persists
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
-  await expect(page.locator('.vditor-ir')).toContainText('persistence-test', { timeout: 15_000 })
+  // After reload, wait for the editor to render then assert the typed text persists
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc')).toContainText('persistence-test', { timeout: 15_000 })
 })
 
 test('stays on the login page when the password is wrong', async ({ page }) => {
   await page.context().clearCookies()
-  await useVditor(page)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('wrong')
   await page.getByRole('button', { name: 'Enter' }).click()
@@ -145,7 +128,7 @@ test('file tree: create → rename → delete', async ({ page }) => {
   // exact: the empty editor also has "New note" and "New folder", which a substring match hits.
   await page.getByRole('button', { name: 'New', exact: true }).click()
   await page.getByRole('menuitem', { name: 'New file' }).click()
-  // Use CSS class to avoid ambiguity with the Vditor editor's role=textbox
+  // Use CSS class to avoid ambiguity with the editor's own role=textbox
   const treeInput = page.locator('.ink-tree-inline-input')
   await treeInput.fill('e2e-new.md')
   await treeInput.press('Enter')
@@ -176,7 +159,7 @@ test('manual save: dot appears on edit and disappears on Ctrl+S', async ({ page 
   await treeItem(page, 'notes').click()
   await treeItem(page, 'welcome.md').click()
 
-  // Wait for Vditor IR to initialise
+  // Wait for the editor to initialise
   const editable = await waitForEditor(page)
 
   // Click into the editable area and type something to mark the document dirty
@@ -197,15 +180,15 @@ test('manual save: dot appears on edit and disappears on Ctrl+S', async ({ page 
 // Phase 1 tests: Lapis IR render, theme toggle, no external CDN
 // ---------------------------------------------------------------------------
 
-test('Vditor IR renders Lapis: blue h1 heading + blue-background h2 pill', async ({ page }) => {
+test('the editor renders Lapis: blue h1 heading + blue-background h2 pill', async ({ page }) => {
   await login(page)
 
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
 
-  // Vditor IR renders real h1 and h2 elements from the markdown
-  const h1 = page.locator('.vditor-ir h1').first()
-  const h2 = page.locator('.vditor-ir h2').first()
+  // The editor renders real h1 and h2 elements from the markdown
+  const h1 = page.locator('.ink-doc h1').first()
+  const h2 = page.locator('.ink-doc h2').first()
 
   await expect(h1).toBeVisible({ timeout: 15_000 })
   await expect(h2).toBeVisible({ timeout: 15_000 })
@@ -238,140 +221,26 @@ test('manual save: editing rich.md shows a dot, Ctrl+S clears it', async ({ page
   // Dot must disappear once saved
   await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toHaveCount(0)
 })
-
-// Vditor IR renders two <pre> per fenced block: the raw source (collapsed to 0x0 until the
-// caret enters) and the highlighted render. Styling a bare `pre` hits both, which leaked
-// padding out of the collapsed source as a stray box beside the fence, and left the source
-// and the render stacked on top of each other while editing.
-test('code block: source and render never show at the same time', async ({ page }) => {
-  await login(page)
-  await treeItem(page, 'notes').click()
-  await treeItem(page, 'rich.md').click()
-
-  const node = page.locator('.vditor-ir__node[data-type="code-block"]').first()
-  const source = node.locator('pre.vditor-ir__marker--pre')
-  const preview = node.locator('pre.vditor-ir__preview')
-  await expect(preview).toBeVisible({ timeout: 15_000 })
-
-  // Caret outside: the render is shown and the source is collapsed to nothing, with no
-  // background or padding of its own to paint a sliver next to the ``` fence.
-  const collapsed = await source.evaluate((el) => {
-    const cs = getComputedStyle(el)
-    const r = el.getBoundingClientRect()
-    return { w: r.width, h: r.height, bg: cs.backgroundColor, pad: cs.padding }
-  })
-  expect(collapsed.w).toBe(0)
-  expect(collapsed.h).toBe(0)
-  expect(collapsed.bg).toBe('rgba(0, 0, 0, 0)')
-  expect(collapsed.pad).toBe('0px')
-
-  // Caret inside: the source becomes a block and the render is hidden outright.
-  await preview.click({ force: true })
-  await expect(node).toHaveClass(/vditor-ir__node--expand/)
-  await expect(preview).toBeHidden()
-  await expect(source).toHaveCSS('display', 'block')
-  // The block's background belongs to the <pre>; the <code> inside must not add its own.
-  await expect(source.locator('code')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
-})
-
-// Vditor puts `transition: all .15s` on every marker. Width and height are not interpolatable
-// (auto <-> 0) so they snap, while padding and background animate — and a 0x0 box with 16px of
-// padding and a background is a 32x32 filled square. Leaving a block painted one beside the
-// fence and shrank it over 150ms, shifting the block 12px as it went.
-test('leaving a fenced block collapses it in one frame', async ({ page }) => {
-  await login(page)
-  await treeItem(page, 'notes').click()
-  await treeItem(page, 'rich.md').click()
-
-  const node = page.locator('.vditor-ir__node[data-type="code-block"]').first()
-  const preview = node.locator('pre.vditor-ir__preview')
-  await expect(preview).toBeVisible({ timeout: 15_000 })
-  await preview.click({ force: true })
-  await expect(node).toHaveClass(/vditor-ir__node--expand/)
-
-  // Dropping the class is precisely what Vditor does when the caret leaves. Doing it here
-  // rather than by clicking away keeps the element reference alive across the collapse, so
-  // the frames can be sampled; a real click can re-render the node out from under us.
-  const frames = await node.evaluate(async (el) => {
-    const marker = el.querySelector('pre.vditor-ir__marker--pre') as HTMLElement
-    el.classList.remove('vditor-ir__node--expand')
-    const out: { pad: number; h: number }[] = []
-    for (let i = 0; i < 10; i++) {
-      out.push({
-        pad: parseFloat(getComputedStyle(marker).paddingTop),
-        h: Math.round(el.getBoundingClientRect().height),
-      })
-      await new Promise((r) => requestAnimationFrame(() => r(null)))
-    }
-    return out
-  })
-
-  // No square: the padding is already gone on the first frame after the class drops.
-  expect(Math.max(...frames.map((f) => f.pad))).toBe(0)
-  // No jitter: the block does not settle over the following frames, it is simply done.
-  expect(new Set(frames.map((f) => f.h)).size).toBe(1)
-})
-
-// Read-only is about the rendering holding still, not just about typing being refused:
-// vd.disabled() alone leaves Vditor's IR click handler expanding whatever was clicked, so a
-// click still swapped a rendered block for its ``` source while the editor was "disabled".
-// Clicking a fenced block must not move the document. Expanding one used to render the language
-// marker as an inline line at the top of the block, so the block grew by exactly one line height
-// and every paragraph below it jumped down 28px.
-test('clicking a fenced block does not move the text below it', async ({ page }) => {
-  await login(page)
-  await treeItem(page, 'notes').click()
-  await treeItem(page, 'rich.md').click()
-
-  const node = page.locator('.vditor-ir__node[data-type="code-block"]').first()
-  const preview = node.locator('pre.vditor-ir__preview')
-  const below = page.getByText('Text below the code block.')
-  await expect(preview).toBeVisible({ timeout: 15_000 })
-
-  const topOf = async () => Math.round((await below.boundingBox())!.y)
-  const heightOf = async () => Math.round((await node.boundingBox())!.height)
-
-  const beforeTop = await topOf()
-  const beforeHeight = await heightOf()
-
-  await preview.click({ force: true })
-  await expect(node).toHaveClass(/vditor-ir__node--expand/)
-
-  expect(await heightOf()).toBe(beforeHeight)
-  expect(await topOf()).toBe(beforeTop)
-
-  // And back again, so neither direction drifts.
-  await page.locator('.vditor-ir h1').first().click({ force: true })
-  await expect(node).not.toHaveClass(/vditor-ir__node--expand/)
-  expect(await topOf()).toBe(beforeTop)
-})
-
-// Vditor's `content: \' \'` pseudo-elements used to sit below each block and, being inline, took a
-// whole line box — which is what had been separating a block from the paragraph under it. Removing
-// them left the block hugging the next line (measured 16px above, 0 below).
-// Read-only blocks clicks so the rendering cannot shift under the pointer, but the copy button
-// and links are the two reasons to be in read-only at all. Blocking everything took both away:
-// the copy button stayed visible and silently stopped filling the clipboard.
 test('read-only still allows copying a code block and following a link', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
 
-  const block = page.locator('.vditor-ir__node[data-type="code-block"]').first()
-  await expect(block.locator('pre.vditor-ir__preview')).toBeVisible({ timeout: 15_000 })
+  const block = page.locator('.ink-doc .milkdown-code-block').first()
+  await expect(block).toBeVisible({ timeout: 15_000 })
 
   await page.locator('.ink-topbar .ink-viewbtn[title^="Read"]').click()
   await expect(page.locator('.ink-topbar .ink-viewbtn[title^="Read"]')).toHaveAttribute('aria-pressed', 'true')
 
   await page.evaluate(() => navigator.clipboard.writeText('SENTINEL'))
   await block.hover()
-  await block.locator('.vditor-copy span').first().click({ force: true })
+  await block.locator('.copy-button').first().click({ force: true })
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('const x = 1')
 
-  // A link in IR is a span[data-type="a"], and Vditor opens it from the same click handler.
+  // A link is an `<a>`, and a plain click follows it while reading — the modifier is for editing.
   const opened = context.waitForEvent('page')
-  await page.locator('.vditor-ir__link').first().click({ force: true })
+  await page.locator('.ink-doc a[href*="example.com"]').first().click({ force: true })
   expect((await opened).url()).toContain('example.com')
 })
 
@@ -389,7 +258,7 @@ test('the empty editor offers the actions first, then recent notes once there ar
 
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
   await expect(empty).toHaveCount(0)
 
   // Reopening with nothing selected shows what was just read, and it opens again from there.
@@ -440,13 +309,13 @@ test('the keys the empty editor advertises actually create things', async ({ pag
   await expect(page.locator('.ink-tree-inline-input')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  // Ctrl/Cmd+Alt+<digit> is Vditor's — headings — and must still reach it untouched.
+  // Ctrl/Cmd+Alt+<digit> sets a heading level and must still reach the editor untouched.
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
   await waitForEditor(page)
   await page.getByText('Text below the code block.').click()
   await page.keyboard.press('ControlOrMeta+Alt+3')
-  await expect(page.locator('.vditor-ir .vditor-reset h3')).toHaveCount(1)
+  await expect(page.locator('.ink-doc h3')).toHaveCount(1)
 })
 
 // Autocommit runs every five minutes, so a row per commit reports the timer rather than the work.
@@ -456,7 +325,7 @@ test('the right panel groups history into sessions and can restore a version', a
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   await page.keyboard.press('ControlOrMeta+/')
   const panel = page.locator('.ink-hist')
@@ -477,11 +346,11 @@ test('the right panel groups history into sessions and can restore a version', a
   await expect(panel.locator('.ink-hist-diff')).not.toContainText('@@')
 
   // Restoring loads the old text into the editor as unsaved changes and writes nothing.
-  await page.locator('.vditor-ir .vditor-reset').click()
+  await page.locator('.ink-doc').click()
   await page.keyboard.type('scribble')
   await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toBeVisible()
   await panel.locator('.ink-hist-restore').click()
-  await expect(page.locator('.vditor-ir')).not.toContainText('scribble')
+  await expect(page.locator('.ink-doc')).not.toContainText('scribble')
   await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toBeVisible()
 
   const onDisk = await page.evaluate(async () =>
@@ -509,13 +378,13 @@ test('a save that fails says so, and does not pretend the file was written', asy
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   await page.route('**/api/file', (route) => route.request().method() === 'PUT'
     ? route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'disk is full' }) })
     : route.continue())
 
-  await page.locator('.vditor-ir .vditor-reset').click()
+  await page.locator('.ink-doc').click()
   await page.keyboard.type(' edited')
   await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toBeVisible()
   await page.keyboard.press('ControlOrMeta+s')
@@ -535,9 +404,9 @@ test('a session that ends mid-edit returns to the login form', async ({ page, co
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
-  await page.locator('.vditor-ir .vditor-reset').click()
+  await page.locator('.ink-doc').click()
   await page.keyboard.type(' edited')
   await context.clearCookies()
   await page.keyboard.press('ControlOrMeta+s')
@@ -551,19 +420,19 @@ test('switching the document theme repaints the document and the shell, and it s
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   // Vditor rebuilds its DOM when a theme is applied, so read the state only once the surface is
   // back — otherwise the probe can land inside that window and find nothing.
   const state = async () => {
-    await page.waitForFunction(() => !!document.querySelector('.vditor-ir .vditor-reset h2'))
+    await page.waitForFunction(() => !!document.querySelector('.ink-doc h2'))
     return page.evaluate(() => ({
       theme: document.documentElement.getAttribute('data-doc-theme'),
-      docFont: getComputedStyle(document.querySelector('.vditor-ir .vditor-reset')!).fontFamily.split(',')[0],
+      docFont: getComputedStyle(document.querySelector('.ink-doc')!).fontFamily.split(',')[0],
       // Lapis renders h2 as a filled pill; Plain does not use colour for structure at all.
-      h2Bg: getComputedStyle(document.querySelector('.vditor-ir .vditor-reset h2')!).backgroundColor,
+      h2Bg: getComputedStyle(document.querySelector('.ink-doc h2')!).backgroundColor,
       shellBg: getComputedStyle(document.querySelector('.ink-left')!).backgroundColor,
-      docBg: getComputedStyle(document.querySelector('.vditor-ir .vditor-reset')!).backgroundColor,
+      docBg: getComputedStyle(document.querySelector('.ink-doc')!).backgroundColor,
     }))
   }
 
@@ -600,17 +469,16 @@ test('code blocks behave the same under every document theme', async ({ page }) 
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   const measure = () => page.evaluate(() => {
-    const node = document.querySelector('.vditor-ir__node[data-type="code-block"]')!
-    const pre = node.querySelector('pre.vditor-ir__preview')!
-    const src = node.querySelector('pre.vditor-ir__marker--pre')!
-    const body = getComputedStyle(document.querySelector('.vditor-ir .vditor-reset')!)
+    const node = document.querySelector('.milkdown-code-block')!
+    const code = node.querySelector('.cm-content')!
+    const body = getComputedStyle(document.querySelector('.ink-doc')!)
     return {
       theme: document.documentElement.getAttribute('data-doc-theme'),
-      slackAbovePre: Math.round(pre.getBoundingClientRect().top - node.getBoundingClientRect().top),
-      collapsedDisplay: getComputedStyle(src).display,
+      slackAbovePre: Math.round(code.getBoundingClientRect().top - node.getBoundingClientRect().top),
+      blockFill: getComputedStyle(node).backgroundColor,
       // The setting names the body size; a theme may not quietly scale it.
       bodyPx: body.fontSize,
       labelColor: getComputedStyle(node, '::after').color,
@@ -629,11 +497,15 @@ test('code blocks behave the same under every document theme', async ({ page }) 
     }
     const m = await measure()
     expect(m.theme, themeId).toBe(themeId)
-    expect(m.slackAbovePre, themeId).toBe(0)
-    expect(m.collapsedDisplay, themeId).toBe('block')
+    // The block has a surface of its own under every theme — the plumbing is shared and no theme
+    // owns it. It lived inside `lapis-theme.css` until a second theme existed, and Plain inherited
+    // none of it: the fill went, and the code sat on the page.
+    expect(m.blockFill, themeId).not.toBe('rgba(0, 0, 0, 0)')
+    // How much room the code is given inside that surface is the theme's business, and they differ
+    // on purpose — 16px in Lapis, 2rem in BitClean. That it is given *some* is not.
+    expect(m.slackAbovePre, themeId).toBeGreaterThan(0)
+    // The setting names the body size; a theme may not quietly scale it.
     expect(m.bodyPx, themeId).toBe('16px')
-    // A shared rule reaching for a theme's own variable leaves the label falling back to body text.
-    expect(m.labelColor, themeId).not.toBe(m.bodyColor)
   }
 })
 
@@ -644,7 +516,7 @@ test('switching appearance does not animate the theme change', async ({ page }) 
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   await page.locator('button[title="Settings"]').click()
   await page.getByRole('button', { name: 'Light', exact: true }).click()
@@ -769,8 +641,8 @@ test('a fenced block keeps its distance from the text below it', async ({ page }
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
 
-  const node = page.locator('.vditor-ir__node[data-type="code-block"]').first()
-  await expect(node.locator('pre.vditor-ir__preview')).toBeVisible({ timeout: 15_000 })
+  const node = page.locator('.ink-doc .milkdown-code-block').first()
+  await expect(node).toBeVisible({ timeout: 15_000 })
 
   const gaps = await node.evaluate((el) => {
     const r = (n: Element) => n.getBoundingClientRect()
@@ -784,130 +656,36 @@ test('a fenced block keeps its distance from the text below it', async ({ page }
   expect(gaps.below).toBeGreaterThan(0)
   expect(gaps.below).toBe(gaps.above)
 })
-
-// Clearing the language used to leave a zero-width box in the corner: nothing to click, and so no
-// way to type a new one. The language became a one-way door.
-// A math block is the one node whose source and render are different heights: one line of
-// LaTeX against a rendered display formula (58px against 88px, measured). Hiding the render
-// on expand therefore pulled everything below the block up 30px, and leaving it dropped the
-// document back down — under a pointer that was aiming at it. Both <pre> now share one grid
-// cell, so the node keeps the taller height in either state.
-test('entering and leaving a math block does not move the document', async ({ page }) => {
-  await login(page)
-  await treeItem(page, 'notes').click()
-  await treeItem(page, 'rich.md').click()
-  await waitForEditor(page)
-
-  const mathNode = page.locator('.vditor-ir__node[data-type="math-block"]')
-  await expect(mathNode).toBeVisible()
-
-  // Measure only once the block has stopped resizing. The maths renders asynchronously, and a
-  // reading taken mid-layout compares a half-rendered formula against a finished one — which
-  // failed this assertion once under full-suite load, reporting a 14px move that was not one.
-  await expect.poll(async () => {
-    const first = (await mathNode.boundingBox())!.height
-    await page.waitForTimeout(120)
-    return Math.abs((await mathNode.boundingBox())!.height - first) < 0.5
-  }).toBe(true)
-
-  const below = page.getByText('Text below the math block.')
-
-  const nodeBefore = (await mathNode.boundingBox())!
-  const belowBefore = (await below.boundingBox())!
-
-  await mathNode.click()
-  await expect(mathNode).toHaveClass(/vditor-ir__node--expand/)
-
-  const nodeAfter = (await mathNode.boundingBox())!
-  const belowAfter = (await below.boundingBox())!
-
-  // Within a pixel, not to the pixel: the grid row resolves to a fractional height and MathJax
-  // rounds differently from a line of monospace. The bug this guards against was 30px.
-  expect(Math.abs(nodeAfter.height - nodeBefore.height)).toBeLessThanOrEqual(1)
-  // The gap between the block and the text under it, not the viewport position: clicking can
-  // scroll the block into view, which moves both together and is not what this is about.
-  const gapBefore = belowBefore.y - nodeBefore.y
-  const gapAfter = belowAfter.y - nodeAfter.y
-  expect(Math.abs(gapAfter - gapBefore)).toBeLessThanOrEqual(1)
-
-  // Reserving the height is only worth anything if the source is still the thing you edit:
-  // the render is invisible rather than absent, so it must not be taking the clicks.
-  const state = await mathNode.evaluate((n) => {
-    const src = n.querySelector('pre.vditor-ir__marker--pre')!
-    const r = src.getBoundingClientRect()
-    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
-    return {
-      sourceVisible: getComputedStyle(src).visibility,
-      renderHidden: getComputedStyle(n.querySelector('pre.vditor-ir__preview')!).visibility,
-      caretInSource: src.contains(document.getSelection()!.anchorNode),
-      onTop: hit ? src.contains(hit) || hit === src : false,
-    }
-  })
-  expect(state.sourceVisible).toBe('visible')
-  expect(state.renderHidden).toBe('hidden')
-  expect(state.caretInSource).toBe(true)
-  expect(state.onTop).toBe(true)
-})
-
-test('clearing a code block language leaves something to click', async ({ page }) => {
-  await login(page)
-  await treeItem(page, 'notes').click()
-  await treeItem(page, 'rich.md').click()
-
-  const node = page.locator('.vditor-ir__node[data-type="code-block"]').first()
-  const info = node.locator('.vditor-ir__marker--info')
-  await node.locator('pre.vditor-ir__preview').click({ force: true })
-  await expect(node).toHaveClass(/vditor-ir__node--expand/)
-
-  await info.click({ force: true })
-  await page.keyboard.press('ControlOrMeta+ArrowRight')
-  for (const _ of [0, 1]) await page.keyboard.press('Backspace')
-  await expect(node).toHaveAttribute('data-lang', '')
-
-  // Still a real target, and it says what goes there.
-  const box = await info.boundingBox()
-  expect(box!.width).toBeGreaterThan(10)
-  await expect(info).toHaveCSS('position', 'absolute')
-
-  // And a new language can be typed straight back in.
-  await info.click({ force: true })
-  await page.keyboard.type('rust')
-  await expect(node).toHaveAttribute('data-lang', 'rust')
-})
-
 test('read-only mode leaves the rendering untouched when clicked', async ({ page }) => {
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
 
   const toggle = page.locator('.ink-topbar .ink-viewbtn[title^="Read"]')
-  const preview = page.locator('.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview').first()
-  const expanded = page.locator('.vditor-ir__node--expand')
-  await expect(preview).toBeVisible({ timeout: 15_000 })
+  const link = page.locator('.ink-doc a[href]').first()
+  await expect(link).toBeVisible({ timeout: 15_000 })
 
-  // Editing: a click opens the block. This is the behaviour read-only has to suppress.
+  // Editing: a caret in a link shows its markdown. This is what read-only has to suppress.
   await expect(toggle).toHaveAttribute('aria-pressed', 'false')
-  await preview.click({ force: true })
-  await expect(expanded).toHaveCount(1)
+  await link.click({ force: true })
+  await expect(page.locator('.ink-doc')).toContainText('](')
 
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-pressed', 'true')
-  // Entering read-only collapses whatever was already open rather than stranding it.
-  await expect(expanded).toHaveCount(0)
+  // Entering read-only closes whatever was already open rather than stranding it.
+  await expect(page.locator('.ink-doc')).not.toContainText('](')
 
-  await preview.click({ force: true })
-  await expect(expanded).toHaveCount(0)
-  await page.locator('.vditor-ir h1').first().click({ force: true })
-  await expect(expanded).toHaveCount(0)
+  await page.locator('.ink-doc h1').first().click({ force: true })
+  await expect(page.locator('.ink-doc')).not.toContainText('](')
 
   // Typing cannot reach the document either, so nothing is ever marked unsaved.
-  const before = await page.locator('.vditor-ir').textContent()
+  const before = await page.locator('.ink-doc').textContent()
   await page.keyboard.type('XXXX')
-  await expect(page.locator('.vditor-ir')).toHaveText(before ?? '')
+  await expect(page.locator('.ink-doc')).toHaveText(before ?? '')
   await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toHaveCount(0)
 
   // Selecting and copying must still work — read-only is for reading.
-  const para = page.locator('.vditor-ir .vditor-reset p').first()
+  const para = page.locator('.ink-doc p').first()
   const box = await para.boundingBox()
   if (box) {
     await page.mouse.move(box.x + 4, box.y + box.height / 2)
@@ -920,18 +698,19 @@ test('read-only mode leaves the rendering untouched when clicked', async ({ page
   // Cmd/Ctrl+E is the same switch, and editing works again afterwards.
   await page.keyboard.press('ControlOrMeta+e')
   await expect(toggle).toHaveAttribute('aria-pressed', 'false')
-  await preview.click({ force: true })
-  await expect(expanded).toHaveCount(1)
+  await expect(page.locator('.ink-doc a[href]').first()).toBeVisible()
+  await page.locator('.ink-doc a[href]').first().click()
+  await expect(page.locator('.ink-doc')).toContainText('](')
 })
 
 test('editor scrolls at the window edge, and the measure starts one gutter in', async ({ page }) => {
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   const geo = await page.evaluate(() => {
-    const scroller = document.querySelector('.vditor-ir .vditor-reset')!
+    const scroller = document.querySelector('.ink-doc')!
     const style = getComputedStyle(scroller)
     const measure = getComputedStyle(document.documentElement).getPropertyValue('--ink-content-width')
     const box = scroller.getBoundingClientRect()
@@ -941,7 +720,7 @@ test('editor scrolls at the window edge, and the measure starts one gutter in', 
       padLeft: Number.parseFloat(style.paddingLeft),
       // A top-level paragraph, which is where a line actually wraps. Not a heading: the themes
       // hang its markers in the gutter, so it is wider than the measure by design.
-      text: Math.round(document.querySelector('.vditor-ir .vditor-reset > p')!.getBoundingClientRect().width),
+      text: Math.round(document.querySelector('.ink-doc > p')!.getBoundingClientRect().width),
       measure: Number.parseFloat(measure),
     }
   })
@@ -967,8 +746,8 @@ test('no external CDN requests (all assets self-hosted)', async ({ page }) => {
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
 
-  // Wait for Vditor IR to fully initialise and render h1 (signals all assets loaded)
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  // Wait for the editor to fully initialise and render h1 (signals all assets loaded)
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
   // Extra settle time to catch any deferred/lazy asset requests
   await page.waitForTimeout(1500)
 
@@ -999,8 +778,8 @@ test('theme switch: after switching to dark, data-theme=dark and h1 color is the
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
 
-  // Wait for Vditor IR to render
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  // Wait for the editor to render
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   // Open settings modal via the gear button
   await page.getByTitle('Settings').click()
@@ -1020,7 +799,7 @@ test('theme switch: after switching to dark, data-theme=dark and h1 color is the
 
   // In dark mode, Lapis dark accent for h1 is #8393ad = rgb(131, 147, 173)
   // (h1 inherits color from --lapis-accent which is overridden to #8393ad in dark mode)
-  const h1color = await page.locator('.vditor-ir h1').first().evaluate((el) => getComputedStyle(el).color)
+  const h1color = await page.locator('.ink-doc h1').first().evaluate((el) => getComputedStyle(el).color)
   expect(h1color).toBe('rgb(131, 147, 173)')
 })
 
@@ -1034,7 +813,7 @@ test('outline: lists headings, jumps to one, and tracks the active heading', asy
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   await page.getByRole('button', { name: 'Outline' }).click()
   const rows = page.locator('.ink-outline-row')
@@ -1042,7 +821,7 @@ test('outline: lists headings, jumps to one, and tracks the active heading', asy
   expect(await rows.count()).toBeGreaterThan(1)
 
   const scrollTopOf = () => page.evaluate(
-    () => document.querySelector('.vditor-ir .vditor-reset')!.scrollTop,
+    () => document.querySelector('.ink-doc')!.scrollTop,
   )
   const before = await scrollTopOf()
   await rows.nth(1).click()
@@ -1174,15 +953,15 @@ test('the drawer takes the margin before it takes the text', async ({ page }) =>
   await login(page)
   await treeItem(page, 'notes').click()
   await treeItem(page, 'rich.md').click()
-  await expect(page.locator('.vditor-ir h1')).toBeVisible({ timeout: 15_000 })
+  await expect(page.locator('.ink-doc h1')).toBeVisible({ timeout: 15_000 })
 
   const measure = () => page.evaluate(() => {
     // A top-level paragraph. Not a heading — the themes hang its markers in the gutter, so it is
     // wider than the measure by design — and not the first `p` in the note either, which is inside
     // the blockquote and indented.
-    const p = document.querySelector('.vditor-ir .vditor-reset > p')!.getBoundingClientRect()
+    const p = document.querySelector('.ink-doc > p')!.getBoundingClientRect()
     const right = document.querySelector('.ink-right')
-    const scroller = document.querySelector('.vditor-ir .vditor-reset')!.getBoundingClientRect()
+    const scroller = document.querySelector('.ink-doc')!.getBoundingClientRect()
     return {
       textLeft: Math.round(p.left),
       width: Math.round(p.width),

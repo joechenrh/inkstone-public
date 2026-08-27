@@ -7,11 +7,11 @@ import { currentPath } from '../../src/web/state/vault.js'
 /** Stands in for the editor: OutlinePanel finds the scroller by selector. */
 function mountEditor(headingsHtml: string) {
   const wrap = document.createElement('div')
-  wrap.className = 'vditor-ir'
+  wrap.className = 'milkdown'
   const reset = document.createElement('pre')
   // The shared surface class, not Vditor's own — the panel asks `documentRoot()` now, so this is
   // what makes the fixture findable whichever engine is mounted. See `editor/surface.ts`.
-  reset.className = 'vditor-reset ink-doc'
+  reset.className = 'ink-doc'
   reset.innerHTML = headingsHtml
   wrap.appendChild(reset)
   document.body.appendChild(wrap)
@@ -19,7 +19,7 @@ function mountEditor(headingsHtml: string) {
 }
 
 const h = (tag: string, marker: string, text: string) =>
-  `<${tag} class="vditor-ir__node"><span class="vditor-ir__marker vditor-ir__marker--heading">${marker}</span>${text}</${tag}>`
+  `<${tag}><span class="ink-marker ink-marker--heading">${marker}</span>${text}</${tag}>`
 
 beforeEach(() => {
   document.body.innerHTML = ''

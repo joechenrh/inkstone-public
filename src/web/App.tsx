@@ -11,7 +11,6 @@ import { PhoneSheet } from './layout/PhoneSheet.js'
 import { CommitPanel } from './git/CommitPanel.js'
 import { SharePanel } from './share/SharePanel.js'
 import { CrepeEditor } from './editor/CrepeEditor.js'
-import { VditorEditor } from './editor/VditorEditor.js'
 import { Sidebar } from './layout/Sidebar.js'
 import { RightPanel } from './layout/RightPanel.js'
 import { Shell } from './layout/Shell.js'
@@ -22,7 +21,7 @@ import { gitStatus, refreshGitStatus } from './state/git.js'
 import { GitFooter } from './layout/GitFooter.js'
 import { handleShortcut } from './state/shortcuts.js'
 import { isPhone, openSettings } from './state/ui.js'
-import { editorEngine, sourceMode } from './state/settings.js'
+import { sourceMode } from './state/settings.js'
 import { loadShares } from './state/share.js'
 import { currentPath, refreshTree } from './state/vault.js'
 
@@ -96,8 +95,8 @@ export function App() {
         <>
           <ConflictBar />
           <SaveErrorBar />
-          {editorEngine.value === 'crepe' ? <CrepeEditor /> : <VditorEditor />}
-          {/* Over the editor, not instead of it — VditorEditor stays mounted so opening a note
+          <CrepeEditor />
+          {/* Over the editor, not instead of it — the editor stays mounted so opening a note
               does not rebuild the whole Vditor instance. */}
           {currentPath.value === null && <EmptyState />}
           {/* And over it while a note is on its way: the name is already right, the body is not

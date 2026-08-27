@@ -404,9 +404,7 @@
     font-weight: inherit;
   }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color: inherit;
     text-decoration: inherit;
   }
@@ -800,18 +798,14 @@
     font-size: 0.85em;
   }
 
-  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area a,
-
-  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area a {
     font-family: "Inter";
     text-decoration: none;
     color: var(--tw-primary);
     border-radius: 3px;
   }
 
-  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area a:hover,
-
-  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area .vditor-ir__link:hover {
+  .ink-doc.ink-doc.ink-doc .md-reverse-footnote-area a:hover {
     background-color: var(--item-hover-bg-color);
   }
 
@@ -828,10 +822,6 @@
     text-decoration: none;
   }
 
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="inline-math"] script {
-    color: var(--tw-prose-code);
-  }
-
   .ink-doc.ink-doc.ink-doc g[data-mml-node="merror"] > rect[data-background] {
     fill: var(--tw-highlight-color) !important;
   }
@@ -841,8 +831,7 @@
     stroke: #000 !important;
   }
 
-  .ink-doc.ink-doc.ink-doc .md-htmlblock-container,
-  .ink-doc.ink-doc.ink-doc .md-math-container {
+  .ink-doc.ink-doc.ink-doc .md-htmlblock-container {
     border-radius: 0.5rem 0 0.5rem 0.5rem;
   }
 
@@ -850,8 +839,6 @@
   .ink-doc.ink-doc.ink-doc [md-inline="linebreak"] {
     font-size: var(--code-blocks-font-size);
   }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     color: var(--tw-prose-pre-code);
@@ -863,10 +850,6 @@
     margin-bottom: 2em;
     border-radius: 0.5rem ;
     padding: 1.1111111em 1.3333333em;
-  }
-
-  .vditor-ir .vditor-reset .vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview.md-focus {
-    border-bottom-right-radius: 0;
   }
 
   .ink-doc.ink-doc.ink-doc pre code,
@@ -981,9 +964,7 @@
     font-weight: 600;
   }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color: var(--tw-prose-links);
     text-decoration: underline;
     font-weight: 500;
@@ -1139,8 +1120,6 @@
     color: #cbd5e1;
   }
 
-  &[data-theme="dark"] .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  &[data-theme="dark"] .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   &[data-theme="dark"] .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: #1e293b;
   }
@@ -1157,8 +1136,6 @@
   /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
      which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
      block takes the theme's own code surface, which its shell tokens already declare. */
-  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--ink-code-bg);
     border-radius: 6px;

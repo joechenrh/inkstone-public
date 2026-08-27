@@ -9,7 +9,7 @@
  *    none and arrives as default-coloured text on the theme's page.
  *  - The editor font-size setting names the body size. Upstream sets its own, in px or rem or a
  *    `font:` shorthand, all of which ignore the setting.
- *  - Upstream styles bare `pre` and bare `code`; in Vditor's DOM those also reach the collapsed
+ *  - Upstream styles bare `pre` and bare `code`; in the editor's DOM those also reach the collapsed
  *    source and the <code> inside a fenced block.
  *  - highlight.js's content theme is injected at runtime and wins ties, so anything correcting it
  *    needs the `.ink-editor` prefix.
@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const DOC_ROOT = '.vditor-ir .vditor-reset'
+const DOC_ROOT = '.ink-doc'
 
 function convert(file, id) {
   const out = execFileSync('node', [path.join(here, 'convert-typora-theme.mjs'), file, id], {
@@ -92,13 +92,13 @@ if (dark) {
 out.push(`
   /* ---- standard finishing ---- */
 
-  .ink-editor .vditor-ir .vditor-reset {
+  .ink-editor .ink-doc {
     /* The setting names the body size in every theme; upstream always sets its own. */
     font-size: var(--ink-font-size, 16px);
 ${lightPage.map((d) => '    ' + d).join('\n')}
   }
 ${darkPage.length ? `
-  &[data-theme="dark"] .ink-editor .vditor-ir .vditor-reset {
+  &[data-theme="dark"] .ink-editor .ink-doc {
 ${darkPage.map((d) => '    ' + d).join('\n')}
   }
 ` : ''}
@@ -106,15 +106,14 @@ ${darkPage.map((d) => '    ' + d).join('\n')}
   /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare \`code\`,
      which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
      block takes the theme's own code surface, which its shell tokens already declare. */
-  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre {
+  .ink-editor .ink-doc .milkdown-code-block {
     background: var(--ink-code-bg);
     border-radius: 6px;
     padding: 14px 16px;
   }
 
-  /* The block's box belongs to the <pre>, so the <code> inside it carries none of its own. */
-  .ink-editor .vditor-ir .vditor-reset pre code {
+  /* The block's box belongs to the block, so the code inside it carries none of its own. */
+  .ink-editor .ink-doc pre code {
     background: none;
     border: none;
     border-radius: 0;

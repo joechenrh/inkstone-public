@@ -2,19 +2,15 @@ import { alertAt } from './alerts.js'
 import './alerts.css'
 
 /**
- * Alerts, for the surfaces whose document is a DOM: Vditor's editor and the shared reader page.
+ * Alerts, for the surface whose document is a DOM and nothing else: the shared reader page.
  *
- * The marker is a bare text node in both — `<blockquote><p>[!NOTE]\nUseful…` — so there is nothing
- * for CSS alone to take hold of, and something has to put a span around it.
+ * The marker is a bare text node there — `<blockquote><p>[!NOTE]\nUseful…` — so there is nothing
+ * for CSS alone to take hold of, and something has to put a span around it. That page is rendered
+ * HTML that nobody reads back, so wrapping is free: there is no serialiser downstream of it.
  *
- * **Wrapping it does not reach the file**, which is the one thing worth measuring before writing a
- * line of this: Vditor's DOM *is* its markdown, and Lute serialises a plain span as the text inside
- * it. Measured on a real note — wrapped, edited elsewhere, saved, and the file still said
- * `> [!NOTE]`. The same experiment that unblocked pictures.
- *
- * Crepe does not use this. ProseMirror watches its own DOM and reads unexpected mutations back as
- * edits, so a stylist reaching into it can rewrite the document; that engine gets decorations
- * instead — `alert-reveal.ts`, same rules, same classes.
+ * The editor does not use this. ProseMirror watches its own DOM and reads unexpected mutations back
+ * as edits, so a stylist reaching into it can rewrite the document; it gets decorations instead —
+ * `alert-reveal.ts`, same rules, same classes.
  */
 
 /** Skipped while the caret is inside: see `sync`. */
@@ -51,7 +47,7 @@ function kindOf(quote: Element): string | null {
  * text in one engine and in coloured monospace in the other, for the same note.
  *
  * So the span is put in when the caret is elsewhere and simply stays. Editing the marker makes
- * Vditor re-render the paragraph and the span goes with it; that is fine, because by then the text
+ * a re-render takes the span with it; that is fine, because by then the text
  * is being typed rather than read, and it comes back when the caret leaves.
  */
 function sync(quote: Element, caretInside: boolean): void {

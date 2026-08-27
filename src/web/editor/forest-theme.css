@@ -230,9 +230,7 @@
     content: 'H6';
   }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color: var(--a-text-color);
     cursor: pointer;
     padding: 0 3px 0 3px;
@@ -553,8 +551,6 @@
   /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
      which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
      block takes the theme's own code surface, which its shell tokens already declare. */
-  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--ink-code-bg);
     border-radius: 6px;

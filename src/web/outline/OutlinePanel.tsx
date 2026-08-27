@@ -93,7 +93,7 @@ export function OutlinePanel({ onJump }: OutlinePanelProps = {}) {
     const rect = item.el.getBoundingClientRect()
     // A detached heading reports an all-zero rect; scrolling on that would jump to the top.
     if (rect.top === 0 && rect.height === 0) return
-    // Rect deltas rather than offsetTop: .vditor-reset is position:static, so a heading's
+    // Rect deltas rather than offsetTop: the document surface is position:static, so a heading's
     // offsetParent is .ink-center and offsetTop would be measured from the wrong origin.
     el.scrollTop += rect.top - el.getBoundingClientRect().top - JUMP_OFFSET
   }

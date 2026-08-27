@@ -11,7 +11,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 const ALERTS = ['note', 'tip', 'important', 'warning', 'caution']
 
-async function open(page: Page, engine: 'vditor' | 'crepe') {
+async function open(page: Page, engine: 'crepe') {
   await page.addInitScript((e) => { localStorage.setItem('inkstone.editorEngine', e) }, engine)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
@@ -40,7 +40,7 @@ async function caretIn(page: Page, kind: string) {
   await page.waitForTimeout(300)
 }
 
-for (const engine of ['vditor', 'crepe'] as const) {
+for (const engine of ['crepe'] as const) {
   test(`${engine}: the five are drawn, and nothing else is`, async ({ page }) => {
     await open(page, engine)
     // The plain quote and the two near-misses are untagged, in that order after the five.
@@ -110,7 +110,7 @@ for (const engine of ['vditor', 'crepe'] as const) {
   })
 }
 
-for (const engine of ['vditor', 'crepe'] as const) {
+for (const engine of ['crepe'] as const) {
   test(`${engine}: the icon sits on the label's line, and opening one adds no blank line`, async ({ page }) => {
     await open(page, engine)
 
@@ -153,16 +153,3 @@ for (const engine of ['vditor', 'crepe'] as const) {
     expect(shown?.colour).not.toBe('rgb(0, 0, 0)')
   })
 }
-
-test('the two engines draw a callout at the same size', async ({ page }) => {
-  // The fortnight's lesson: a document fact written where only one engine can read it is how the
-  // two renderings drifted. An alert is a document fact.
-  const heights: number[] = []
-  for (const engine of ['vditor', 'crepe'] as const) {
-    await open(page, engine)
-    heights.push(await page.evaluate(() =>
-      Math.round(document.querySelector('.ink-doc blockquote[data-alert="note"]')!.getBoundingClientRect().height)))
-    await page.context().clearCookies()
-  }
-  expect(heights[0]).toBe(heights[1])
-})

@@ -175,18 +175,14 @@
     line-height: 1.8;
   }
 
-  .ink-doc.ink-doc.ink-doc a,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+  .ink-doc.ink-doc.ink-doc a {
     color: var(--accent-blue);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: all 0.2s ease;
   }
 
-  .ink-doc.ink-doc.ink-doc a:hover,
-
-  .ink-doc.ink-doc.ink-doc .vditor-ir__link:hover {
+  .ink-doc.ink-doc.ink-doc a:hover {
     color: var(--accent-teal);
     border-bottom-color: var(--accent-teal);
   }
@@ -233,7 +229,6 @@
     margin: 0.3rem 0;
   }
 
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
   .ink-doc.ink-doc.ink-doc code,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: #e6e9ef;
@@ -243,8 +238,6 @@
     font-size: calc(var(--ink-font-size, 16px) * 0.875);
     border-radius: 6px;
   }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     padding: 2rem;
@@ -256,24 +249,6 @@
     overflow-x: auto;
     white-space: pre;
     word-wrap: normal;
-  }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar {
-    height: 6px;
-    background: transparent;
-  }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb {
-    background: rgba(76, 79, 105, 0.15);
-    border-radius: 3px;
-  }
-
-  .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb:hover {
-    background: rgba(76, 79, 105, 0.25);
   }
 
   .ink-doc.ink-doc.ink-doc code {
@@ -703,18 +678,14 @@
       line-height: 1.8;
     }
 
-    .ink-doc.ink-doc.ink-doc a,
-
-    .ink-doc.ink-doc.ink-doc .vditor-ir__link {
+    .ink-doc.ink-doc.ink-doc a {
       color: var(--accent-blue);
       text-decoration: none;
       border-bottom: 1px solid transparent;
       transition: all 0.2s ease;
     }
 
-    .ink-doc.ink-doc.ink-doc a:hover,
-
-    .ink-doc.ink-doc.ink-doc .vditor-ir__link:hover {
+    .ink-doc.ink-doc.ink-doc a:hover {
       color: var(--accent-teal);
       border-bottom-color: var(--accent-teal);
     }
@@ -761,7 +732,6 @@
       margin: 0.3rem 0;
     }
 
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
     .ink-doc.ink-doc.ink-doc code,
     .ink-doc.ink-doc.ink-doc .milkdown-code-block {
       background: #181825;
@@ -771,8 +741,6 @@
       font-size: calc(var(--ink-font-size, 16px) * 0.875);
       border-radius: 6px;
     }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview,
 
     .ink-doc.ink-doc.ink-doc .milkdown-code-block {
       padding: 2rem;
@@ -784,24 +752,6 @@
       overflow-x: auto;
       white-space: pre;
       word-wrap: normal;
-    }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar {
-      height: 6px;
-      background: transparent;
-    }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb {
-      background: rgba(205, 214, 244, 0.15);
-      border-radius: 3px;
-    }
-
-    .vditor-ir .vditor-reset pre.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview::-webkit-scrollbar-thumb:hover {
-      background: rgba(205, 214, 244, 0.25);
     }
 
     .ink-doc.ink-doc.ink-doc code {
@@ -1102,8 +1052,6 @@
   /* Upstream draws the block's fill in whatever place Typora's DOM put it — often a bare `code`,
      which here is the element *inside* the pre. Rather than chase each theme's arrangement, the
      block takes the theme's own code surface, which its shell tokens already declare. */
-  .ink-editor .vditor-ir .vditor-reset pre.vditor-ir__preview,
-  .ink-editor .vditor-ir .vditor-reset .vditor-ir__node--expand > pre.vditor-ir__marker--pre,
   .ink-doc.ink-doc.ink-doc .milkdown-code-block {
     background: var(--ink-code-bg);
     border-radius: 6px;

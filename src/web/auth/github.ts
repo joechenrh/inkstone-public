@@ -36,7 +36,16 @@ export function githubIdentity(deps: { fetch?: typeof globalThis.fetch } = {}): 
    */
   let refreshing: Promise<string> | null = null
 
-  async function fresh(): Promise<string> {
+  /**
+   * @param force Throw away the held token first.
+   *
+   * A token can stop working before the expiry it was given: signing in on a second device
+   * replaces it, and every call from the first is then answered `Bad credentials`. Nothing here
+   * can see that — the clock says the token is good — so the 401 is the signal, and this is what
+   * {@link GitHubRest} calls when it gets one.
+   */
+  async function fresh(force = false): Promise<string> {
+    if (force) access = null
     if (access !== null && Date.now() < access.expiresAt - EARLY_MS) return access.token
     if (refreshing !== null) return refreshing
 
@@ -58,7 +67,11 @@ export function githubIdentity(deps: { fetch?: typeof globalThis.fetch } = {}): 
     }
   }
 
-  const rest = new GitHubRest({ token: fresh, fetch: doFetch })
+  const rest = new GitHubRest({
+    token: () => fresh(),
+    renew: () => fresh(true),
+    fetch: doFetch,
+  })
 
   return {
     begin(returnTo?: string): void {
@@ -109,7 +122,8 @@ export function githubIdentity(deps: { fetch?: typeof globalThis.fetch } = {}): 
       return { login: user.login, repositories }
     },
 
-    token: fresh,
+    token: () => fresh(),
+    renew: () => fresh(true),
 
     async signOut(): Promise<void> {
       access = null

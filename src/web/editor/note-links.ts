@@ -10,7 +10,7 @@
  * is worse than no link at all.
  */
 
-import { offerNotice } from '../assets/inbox.js'
+import { offerNotice, type Point } from '../assets/inbox.js'
 import { blockText, documentRoot } from './surface.js'
 
 /** Only what a note may legitimately point at. `javascript:` and `file:` are not links. */
@@ -136,7 +136,7 @@ export function headingSlugs(texts: string[]): string[] {
  * event alone. Everything it *does* follow it also reports on failure: silence is what the previous
  * version did and it is indistinguishable from a broken gesture.
  */
-export function followLink(href: string, from: string | null): boolean {
+export function followLink(href: string, from: string | null, at: Point | null = null): boolean {
   const target = resolveLink(href, from)
   if (target === null) return false
 
@@ -145,22 +145,22 @@ export function followLink(href: string, from: string | null): boolean {
       window.open(target.href, '_blank', 'noopener,noreferrer')
       return true
     case 'anchor':
-      scrollToHeading(target.anchor)
+      scrollToHeading(target.anchor, at)
       return true
     case 'asset':
-      void openAsset(target.path)
+      void openAsset(target.path, at)
       return true
     case 'note':
-      void openNote(target.path, target.anchor)
+      void openNote(target.path, target.anchor, at)
       return true
   }
 }
 
-async function openNote(path: string, anchor: string | null): Promise<void> {
+async function openNote(path: string, anchor: string | null, at: Point | null = null): Promise<void> {
   const { openFile } = await import('../state/document.js')
   const { treeHas } = await import('../state/vault.js')
   if (!treeHas(path)) {
-    offerNotice('no such note', path)
+    offerNotice('no such note', path, at)
     return
   }
   await openFile(path)
@@ -171,25 +171,25 @@ async function openNote(path: string, anchor: string | null): Promise<void> {
   }
 }
 
-async function openAsset(path: string): Promise<void> {
+async function openAsset(path: string, at: Point | null = null): Promise<void> {
   const { backend } = await import('../api/index.js')
   const url = await backend.assetUrl(path)
   if (url === null) {
-    offerNotice('no such picture', path)
+    offerNotice('no such picture', path, at)
     return
   }
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 /** Scroll to the heading whose slug matches, and say so when there is none. */
-export function scrollToHeading(anchor: string): void {
+export function scrollToHeading(anchor: string, from: Point | null = null): void {
   const root = documentRoot()
   if (root === null) return
   const headings = Array.from(root.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6'))
   const slugs = headingSlugs(headings.map((h) => blockText(h)))
   const at = slugs.indexOf(anchor.toLowerCase())
   if (at < 0) {
-    offerNotice('no such heading', anchor)
+    offerNotice('no such heading', anchor, from)
     return
   }
   headings[at]?.scrollIntoView({ block: 'start', behavior: 'smooth' })

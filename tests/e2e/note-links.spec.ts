@@ -52,6 +52,33 @@ for (const engine of ['crepe'] as const) {
   })
 }
 
+/**
+ * Where the notice is drawn.
+ *
+ * Measured on a phone, in read mode: the first tap on a dead link put the pill in the corner of the
+ * editor, half off the left edge, and every tap after that put it beside a caret from some earlier
+ * edit. Reading has no caret to measure against, and a tap leaves no selection behind — so the line
+ * is hung off the place that was pressed instead.
+ */
+test('the notice is drawn beside the link that was followed, with no caret anywhere', async ({ page }) => {
+  await open(page, 'crepe')
+  // Read mode: the state the phone was in. There is no caret in it at all.
+  await page.getByRole('button', { name: 'Read' }).click()
+  await expect(page.locator('.ink-doc')).toBeVisible()
+  await page.evaluate(() => { document.getSelection()?.removeAllRanges() })
+
+  const link = page.locator('.ink-doc').getByText('nowhere', { exact: true }).first()
+  const box = (await link.boundingBox())!
+  await link.click()
+
+  const pill = page.locator('.ink-paste-line')
+  await expect(pill).toContainText('no such note')
+  const drawn = (await pill.boundingBox())!
+  // Beside the link — the same screenful, under the line that was pressed. Not the corner.
+  expect(Math.abs(drawn.y - box.y)).toBeLessThan(80)
+  expect(drawn.x).toBeGreaterThan(0)
+})
+
 test('a heading link scrolls to the heading, and a bad one says so', async ({ page }) => {
   await open(page, 'crepe')
   await follow(page, 'no heading')

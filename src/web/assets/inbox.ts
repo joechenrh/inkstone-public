@@ -14,13 +14,16 @@
  * whatever the last one had.
  */
 
+/** Where the gesture happened, in client coordinates. */
+export interface Point { x: number; y: number }
+
 export type EditorOffer =
   | { files: File[] }
   /**
    * Nothing came of it — an empty clipboard, a permission refused, a link to a note that is not
    * there. `head` is the verb, `detail` the number or name it was refused on.
    */
-  | { notice: { head: string; detail: string } }
+  | { notice: { head: string; detail: string; at: Point | null } }
 
 let handler: ((offer: EditorOffer) => void) | null = null
 
@@ -41,7 +44,14 @@ export function offerImages(files: File[]): void {
   if (files.length > 0) handler?.({ files })
 }
 
-/** Say something in the line under the caret: `no such note · notes/deep/storage.md`. */
-export function offerNotice(head: string, detail: string): void {
-  handler?.({ notice: { head, detail } })
+/**
+ * Say something in the line under the caret: `no such note · notes/deep/storage.md`.
+ *
+ * `at` is where the reader pressed, and it is not optional decoration: a notice can be raised while
+ * reading, where there is no caret at all, and a phone reports a tap without leaving a selection
+ * behind. Without it the line was drawn in the corner of the editor the first time and beside a
+ * caret from some earlier edit after that — measured on a phone, both.
+ */
+export function offerNotice(head: string, detail: string, at: Point | null = null): void {
+  handler?.({ notice: { head, detail, at } })
 }

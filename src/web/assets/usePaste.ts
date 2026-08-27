@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
 import type { RefObject } from 'preact'
 import { documentRoot } from '../editor/surface.js'
+import type { Point } from './inbox.js'
 import { readOnly } from '../state/settings.js'
 import { receiveImages } from './inbox.js'
 import { storeImages, type PasteStatus } from './paste.js'
@@ -69,6 +70,14 @@ export function useImagePaste(
   const pathRef = useRef<string | null>(null)
   const insertRef = useRef(insert)
   insertRef.current = insert
+  /**
+   * Where the reader pressed, when the line is about a gesture rather than about a picture.
+   *
+   * A notice can be raised while reading, and reading has no caret; a phone reports a tap without
+   * leaving a selection behind at all. Measured on a phone: without this the pill went to the
+   * corner of the editor the first time, and beside a caret from some earlier edit after that.
+   */
+  const atRef = useRef<Point | null>(null)
   /** Bumped whenever this line stops being the current one, so a late frame cannot revive it. */
   const runRef = useRef(0)
   const placedAt = useRef(0)
@@ -94,7 +103,7 @@ export function useImagePaste(
     const img = matches.length === 0 ? null : matches[matches.length - 1]
     const drawn = img?.getBoundingClientRect()
     const settled = drawn !== undefined && drawn.height > 0
-    const from = settled ? drawn : caretRect()
+    const from = settled ? drawn : (pointRect(atRef.current) ?? caretRect())
     if (from === null || from === undefined) return { rect: { top: 0, left: 0 }, settled }
 
     /*
@@ -106,7 +115,16 @@ export function useImagePaste(
      * left edge and so does a picture, so taking the left from the enclosing block puts it where it
      * is going to be and it stops moving sideways.
      */
-    const left = settled ? from.left : (blockLeft() ?? from.left)
+    /*
+     * A notice takes only its *height* from where the reader pressed. Starting it at the finger
+     * would push a long path off the right edge, and there is no picture under it to line up with —
+     * so it keeps the column's left edge, the same one a paste line uses.
+     */
+    const left = settled
+      ? from.left
+      : atRef.current !== null
+        ? (blockLeftAt(atRef.current) ?? from.left)
+        : (blockLeft() ?? from.left)
 
     // Under the picture, but never off the screen. A tall screenshot reaches past the bottom of the
     // window, and a line about what just happened is worth nothing where it cannot be read — so it
@@ -140,6 +158,7 @@ export function useImagePaste(
   const paste = useCallback((files: File[]) => {
     if (files.length === 0 || readOnly.value) return
     pathRef.current = null
+    atRef.current = null
     place({ kind: 'working', done: 0, total: files.length })
     void storeImages(files, {
       insert: (markdown, path) => {
@@ -154,6 +173,7 @@ export function useImagePaste(
   useEffect(() => receiveImages((offer) => {
     if ('files' in offer) { paste(offer.files); return }
     pathRef.current = null
+    atRef.current = offer.notice.at
     place({ kind: 'refused', head: offer.notice.head, detail: offer.notice.detail })
   }), [paste, place])
 
@@ -184,8 +204,22 @@ export function useImagePaste(
 function blockLeft(): number | null {
   const node = document.getSelection()?.anchorNode
   const el = node instanceof Element ? node : node?.parentElement
+  return leftOfBlock(el ?? null)
+}
+
+/** The same edge, for a line that is about something pressed rather than about the caret. */
+function blockLeftAt(at: Point): number | null {
+  return leftOfBlock(document.elementFromPoint(at.x, at.y))
+}
+
+function leftOfBlock(el: Element | null): number | null {
   const block = el?.closest?.('p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th')
   return block ? block.getBoundingClientRect().left : null
+}
+
+/** The pressed point as something with a bottom to hang the line under. */
+function pointRect(at: Point | null): DOMRect | null {
+  return at === null ? null : new DOMRect(at.x, at.y, 0, 0)
 }
 
 function caretRect(): DOMRect | null {

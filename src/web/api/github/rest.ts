@@ -13,6 +13,16 @@ export interface RestOptions {
    * lives an hour, so by slice 4 this refreshes; a plain string would go stale mid-session.
    */
   token: () => Promise<string> | string
+  /**
+   * Get one that is definitely new, throwing away whatever is held.
+   *
+   * A token can stop working before it expires: signing in on a second device replaces it, and
+   * GitHub then answers every call from the first with `Bad credentials`. The token holder cannot
+   * see that happen — its clock says the token is good for hours — so the only thing that knows is
+   * a 401, and the only cure was reloading the page. Optional: without it a 401 is reported as it
+   * always was.
+   */
+  renew?: () => Promise<string>
   /** Injectable for tests. */
   fetch?: typeof globalThis.fetch
 }
@@ -28,10 +38,12 @@ export interface RestOptions {
  */
 export class GitHubRest {
   readonly #token: RestOptions['token']
+  readonly #renew: RestOptions['renew']
   readonly #fetch: typeof globalThis.fetch
 
   constructor(options: RestOptions) {
     this.#token = options.token
+    this.#renew = options.renew
     this.#fetch = options.fetch ?? globalThis.fetch.bind(globalThis)
   }
 
@@ -41,24 +53,38 @@ export class GitHubRest {
     init: { method?: string; body?: unknown; accept?: string } = {},
   ): Promise<T> {
     const accept = init.accept ?? JSON_MEDIA
-    const headers: Record<string, string> = {
-      accept,
-      authorization: `Bearer ${await this.#token()}`,
-      'x-github-api-version': '2022-11-28',
+    const send = async (token: string): Promise<Response> => {
+      const headers: Record<string, string> = {
+        accept,
+        authorization: `Bearer ${token}`,
+        'x-github-api-version': '2022-11-28',
+      }
+      if (init.body !== undefined) headers['content-type'] = 'application/json'
+      try {
+        return await this.#fetch(`${API}${path}`, {
+          method: init.method ?? 'GET',
+          headers,
+          body: init.body === undefined ? undefined : JSON.stringify(init.body),
+        })
+      } catch {
+        // A network-level failure, or a CORS refusal — which the browser reports as the same
+        // opaque TypeError, giving the app nothing more specific to say than this.
+        throw new BackendError('Could not reach GitHub', 0)
+      }
     }
-    if (init.body !== undefined) headers['content-type'] = 'application/json'
 
-    let res: Response
-    try {
-      res = await this.#fetch(`${API}${path}`, {
-        method: init.method ?? 'GET',
-        headers,
-        body: init.body === undefined ? undefined : JSON.stringify(init.body),
-      })
-    } catch (cause) {
-      // A network-level failure, or a CORS refusal — which the browser reports as the same
-      // opaque TypeError, giving the app nothing more specific to say than this.
-      throw new BackendError('Could not reach GitHub', 0)
+    let res = await send(await this.#token())
+    /*
+     * Once, with a token that is definitely new.
+     *
+     * A token can stop working before it expires — signing in on another device replaces it — and
+     * nothing on this side can tell, because the expiry it was given has not passed. GitHub says
+     * `Bad credentials`, which was shown to the reader as if it were their fault and cleared only
+     * by reloading the page. One retry is the whole difference: if the fresh token is refused too,
+     * the refusal is real and is reported.
+     */
+    if (res.status === 401 && this.#renew !== undefined) {
+      res = await send(await this.#renew())
     }
 
     const text = await res.text()

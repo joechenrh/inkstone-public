@@ -57,7 +57,9 @@ describe('adding a picture on a phone', () => {
     fireEvent.click(screen.getByText('Paste'))
 
     await waitFor(() => {
-      expect(offers).toEqual([{ notice: { head: 'not pasted', detail: 'there is no picture on the clipboard' } }])
+      expect(offers).toEqual([{
+        notice: { head: 'not pasted', detail: 'there is no picture on the clipboard', at: null },
+      }])
     })
     vi.unstubAllGlobals()
   })
@@ -71,7 +73,12 @@ describe('adding a picture on a phone', () => {
 
     await waitFor(() => {
       expect(offers.at(-1)).toEqual({
-        notice: { head: 'not pasted', detail: 'the clipboard was not shared with this page' },
+        notice: {
+          head: 'not pasted',
+          detail: 'the clipboard was not shared with this page',
+          // Nothing was pressed: this comes from the phone's button, and the line goes to the caret.
+          at: null,
+        },
       })
     })
     vi.unstubAllGlobals()

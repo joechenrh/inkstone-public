@@ -375,7 +375,7 @@ export const sourceReveal = $prose((ctx) =>
           if (!at) return false
           const href = hrefAt(view, ctx, at.pos)
           if (href === null || href === '') return false
-          if (!followLink(href, currentPath.value)) return false
+          if (!followLink(href, currentPath.value, { x: e.clientX, y: e.clientY })) return false
           // Read mode renders a real `<a href>`, and returning true only stops *ProseMirror* —
           // without this the browser follows the href as well and leaves the page.
           e.preventDefault()

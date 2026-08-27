@@ -1,3 +1,4 @@
+import { useRef } from 'preact/hooks'
 import { PictureButton } from '../assets/PictureButton.js'
 import { IconEditMode, IconReadMode, IconSource } from '../components/icons.js'
 import { dirty, flushSave } from '../state/document.js'
@@ -24,7 +25,38 @@ const VIEWS = [
  * Save is a button because there is no Ctrl+S on a phone, and manual save is the app's whole
  * protocol — without a visible one the only route to disk would be the five-minute autocommit.
  */
+/**
+ * One gesture, one action, and the action happens on the press.
+ *
+ * Leaving source mode means leaving a focused textarea, and dismissing the keyboard moves
+ * everything under the thumb: the press lands on the button, the release lands wherever the button
+ * has moved to, and the browser delivers no click at all. Measured on a phone — Source to Edit did
+ * nothing until it was tapped a second time. Acting on `pointerdown` settles it before anything can
+ * move, and suppressing the default keeps the focus where it is until the mode has changed.
+ *
+ * `onClick` stays for the keyboard and for anything that activates a button without a pointer; the
+ * flag is what stops one press from counting twice.
+ */
+function usePress(): (run: () => void) => {
+  onPointerDown: (e: Event) => void
+  onClick: () => void
+} {
+  const pressed = useRef(false)
+  return (run) => ({
+    onPointerDown: (e: Event) => {
+      e.preventDefault()
+      pressed.current = true
+      run()
+    },
+    onClick: () => {
+      if (pressed.current) { pressed.current = false; return }
+      run()
+    },
+  })
+}
+
 export function PhoneBar() {
+  const press = usePress()
   const path = currentPath.value
   // Only where there is a document to act on. The list is a different screen, and Edit / Read /
   // Source / Save belong to a note you are looking at — on the list they described one you had
@@ -42,7 +74,7 @@ export function PhoneBar() {
             key={mode}
             type="button"
             class={`ink-iconbtn ink-viewbtn${view === mode ? ' on' : ''}`}
-            onClick={() => { setViewMode(mode) }}
+            {...press(() => { setViewMode(mode) })}
             aria-pressed={view === mode}
             title={label}
           >
@@ -61,7 +93,7 @@ export function PhoneBar() {
         // Disabled when there is nothing to write, so the button reports the document's state
         // as well as acting on it — the unsaved dot in the top bar says the same thing.
         disabled={!dirty.value}
-        onClick={() => { void flushSave().then(() => refreshGitStatus()) }}
+        {...press(() => { void flushSave().then(() => refreshGitStatus()) })}
       >
         {dirty.value ? 'Save' : 'Saved'}
       </button>

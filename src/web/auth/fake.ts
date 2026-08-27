@@ -22,6 +22,7 @@ export function fakeIdentity(config: {
       return signedIn ? { login: config.login, repositories: config.repositories } : null
     },
     async token(): Promise<string> { return config.token },
+    async renew(): Promise<string> { return config.token },
     async signOut(): Promise<void> { signedIn = false },
   }
 }

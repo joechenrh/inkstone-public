@@ -71,7 +71,8 @@ describe('signing in', () => {
     useIdentity({
       begin: () => {},
       restore: () => Promise.reject(new Error('Could not reach GitHub')),
-      token: () => Promise.resolve('t'),
+      renew: () => Promise.resolve('t'),
+    token: () => Promise.resolve('t'),
       signOut: () => Promise.resolve(),
     })
     await restoreSession()

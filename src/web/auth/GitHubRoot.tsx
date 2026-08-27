@@ -75,6 +75,8 @@ function RepoApp({ repo, identity }: { repo: Repository; identity: IdentityProvi
       // Asked for again on every request: an access token is good for eight hours and a tab may
       // outlive one.
       token: () => identity.token(),
+      // A token can be replaced from another device; see `IdentityProvider.renew`.
+      renew: () => identity.renew(),
       // Every commit moves the base the open document is measured against — the timer's as much as
       // the button's. See `rebaseOpenDocument`.
       onCommitted: () => { void rebaseOpenDocument() },

@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- interactive-widget: the soft keyboard shortens the page rather than sliding over it, so the
+     bottom bar stays above the keyboard instead of under it. Chrome's default resizes only the
+     visual viewport, which leaves Edit / Read / Source out of reach while the source textarea is
+     open — and a tap aimed at them lands on the keyboard. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Replaced at runtime with the open file's name — see App.tsx. -->
     <title>Inkstone</title>

@@ -13,6 +13,52 @@ function restWith(respond: (url: string, init: RequestInit) => Response, token =
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } })
 
+/**
+ * A token that stopped working before it expired.
+ *
+ * Signing in on a second device replaces the first device's token, and nothing on this side can
+ * tell: the expiry it was given has not passed. GitHub says `Bad credentials`, and until this the
+ * reader saw those two words and had to reload the page.
+ */
+describe('a token refused before its time', () => {
+  it('asks for a new one and sends the request again', async () => {
+    const seen: string[] = []
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const auth = (init!.headers as Record<string, string>).authorization
+      seen.push(auth)
+      return auth === 'Bearer stale'
+        ? json({ message: 'Bad credentials' }, 401)
+        : json({ ok: true })
+    })
+    const rest = new GitHubRest({
+      token: () => 'stale',
+      renew: async () => 'fresh',
+      fetch: fetchMock as unknown as typeof globalThis.fetch,
+    })
+
+    expect(await rest.request('/user')).toEqual({ ok: true })
+    expect(seen).toEqual(['Bearer stale', 'Bearer fresh'])
+  })
+
+  it('reports the refusal when the new one is refused too, and never tries a third time', async () => {
+    const fetchMock = vi.fn(async () => json({ message: 'Bad credentials' }, 401))
+    const rest = new GitHubRest({
+      token: () => 'stale',
+      renew: async () => 'fresh',
+      fetch: fetchMock as unknown as typeof globalThis.fetch,
+    })
+
+    await expect(rest.request('/user')).rejects.toThrow('Bad credentials')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not retry a 401 when there is no way to get a new token', async () => {
+    const { rest, fetchMock } = restWith(() => json({ message: 'Bad credentials' }, 401))
+    await expect(rest.request('/user')).rejects.toThrow('Bad credentials')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('requests', () => {
   it('carries the token, and asks again for it on every request', async () => {
     let issued = 0

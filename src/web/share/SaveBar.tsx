@@ -78,6 +78,7 @@ export function SaveBar({ note, identity, onNeedRepo }: {
         repo: repo.name,
         ref: repo.defaultBranch,
         token: () => identityProvider().token(),
+        renew: () => identityProvider().renew(),
       }))
       const landed = await saveCopy(note.content, target)
       setSave(landed)

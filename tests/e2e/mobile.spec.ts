@@ -102,6 +102,52 @@ test('the bottom bar carries Save, and reports whether there is anything to save
   await expect(save).toHaveText('Saved')
 })
 
+/**
+ * Leaving source mode, with the keyboard up.
+ *
+ * Measured on a phone: Source to Edit did nothing. Dismissing the soft keyboard moves everything
+ * under the thumb, so the press lands on the button and the release lands wherever the button has
+ * moved to — and the browser delivers no click at all. The bar acts on the press instead.
+ */
+test('the view switches on the press, not on a click that may never come', async ({ page }) => {
+  await login(page)
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
+  await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
+
+  const bar = page.locator('.ink-phonebar')
+  await bar.getByTitle('Source', { exact: true }).tap()
+  await page.locator('.ink-source-area').tap()
+  await expect(page.locator('.ink-source-area')).toBeFocused()
+
+  // The press alone, with no click after it — which is the gesture a closing keyboard leaves.
+  await page.locator('.ink-phonebar').getByTitle('Edit', { exact: true }).dispatchEvent('pointerdown')
+  await expect(page.locator('.ink-source-area')).toHaveCount(0)
+  await expect(page.locator('.ink-doc')).toBeVisible()
+})
+
+test('one press is one switch, not two', async ({ page }) => {
+  await login(page)
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).tap()
+  await page.locator('.ink-tree-name').filter({ hasText: /^rich\.md$/ }).tap()
+  await expect(page.locator('.ink-doc')).toBeVisible({ timeout: 15_000 })
+
+  // A real tap fires the press and the click that follows it. The mode is the same either way, but
+  // Save must not write twice, so the two are one gesture.
+  const save = page.locator('.ink-phonebar-save')
+  await page.locator('.ink-phonebar').getByTitle('Source', { exact: true }).tap()
+  await page.locator('.ink-source-area').tap()
+  await page.keyboard.type('once')
+  await expect(save).toHaveText('Save')
+
+  const writes: string[] = []
+  page.on('request', (r) => { if (r.method() === 'PUT' && r.url().includes('/api/file')) writes.push(r.url()) })
+  await save.tap()
+  await expect(save).toHaveText('Saved')
+  await page.waitForTimeout(400)
+  expect(writes).toHaveLength(1)
+})
+
 test('no keycaps and no undersized targets on a touch screen', async ({ page }) => {
   await login(page)
   // A chip reading ⌘⌥N on a device with no ⌘ names a key that does not exist.

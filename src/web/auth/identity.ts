@@ -38,6 +38,14 @@ export interface IdentityProvider {
   restore(): Promise<Session | null>
   /** A token good right now. Called before every request, because these expire. */
   token(): Promise<string>
+  /**
+   * A token that is definitely new, whatever is held.
+   *
+   * Expiry is not the only way one dies: signing in on another device replaces it, and GitHub
+   * answers every later call from this one with `Bad credentials` while the clock here still says
+   * there are hours left. A 401 is the only news of it, and this is the answer to that.
+   */
+  renew(): Promise<string>
   signOut(): Promise<void>
 }
 

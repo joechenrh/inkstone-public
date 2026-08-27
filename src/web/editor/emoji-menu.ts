@@ -44,11 +44,24 @@ function offerAt(view: EditorView): Offer | null {
   return { from: $head.pos - (typed?.[1]?.length ?? 0), matches, active: 0 }
 }
 
-/** Put the shortcode in, colons included: what is inserted is what the file will hold. */
+/** The rest of a shortcode the caret is standing in the middle of: `:tad|a:` has `a:` after it. */
+const REMAINDER = /^[a-z0-9_+-]*:/
+
+/**
+ * Put the shortcode in, colons included: what is inserted is what the file will hold.
+ *
+ * The replacement runs to the end of whatever shortcode is being *edited*, not to the caret. Taking
+ * an offer while standing inside `:tada:` used to leave the old closing colon where it was and the
+ * line came out `:tada::` — the list is as much for correcting a shortcode as for finishing one.
+ */
 function accept(view: EditorView, offer: Offer): boolean {
   const chosen = offer.matches[offer.active]
   if (chosen === undefined) return false
-  const tr = view.state.tr.insertText(`:${chosen.name}:`, offer.from, view.state.selection.head)
+  const head = view.state.selection.head
+  const $head = view.state.selection.$head
+  const after = $head.parent.textBetween($head.parentOffset, Math.min($head.parentOffset + 40, $head.parent.content.size), '', '')
+  const to = head + (REMAINDER.exec(after)?.[0]?.length ?? 0)
+  const tr = view.state.tr.insertText(`:${chosen.name}:`, offer.from, to)
   // Withdrawn in the same transaction that accepts it. Left to be recomputed afterwards, the list
   // stayed on screen over a shortcode that was already complete.
   view.dispatch(tr.setMeta(KEY, null))

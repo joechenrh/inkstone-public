@@ -201,6 +201,12 @@ for (const n of [1, 2, 3, 4]) {
 // A shortcode already in a file, which must survive being opened and saved.
 fs.writeFileSync(path.join(root, 'notes', 'emoji-crepe.md'), 'An existing :smile: stays.\n')
 
+// A shortcode to stand in the middle of and change.
+fs.writeFileSync(path.join(root, 'notes', 'emojiedit-crepe.md'), 'x :tada: y\n')
+
+// A shortcode that opens a line, where the caret has nowhere before it to stand.
+fs.writeFileSync(path.join(root, 'notes', 'emojistart-crepe.md'), ':tada: at the start of a line.\n')
+
 // Thirty paragraphs, so that "where you were" is somewhere a scroll away from the top.
 fs.writeFileSync(
   path.join(root, 'notes', 'long-crepe.md'),

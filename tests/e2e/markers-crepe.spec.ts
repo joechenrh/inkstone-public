@@ -371,11 +371,10 @@ test('backspacing into a run opens it, and the next one takes a marker', async (
 test('a shortcode is drawn as its emoji and stays in the file', async ({ page }) => {
   await open(page, 'emoji-crepe.md', 'An existing')
 
-  // Drawn: the span carries the emoji, and the shortcode under it is collapsed to nothing.
-  const drawn = page.locator('.ink-doc .ink-emoji').first()
-  await expect(drawn).toHaveAttribute('data-emoji', '😄')
-  expect(await drawn.evaluate((el) => getComputedStyle(el).fontSize)).toBe('0px')
-  expect(await drawn.evaluate((el) => getComputedStyle(el, '::before').content)).toContain('😄')
+  // Drawn beside the shortcode, which is itself collapsed to nothing.
+  await expect(page.locator('.ink-doc .ink-emoji-glyph-drawn').first()).toHaveText('😄')
+  const shortcode = page.locator('.ink-doc .ink-emoji').first()
+  expect(await shortcode.evaluate((el) => getComputedStyle(el).fontSize)).toBe('0px')
 
   // The caret in it shows the shortcode, in grey, beside what it draws.
   await page.evaluate(() => {
@@ -402,6 +401,34 @@ test('a shortcode is drawn as its emoji and stays in the file', async ({ page })
  *
  * What it inserts is the shortcode rather than the character, for the reason above.
  */
+/**
+ * The emoji and the colon after it are one unit: there is no caret stop between them, wherever the
+ * shortcode is. It was a widget that made that true everywhere — as the span's own `::before` the
+ * picture lived *inside* the span, and at the start of a paragraph the caret has nowhere else to
+ * go, so a shortcode that opened a line had a stop that the same shortcode mid-line did not.
+ */
+test('the emoji and its colon are one step, at the start of a line too', async ({ page }) => {
+  await open(page, 'emojistart-crepe.md', 'at the start')
+
+  await page.locator('.ink-doc p').first().click()
+  await page.keyboard.press('Home')
+  await page.waitForTimeout(200)
+  // Before everything: outside the shortcode's own span, which is what puts it before the picture.
+  expect(await page.evaluate(() => {
+    const node = getSelection()?.focusNode
+    const element = node instanceof Element ? node : node?.parentElement
+    return element?.closest('.ink-emoji') !== null
+  })).toBe(false)
+
+  // One press, and the caret is past both the picture and the colon.
+  await page.keyboard.press('ArrowRight')
+  await page.waitForTimeout(200)
+  expect(await page.evaluate(() => {
+    const selection = getSelection()!
+    return { inside: (selection.focusNode?.parentElement)?.closest('.ink-emoji') !== null, offset: selection.focusOffset }
+  })).toEqual({ inside: true, offset: 1 })
+})
+
 test('typing a colon and two letters offers the shortcodes they start', async ({ page }) => {
   await open(page, 'emoji-crepe.md', 'An existing')
 
@@ -428,4 +455,35 @@ test('typing a colon and two letters offers the shortcodes they start', async ({
   await page.keyboard.press('ControlOrMeta+s')
   await page.waitForTimeout(700)
   expect(await read(page, 'notes/emoji-crepe.md')).toContain(':tada:')
+})
+
+/**
+ * The list corrects a shortcode as well as finishing one.
+ *
+ * Taking an offer while standing inside `:tada:` used to leave the closing colon that was already
+ * there, so the line came out `:tada::` — the replacement ran to the caret rather than to the end
+ * of the shortcode being edited.
+ */
+test('taking an offer inside a shortcode replaces all of it', async ({ page }) => {
+  await open(page, 'emojiedit-crepe.md', 'x ')
+
+  // `x :ta|da: y` — two letters in, where the offer is for `ta`.
+  await page.locator('.ink-doc p').first().click()
+  await page.keyboard.press('Home')
+  for (const _ of [0, 1, 2, 3, 4]) {
+    await page.keyboard.press('ArrowRight')
+    await page.waitForTimeout(100)
+  }
+  await page.waitForTimeout(400)
+  await expect(page.locator('.ink-emoji-menu')).toBeVisible()
+  await expect(page.locator('.ink-emoji-row').first()).toContainText(':taco:')
+
+  await page.keyboard.press('Enter')
+  await page.waitForTimeout(400)
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(700)
+
+  const saved = await read(page, 'notes/emojiedit-crepe.md')
+  expect(saved).toContain('x :taco: y')
+  expect(saved).not.toContain('::')
 })

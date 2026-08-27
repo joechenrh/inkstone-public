@@ -61,8 +61,27 @@ export function emojiMatching(prefix: string, limit = 8): { name: string; emoji:
   return found.slice(0, limit)
 }
 
+/** The picture itself. Not part of the text, and not somewhere a caret can be put. */
+function glyph(emoji: string): HTMLElement {
+  const span = document.createElement('span')
+  span.className = 'ink-emoji-glyph-drawn'
+  span.textContent = emoji
+  span.contentEditable = 'false'
+  return span
+}
+
 /** `:name:` — the shape a shortcode has, wherever it is in a line. */
 const SHORTCODE = /:([a-z0-9_+-]+):/g
+
+/**
+ * The last answer, kept because this is asked far more often than the document changes.
+ *
+ * Decorations are recomputed on every view update — a focus change, a scroll, a selection that
+ * lands in the same place — and this one walks every text node in the note. Two things decide the
+ * answer: the document, and where the caret is (which shortcode is spelled out). Nothing else, so
+ * anything else asking gets the same set back.
+ */
+let last: { doc: unknown; from: number; to: number; set: DecorationSet | null } | null = null
 
 export const emojiReveal = $prose(() =>
   new Plugin({
@@ -70,6 +89,8 @@ export const emojiReveal = $prose(() =>
     props: {
       decorations(state: EditorState) {
         if (lookup === null) return null
+        if (last !== null && last.doc === state.doc && last.from === state.selection.from
+          && last.to === state.selection.to) return last.set
         const found: Decoration[] = []
         const { from: caretFrom, to: caretTo } = state.selection
 
@@ -86,15 +107,32 @@ export const emojiReveal = $prose(() =>
             // In it: the shortcode shows, in grey, beside what it draws. Everywhere else it is the
             // picture alone. The same rule the marks and the headings follow.
             const open = caretFrom <= to && caretTo >= from
+            /*
+             * The picture is a widget rather than the span's own `::before`.
+             *
+             * A pseudo-element lives *inside* the span, and at the start of a paragraph that is
+             * where the caret has to go: there is no text before it to hold the position, so the
+             * caret landed after the emoji and `:tada:` at the start of a line had a stop that the
+             * same shortcode mid-line did not. Measured — 20px in from the span's left edge, which
+             * is exactly the emoji's width. A widget at the run's first position with `side: 1` is
+             * drawn *after* any caret sharing that position, so `|🎉:tada:` reads the same wherever
+             * the shortcode is, and the emoji and the colon after it stay one unit with nothing
+             * between them.
+             */
+            found.push(Decoration.widget(from, () => glyph(emoji), {
+              side: 1,
+              key: `emoji:${emoji}`,
+            }))
             found.push(Decoration.inline(from, to, {
               class: `ink-emoji${open && !readOnly.value ? ' ink-emoji--open' : ''}`,
-              'data-emoji': emoji,
             }))
           }
           return false
         })
 
-        return found.length === 0 ? null : DecorationSet.create(state.doc, found)
+        const set = found.length === 0 ? null : DecorationSet.create(state.doc, found)
+        last = { doc: state.doc, from: state.selection.from, to: state.selection.to, set }
+        return set
       },
     },
   }),

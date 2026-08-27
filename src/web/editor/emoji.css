@@ -1,24 +1,16 @@
 /*
  * A shortcode, drawn as what it stands for.
  *
- * The text stays in the document — this is a decoration over it — so the file keeps the six
- * characters somebody typed. What changes is what is on screen: the emoji, from the span's own
- * `data-emoji`, and the shortcode itself only while the caret is in it.
+ * The text stays in the document — the emoji is a widget beside it and the shortcode itself is
+ * only collapsed — so the file keeps the six characters somebody typed.
  */
-.ink-doc .ink-emoji::before {
-  content: attr(data-emoji);
-  /* An inline-block, so this box is what gives the span its height. The span's own font-size is
-     zero — that is how the shortcode is hidden — and a unitless line-height multiplied by zero is
-     zero, so a span with only text in it measured 20px wide and *0px tall*: nothing could be
-     clicked, because there was nothing there to click. */
-  display: inline-block;
+.ink-doc .ink-emoji-glyph-drawn {
+  /* Its own colour and size, because the span beside it is `color: transparent` at `font-size: 0`
+     to hide the shortcode, and anything inheriting that is painted transparent — emoji bitmap and
+     all. Both emoji on a line were blank gaps with every computed style saying "visible". */
+  color: var(--ink-fg);
   font-size: var(--ink-font-size, 16px);
   line-height: var(--ink-line-height, 1.6);
-  vertical-align: baseline;
-  /* Its own colour, not the span's. The span is `color: transparent` to hide the shortcode, and a
-     pseudo-element inherits that — which paints the emoji transparent too, bitmap glyph and all.
-     Both emoji on the line were a pair of blank gaps, with every computed style saying "visible". */
-  color: var(--ink-fg);
 }
 
 /* Collapsed rather than `display: none`: the characters must keep their positions in the text so
@@ -26,10 +18,6 @@
 .ink-doc .ink-emoji:not(.ink-emoji--open) {
   font-size: 0;
   color: transparent;
-  /* Absolute, because the document's line-height is a *number*: inherited onto a span whose own
-     font-size is zero it computes to zero, and the span measured 20px wide and 0px tall — nothing
-     to click, and nothing for a pointer to aim at. */
-  line-height: calc(var(--ink-font-size, 16px) * var(--ink-line-height, 1.6));
 }
 
 /* In it, Typora shows both: the picture, then the shortcode in grey. */

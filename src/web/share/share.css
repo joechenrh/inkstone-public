@@ -24,14 +24,14 @@
   flex-direction: column;
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
-  border-radius: 10px;
+  border-radius: var(--ink-r-md);
   box-shadow: var(--ink-shadow-modal);
   overflow: hidden;
 }
 
 .ink-share--sheet {
   max-width: none;
-  border-radius: 14px 14px 0 0;
+  border-radius: var(--ink-r-lg) var(--ink-r-lg) 0 0;
   border-left: none;
   border-right: none;
   border-bottom: none;
@@ -87,7 +87,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--ink-rule);
-  border-radius: 6px;
+  border-radius: var(--ink-r-md);
   padding: 0 10px;
   /* A field, painted the way this app paints one: the page's own ground inside a hairline, the
      same as the commit message input. NOT `--ink-code-bg` — under Tailwind that is a dark slate
@@ -125,7 +125,7 @@
 
 .ink-share-btn {
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--ink-r-md);
   padding: 8px 13px;
   font: inherit;
   font-size: 12.5px;

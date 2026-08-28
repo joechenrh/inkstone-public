@@ -30,7 +30,7 @@
   padding: var(--auth-pad) var(--auth-pad) 18px;
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
-  border-radius: 10px;
+  border-radius: var(--ink-r-md);
   box-sizing: border-box;
 }
 
@@ -87,7 +87,7 @@
   color: #ffffff;
   background: var(--ink-link);
   border: none;
-  border-radius: 7px;
+  border-radius: var(--ink-r-md);
   cursor: pointer;
   text-decoration: none;
   /* The label and its arrow are one line or the button is wrong. The first version wrapped the

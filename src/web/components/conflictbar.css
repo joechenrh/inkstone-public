@@ -16,7 +16,7 @@
   color: var(--ink-fg);
   font-size: 13px;
   border: 1px solid var(--ink-rule);
-  border-radius: 8px;
+  border-radius: var(--ink-r-md);
   box-shadow: var(--ink-shadow-modal);
 }
 

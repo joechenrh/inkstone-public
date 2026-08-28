@@ -393,6 +393,43 @@ for (const theme of DOC_THEMES) {
       })
       expect(frozen, `${theme.name} / ${appearance}: ${frozen.join(', ')} ignored the font-size ` +
         `setting — ${frozen.map((k) => `${k} stayed at ${small[k]}px`).join(', ')}`).toEqual([])
+
+      /*
+       * The bar down a quote has ends.
+       *
+       * A `border-left` has none — it stops where the box stops, square, because it is an edge and
+       * not an object. All seven themes drew it that way and it is most of what made the document
+       * look assembled rather than drawn. The bar is a drawn rail now, from `--ink-quote-rail`, and
+       * this is what keeps the next theme from reaching for a border again.
+       */
+      const quote = await page.evaluate(() => {
+        const el = document.querySelector('.ink-doc blockquote')!
+        const box = getComputedStyle(el)
+        const rail = getComputedStyle(el, '::after')
+        const own = getComputedStyle(el, '::before')
+        const transparent = (c: string) => c === 'transparent' || /,\s*0\)$/.test(c)
+        return {
+          borderPaints: !transparent(box.borderLeftColor) && parseFloat(box.borderLeftWidth) > 0,
+          railWidth: parseFloat(rail.width) || 0,
+          railRadius: parseFloat(rail.borderTopLeftRadius) || 0,
+          ownWidth: parseFloat(own.width) || 0,
+          ownRadius: parseFloat(own.borderTopLeftRadius) || 0,
+        }
+      })
+
+      expect(quote.borderPaints,
+        `${theme.name} / ${appearance}: the quote bar is a border, which cannot have round ends — ` +
+        'set --ink-quote-rail and --ink-quote-rail-w instead').toBe(false)
+
+      // Either the shared rail or the theme's own drawn one, but whichever it is, it is rounded.
+      const drawn = quote.railWidth > 0
+        ? { width: quote.railWidth, radius: quote.railRadius, which: 'the shared rail' }
+        : { width: quote.ownWidth, radius: quote.ownRadius, which: "the theme's own bar" }
+      expect(drawn.width, `${theme.name} / ${appearance}: no bar down the quote at all`)
+        .toBeGreaterThan(0)
+      expect(drawn.radius,
+        `${theme.name} / ${appearance}: ${drawn.which} is ${drawn.width}px wide with a ` +
+        `${drawn.radius}px corner — square ends`).toBeGreaterThanOrEqual(drawn.width / 2)
     }
   })
 }

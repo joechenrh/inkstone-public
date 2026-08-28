@@ -92,6 +92,39 @@
 }
 
 
+/* 4b. One bar down a quote, and it has ends.
+ *
+ * `border-left` cannot be rounded: a border is an edge of a box, not an object, so its ends are
+ * wherever the box stops. Every theme drew the quote bar that way, which is why all seven had
+ * square ends — and the same square rail turned up twice more in the shell. It is drawn now, from
+ * two properties a theme sets instead of a border:
+ *
+ *   --ink-quote-rail    the colour, which stays each theme's own
+ *   --ink-quote-rail-w  its width, which stays each theme's own
+ *
+ * The theme keeps a transparent border of that width so nothing moves, and the rail is drawn back
+ * over it. A theme that sets neither draws nothing — Forest paints its own bar and keeps it.
+ *
+ * `::after`, because `::before` is spoken for three times over: Crepe draws its own bar there, an
+ * alert's icon lives there, and Forest's bar is there. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote {
+  position: relative;
+}
+
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* Back over the transparent border, which is outside the padding box this is positioned in. */
+  left: calc(-1 * var(--ink-quote-rail-w, 0px));
+  width: var(--ink-quote-rail-w, 0px);
+  border-radius: var(--ink-r-pill);
+  background: var(--ink-quote-rail, transparent);
+  pointer-events: none;
+}
+
+
 /* 5. A table keeps its columns reachable.
  *
  * Everforest rounds its table's corners and clips with `overflow: hidden`; against a table wider

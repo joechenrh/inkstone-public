@@ -253,7 +253,9 @@
   .ink-doc.ink-doc.ink-doc blockquote {
     margin: 1.25rem 0;
     padding: 0.8rem 1rem;
-    border-left: 4px solid var(--ef-aqua);
+    border-left: 4px solid transparent;
+    --ink-quote-rail: var(--ef-aqua);
+    --ink-quote-rail-w: 4px;
     background: rgba(53, 167, 124, 0.06);
     color: var(--text);
     border-radius: var(--radius-sm);
@@ -402,7 +404,9 @@
     background: var(--color-1-0-b);
     box-sizing: border-box;
     border-radius: 8px;
-    border-left: 4px solid var(--color-1);
+    border-left: 4px solid transparent;
+    --ink-quote-rail: var(--color-1);
+    --ink-quote-rail-w: 4px;
     border-right: 0.1px solid transparent;
     border-bottom: 0.1px solid transparent;
     border-top: 0.1px solid transparent;
@@ -899,7 +903,9 @@
     .ink-doc.ink-doc.ink-doc blockquote {
       margin: 1.25rem 0;
       padding: 0.8rem 1rem;
-      border-left: 4px solid var(--ef-aqua);
+      border-left: 4px solid transparent;
+    --ink-quote-rail: var(--ef-aqua);
+    --ink-quote-rail-w: 4px;
       background: var(--ef-bg-2);
       color: var(--text);
       border-radius: var(--radius-sm);
@@ -1040,7 +1046,9 @@
       background: var(--color-1-0-b);
       box-sizing: border-box;
       border-radius: 8px;
-      border-left: 4px solid var(--color-1);
+      border-left: 4px solid transparent;
+    --ink-quote-rail: var(--color-1);
+    --ink-quote-rail-w: 4px;
       border-right: 0.1px solid transparent;
       border-bottom: 0.1px solid transparent;
       border-top: 0.1px solid transparent;

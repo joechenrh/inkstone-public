@@ -15,8 +15,6 @@
   --ink-alert-important: #7a4fb5;
   --ink-alert-warning: #a8761f;
   --ink-alert-caution: #b04434;
-  /* How much of the type's colour is behind it. Light paper takes less. */
-  --ink-alert-tint: 10%;
 }
 
 :root[data-theme="dark"] {
@@ -25,7 +23,6 @@
   --ink-alert-important: #ab86e0;
   --ink-alert-warning: #d8a54a;
   --ink-alert-caution: #e08272;
-  --ink-alert-tint: 16%;
 }
 
 /* The block itself. `--ink-alert` is the one thing the five rules below set; everything else is
@@ -43,9 +40,20 @@
   padding-bottom: 12px !important;
   padding-left: 40px !important;
   padding-right: 14px !important;
-  border-left: 3px solid var(--ink-alert) !important;
-  border-radius: 0 4px 4px 0;
-  background: color-mix(in srgb, var(--ink-alert) var(--ink-alert-tint), transparent) !important;
+  /*
+   * The type's colour goes on the rail and on the label, and nowhere else.
+   *
+   * It used to go behind the whole block as well, in a rounded box with a square left edge and a
+   * square-ended bar — which is the callout card every generated interface draws, and on a phone,
+   * where the document has no margin, it ran from one edge of the screen to the other and read as a
+   * banner rather than as a paragraph. What is left is what a quote already is in this theme, said
+   * in the alert's colour: the box, the fill and the corner all stay the theme's own.
+   */
+  border-left: 3px solid transparent !important;
+  /* `!important` for the same reason as everything else here: a theme's own quote rule carries
+     three copies of `.ink-doc` and would otherwise paint the alert's rail in the quote's colour. */
+  --ink-quote-rail: var(--ink-alert) !important;
+  --ink-quote-rail-w: 3px !important;
   color: inherit;
 }
 

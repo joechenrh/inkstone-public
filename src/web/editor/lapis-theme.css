@@ -162,7 +162,10 @@
 
   /* Blockquote — blue left border, light background */
   .ink-doc.ink-doc.ink-doc blockquote {
-    border-left: 3px solid var(--lapis-accent);
+    border-left: 3px solid transparent;
+    --ink-quote-rail: var(--lapis-accent);
+    --ink-quote-rail-w: 3px;
+    border-radius: var(--ink-r-sm);
     background:  var(--lapis-block-bg);
     padding:     15px 30px 15px 20px;
     font-size:   0.9em;

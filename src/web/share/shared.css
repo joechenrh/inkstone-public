@@ -124,7 +124,7 @@
 
 .ink-shared-skel {
   height: 12px;
-  border-radius: 4px;
+  border-radius: var(--ink-r-sm);
   /* The faint tint every theme defines over its own ground. `--ink-code-bg` is a code block's
      colour and is deliberately dark in some light themes. */
   background: var(--ink-sidebar-hover);
@@ -148,7 +148,7 @@
   margin: 24px auto 40px;
   padding: 12px 16px;
   border: 1px solid var(--ink-rule);
-  border-radius: 8px;
+  border-radius: var(--ink-r-md);
   background: var(--ink-sidebar-hover);
   font-size: 13px;
   color: var(--ink-fg-muted);
@@ -159,7 +159,7 @@
 .ink-shared-go {
   margin-left: auto;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--ink-r-md);
   padding: 8px 14px;
   font: inherit;
   background: var(--ink-link);

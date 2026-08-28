@@ -20,7 +20,7 @@
   margin-top: 6px;
   padding: 6px 11px;
   overflow: hidden;
-  border-radius: 9px;
+  border-radius: var(--ink-r-md);
   background: var(--ink-fg);
   color: var(--ink-bg);
   font-family: var(--ink-font-body);

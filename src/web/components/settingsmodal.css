@@ -20,7 +20,7 @@
   flex-direction: column;
   background: var(--ink-bg);
   color: var(--ink-fg);
-  border-radius: 8px;
+  border-radius: var(--ink-r-md);
   box-shadow: var(--ink-shadow-modal);
   padding: 28px 32px;
   min-width: 360px;
@@ -84,7 +84,7 @@
   border: none;
   cursor: pointer;
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: var(--ink-r-sm);
   font-size: 13px;
   color: var(--ink-fg-muted);
 }
@@ -99,7 +99,7 @@
   background: var(--ink-sidebar-bg);
   color: var(--ink-fg);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--ink-r-sm);
   padding: 4px 8px;
   cursor: pointer;
 }
@@ -117,7 +117,7 @@
   font-size: 13px;
   color: var(--ink-danger);
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: var(--ink-r-sm);
 }
 
 .ink-logout-btn:hover {
@@ -158,7 +158,7 @@
   width: 92px;
   padding: 0;
   border: 1px solid var(--ink-rule);
-  border-radius: 8px;
+  border-radius: var(--ink-r-md);
   overflow: hidden;
   background: none;
   cursor: pointer;
@@ -186,7 +186,7 @@
 .ink-swatch-page i {
   display: block;
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--ink-r-sm);
   opacity: 0.55;
 }
 
@@ -377,7 +377,7 @@
   color: var(--ink-fg);
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
 }
 
 .ink-pairing-field:focus-visible {
@@ -393,7 +393,7 @@
   color: var(--ink-bg);
   background: var(--ink-link);
   border: 1px solid var(--ink-link);
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
   cursor: pointer;
 }
 

@@ -163,7 +163,9 @@
 
   .ink-doc.ink-doc.ink-doc blockquote {
     border: 0 solid var(--as-blockquote-border-color);
-    border-left: 2px solid var(--as-blockquote-border-color);
+    border-left: 2px solid transparent;
+    --ink-quote-rail: var(--as-blockquote-border-color);
+    --ink-quote-rail-w: 2px;
     color: var(--as-blockquote-font-color);
     padding: 0 1rem;
   }

@@ -27,7 +27,7 @@
   flex-direction: column;
   background: var(--ink-bg);
   border-top: 1px solid var(--ink-rule);
-  border-radius: 14px 14px 0 0;
+  border-radius: var(--ink-r-lg) var(--ink-r-lg) 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 

@@ -9,7 +9,7 @@
   padding: 4px;
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
-  border-radius: 7px;
+  border-radius: var(--ink-r-md);
   box-shadow: var(--ink-shadow-menu);
 }
 
@@ -20,7 +20,7 @@
   width: 100%;
   padding: 6px 9px;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
   background: none;
   font: inherit;
   font-size: 13px;

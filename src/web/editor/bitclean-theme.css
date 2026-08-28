@@ -264,7 +264,10 @@
   }
 
   .ink-doc.ink-doc.ink-doc blockquote {
-    border-left: 4px solid var(--accent-blue);
+    border-left: 4px solid transparent;
+    --ink-quote-rail: var(--accent-blue);
+    --ink-quote-rail-w: 4px;
+    border-radius: var(--ink-r-sm);
     background: var(--bg-tertiary);
     padding: 1rem 1.5rem;
     /* 2rem upstream, which put 32px after a list against the 19px before it — leaving a list
@@ -767,7 +770,10 @@
     }
 
     .ink-doc.ink-doc.ink-doc blockquote {
-      border-left: 4px solid var(--accent-blue);
+      border-left: 4px solid transparent;
+      --ink-quote-rail: var(--accent-blue);
+      --ink-quote-rail-w: 4px;
+      border-radius: var(--ink-r-sm);
       background: var(--bg-tertiary);
       padding: 1rem 1.5rem;
       /* 2rem upstream, which put 32px after a list against the 19px before it — leaving a list

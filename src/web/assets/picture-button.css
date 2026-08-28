@@ -4,7 +4,7 @@
   /* The bar's floor, matching the view group and Save either side of it. */
   min-width: 48px;
   min-height: 48px;
-  border-radius: 8px;
+  border-radius: var(--ink-r-md);
   color: var(--ink-fg-muted);
 }
 
@@ -27,7 +27,7 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--ink-rule);
-  border-radius: 12px;
+  border-radius: var(--ink-r-md);
   background: var(--ink-bg);
   box-shadow: var(--ink-shadow-menu);
 }

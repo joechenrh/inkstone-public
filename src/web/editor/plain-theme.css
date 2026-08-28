@@ -113,7 +113,9 @@
   .ink-doc.ink-doc.ink-doc blockquote {
     margin: 0.9em 0;
     padding: 0.1em 0 0.1em 14px;
-    border-left: 3px solid var(--plain-rule);
+    border-left: 3px solid transparent;
+    --ink-quote-rail: var(--plain-rule);
+    --ink-quote-rail-w: 3px;
     background: none;
     color: var(--plain-muted);
     font-size: inherit;

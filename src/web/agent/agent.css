@@ -33,7 +33,7 @@
   color: var(--ink-fg);
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
 }
 
 .ink-agent-version {
@@ -102,7 +102,7 @@
   color: var(--ink-fg);
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
-  border-radius: 6px;
+  border-radius: var(--ink-r-md);
   resize: vertical;
   /* `resize: vertical` with no floor lets the drag handle collapse the box to a hairline, which
      cannot be grabbed again — the control destroys itself. The ceiling is here so a drag cannot
@@ -134,7 +134,7 @@
   color: var(--ink-bg);
   background: var(--ink-link);
   border: 1px solid var(--ink-link);
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
   cursor: pointer;
 }
 
@@ -184,11 +184,23 @@
 .ink-agent-turn p { margin: 0; line-height: 1.55; }
 
 /* The question, set as one: a rule down its left rather than bold text, which at this size was
-   indistinguishable from the answer below it. */
+   indistinguishable from the answer below it. Drawn rather than bordered, so it has ends — see
+   `.ink-hist-item.anchor`, which is the same rail. */
 .ink-agent-prompt {
-  padding-left: 9px;
-  border-left: 2px solid var(--ink-rule);
+  position: relative;
+  padding-left: 11px;
   color: var(--ink-fg-muted);
+}
+
+.ink-agent-prompt::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 0;
+  width: 2px;
+  border-radius: var(--ink-r-pill);
+  background: var(--ink-rule);
 }
 
 .ink-agent-said { color: var(--ink-fg); }

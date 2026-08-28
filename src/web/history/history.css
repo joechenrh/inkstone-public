@@ -46,7 +46,7 @@
   width: 100%;
   padding: 7px 8px;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
   background: none;
   cursor: pointer;
   text-align: left;
@@ -77,14 +77,29 @@
    them: one fill, one radius, on the entry that contains both. */
 .ink-hist-item.open {
   background: var(--ink-code-bg);
-  border-radius: 5px;
+  border-radius: var(--ink-r-sm);
   overflow: hidden;
 }
 
-/* Deliberate commits carry the accent rule down the full height of the entry, expanded or not. */
+/* Deliberate commits carry the accent rule down the full height of the entry, expanded or not.
+ *
+ * Drawn rather than bordered: a border has no ends, so it can only be square, and three different
+ * square rails at three different widths were most of what made this application look assembled
+ * out of parts. One rail, one shape — the same one a quote gets in the document. */
 .ink-hist-item.anchor {
-  border-left: 2px solid var(--ink-link);
-  padding-left: 4px;
+  position: relative;
+  padding-left: 6px;
+}
+
+.ink-hist-item.anchor::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 0;
+  width: 2px;
+  border-radius: var(--ink-r-pill);
+  background: var(--ink-link);
 }
 
 /* Pressing Commit is the only real signal in a log whose messages are all generated, so it is the
@@ -150,13 +165,13 @@
   padding: 5px 8px;
   background: var(--ink-code-bg);
   border-top: 1px solid var(--ink-rule);
-  border-radius: 0 0 5px 5px;
+  border-radius: 0 0 var(--ink-r-sm) var(--ink-r-sm);
 }
 
 .ink-hist-restore {
   padding: 2px 4px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--ink-r-sm);
   background: none;
   cursor: pointer;
   font: inherit;

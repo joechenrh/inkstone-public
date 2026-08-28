@@ -179,7 +179,7 @@
   font-family: inherit;
   padding: 4px 8px;
   outline: none;
-  border-radius: 6px;
+  border-radius: var(--ink-r-md);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-link) 14%, transparent);
 }
 
@@ -222,7 +222,7 @@
 .ink-tree-skeleton-row {
   height: 10px;
   margin-bottom: 20px;
-  border-radius: 4px;
+  border-radius: var(--ink-r-sm);
   background: var(--ink-sidebar-hover);
 }
 

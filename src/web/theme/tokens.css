@@ -17,6 +17,22 @@
      colours are a different axis. */
   --ink-warn: #b07d2b;
 
+  /*
+   * Corners, as a scale rather than a per-component decision.
+   *
+   * There were ten values in the shell — 2, 3, 4, 5, 6, 7, 8, 9, 10 and 14 — because every
+   * component invented its own the day it was written. Nobody counts them, but within one screen
+   * they do not agree, and that disagreement is most of what reads as assembled rather than drawn.
+   *
+   * `sm` is anything you type into or press, `md` is anything that floats over something else,
+   * `lg` is a phone sheet — a bigger corner is what says "this slid up from the bottom" — and
+   * `pill` is for things with two ends: a bar down the side of a quote, a badge.
+   */
+  --ink-r-sm: 4px;
+  --ink-r-md: 8px;
+  --ink-r-lg: 14px;
+  --ink-r-pill: 999px;
+
   /* Scrollbars: a low-contrast thumb over a track-less gutter. */
   --ink-scrollbar-thumb: rgba(0, 0, 0, 0.13);
   --ink-scrollbar-thumb-hover: rgba(0, 0, 0, 0.26);

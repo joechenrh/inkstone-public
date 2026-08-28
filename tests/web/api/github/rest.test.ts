@@ -24,7 +24,7 @@ describe('a token refused before its time', () => {
   it('asks for a new one and sends the request again', async () => {
     const seen: string[] = []
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      const auth = (init!.headers as Record<string, string>).authorization
+      const auth = (init!.headers as Record<string, string>).authorization ?? ''
       seen.push(auth)
       return auth === 'Bearer stale'
         ? json({ message: 'Bad credentials' }, 401)

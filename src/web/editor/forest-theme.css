@@ -333,8 +333,7 @@
     height: 100%;
     width: .30rem;
     background: var(--theme-primary-color);
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
+    border-radius: var(--ink-r-pill);
   }
 
   .ink-doc.ink-doc.ink-doc div[mdtype='hr'] {

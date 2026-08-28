@@ -50,6 +50,12 @@
    * in the alert's colour: the box, the fill and the corner all stay the theme's own.
    */
   border-left: 3px solid transparent !important;
+  /*
+   * No fill at all — not the alert's own tint, and not the quote fill the theme would otherwise
+   * lend it. This is GitHub's own rendering, which is where the five colours come from: a rail, a
+   * coloured label, and the paper. A quote keeps whatever box its theme gives it.
+   */
+  background: transparent !important;
   /* `!important` for the same reason as everything else here: a theme's own quote rule carries
      three copies of `.ink-doc` and would otherwise paint the alert's rail in the quote's colour. */
   --ink-quote-rail: var(--ink-alert) !important;

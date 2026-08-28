@@ -92,6 +92,18 @@
 }
 
 
+/* 4a. A quote is as wide as everything else in the note.
+ *
+ * Crepe's own reset says `box-sizing: content-box` for a blockquote, and the measure is applied as
+ * a `max-width` on the blocks — so the cap landed on the quote's *content* and its padding was
+ * added outside it. Measured at 1440px: every other block ended at 1066 and the quote ran to 1119,
+ * by exactly the padding its theme gives it, in all seven. One property, and the column is straight
+ * again. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc blockquote {
+  box-sizing: border-box;
+}
+
+
 /* 4b. One bar down a quote, and it has ends.
  *
  * `border-left` cannot be rounded: a border is an edge of a box, not an object, so its ends are

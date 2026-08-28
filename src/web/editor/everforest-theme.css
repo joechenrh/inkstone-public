@@ -224,9 +224,13 @@
     color: var(--text-muted);
   }
 
+  /* The indent is padding, not a margin: the measure is applied as a max-width, so a margin pushes
+     the whole list out of the column and over its right edge — measured, 24px past every other
+     block. Inside the box, the text starts in exactly the same place. */
   .ink-doc.ink-doc.ink-doc ul,
   .ink-doc.ink-doc.ink-doc ol {
-    margin: 0 0 1rem 1.5rem;
+    margin: 0 0 1rem;
+    padding-left: 1.5rem;
   }
 
   .ink-doc.ink-doc.ink-doc li {
@@ -876,7 +880,8 @@
 
     .ink-doc.ink-doc.ink-doc ul,
     .ink-doc.ink-doc.ink-doc ol {
-      margin: 0 0 1rem 1.5rem;
+      margin: 0 0 1rem;
+      padding-left: 1.5rem;
     }
 
     .ink-doc.ink-doc.ink-doc li {

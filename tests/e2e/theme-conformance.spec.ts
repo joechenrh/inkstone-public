@@ -395,6 +395,27 @@ for (const theme of DOC_THEMES) {
         `setting — ${frozen.map((k) => `${k} stayed at ${small[k]}px`).join(', ')}`).toEqual([])
 
       /*
+       * One column, and every block ends at its right edge.
+       *
+       * The measure is a `max-width` on the blocks, which caps a *content* box — so anything with
+       * horizontal padding and Crepe's `box-sizing: content-box`, or an indent written as a left
+       * margin, ends up wider than the note it is in. Measured at 1440px before this: every quote
+       * in all seven themes ran past the column by its own padding, and Everforest's lists by 24px.
+       * Overhanging to the left is a different thing and allowed — Lapis hangs its heading badge
+       * out there on purpose.
+       */
+      const past = await page.evaluate(() => {
+        const doc = document.querySelector('.ink-doc')!
+        const edge = doc.getBoundingClientRect().left + parseFloat(getComputedStyle(doc).paddingLeft)
+          + parseFloat(getComputedStyle(doc).getPropertyValue('--ink-content-width'))
+        return Array.from(doc.children)
+          .map((el) => ({ el, right: el.getBoundingClientRect().right }))
+          .filter(({ right }) => right > edge + 1)
+          .map(({ el, right }) => `${el.tagName.toLowerCase()} ends ${Math.round(right - edge)}px past the column`)
+      })
+      expect(past, `${theme.name} / ${appearance}: ${past.join('; ')}`).toEqual([])
+
+      /*
        * The bar down a quote has ends.
        *
        * A `border-left` has none — it stops where the box stops, square, because it is an edge and

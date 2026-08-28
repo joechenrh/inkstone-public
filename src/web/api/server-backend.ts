@@ -165,6 +165,12 @@ export const serverBackend: VaultBackend = {
     return Promise.resolve(rel.startsWith('assets/') ? `/api/asset?path=${encodeURIComponent(rel)}` : null)
   },
 
+  /* The vault serves its own files, so `assetUrl` is already an address that survives being
+     opened, reloaded and kept. There is nothing better to offer. */
+  assetPage(): Promise<string | null> {
+    return Promise.resolve(null)
+  },
+
   releaseAssets(): void {
     // Nothing is held: the URLs above are ordinary ones the browser fetches and caches itself.
   },

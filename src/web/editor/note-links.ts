@@ -173,7 +173,10 @@ async function openNote(path: string, anchor: string | null, at: Point | null = 
 
 async function openAsset(path: string, at: Point | null = null): Promise<void> {
   const { backend } = await import('../api/index.js')
-  const url = await backend.assetUrl(path)
+  /* Opening a picture is not displaying one: what goes in `src` may be a `blob:` URL this tab
+     made, which cannot be reloaded, kept or sent to anyone. Where the file lives, when there is
+     such a place. */
+  const url = await backend.assetPage(path) ?? await backend.assetUrl(path)
   if (url === null) {
     offerNotice('no such picture', path, at)
     return

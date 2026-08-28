@@ -569,6 +569,16 @@ export function createGitHubBackend(options: GitHubBackendOptions): VaultBackend
       return url
     },
 
+    /* Where the file actually lives, for a reader who wants to open it rather than look at it.
+       The repository may well be private; that is not in the way, because the only person this
+       link is offered to is one already signed in to GitHub to be reading these notes at all. */
+    async assetPage(path: string): Promise<string | null> {
+      const rel = path.replace(/^\//, '')
+      if (!rel.startsWith(`${ASSET_DIR}/`)) return null
+      const encoded = rel.split('/').map(encodeURIComponent).join('/')
+      return `https://github.com/${owner}/${repo}/blob/${encodeURIComponent(ref)}/${encoded}`
+    },
+
     releaseAssets(): void {
       for (const url of assetUrls.values()) URL.revokeObjectURL(url)
       assetUrls.clear()

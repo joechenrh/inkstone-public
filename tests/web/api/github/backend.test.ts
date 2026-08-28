@@ -578,4 +578,25 @@ describe('assets', () => {
     expect(await backend.assetUrl('notes/a.md')).toBeNull()
     expect(await backend.assetUrl('assets/deadbeefdeadbeef.webp')).toBeNull()
   })
+
+  /*
+   * Opening a picture is a different question from displaying one.
+   *
+   * `src` is a `blob:` URL over bytes this tab downloaded — it draws the picture and is useless as
+   * a link: it reads as this application's own origin, it dies with the tab that made it, and it
+   * can be neither reloaded nor sent to anyone. The file itself is on GitHub, where whoever is
+   * reading these notes is already signed in.
+   */
+  it('points at the file on GitHub for opening, not at a blob this tab made', async () => {
+    const { github, backend } = backendFor2(VAULT)
+    const page = await backend.assetPage('/assets/a1b2c3d4e5f60718.webp')
+    expect(page).toBe('https://github.com/octocat/notes/blob/main/assets/a1b2c3d4e5f60718.webp')
+    // And it costs nothing: no blob is downloaded to answer where a file lives.
+    expect(github.calls.filter((u) => /\/git\/blobs\//.test(u))).toHaveLength(0)
+  })
+
+  it('has no page to offer for anything that is not a picture', async () => {
+    const { backend } = backendFor2(VAULT)
+    expect(await backend.assetPage('notes/a.md')).toBeNull()
+  })
 })

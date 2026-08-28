@@ -63,6 +63,20 @@ export interface VaultBackend {
   assetUrl(path: string): Promise<string | null>
 
   /**
+   * A page a person can open for that file, on whatever holds it — or null when there is none.
+   *
+   * Not the same question as {@link assetUrl}, which answers "what goes in `src`". Reading a
+   * repository from GitHub, `src` is a `blob:` URL over bytes this tab downloaded: it shows the
+   * picture, and it is useless as a link — the address bar says this application's origin, the URL
+   * dies with the tab that made it, and it cannot be reloaded or sent to anyone. Opening a picture
+   * is a different gesture from displaying one, and the reader is signed in to GitHub already.
+   *
+   * Null where the answer is already `assetUrl` — the vault serves its own files from a real,
+   * reloadable address.
+   */
+  assetPage(path: string): Promise<string | null>
+
+  /**
    * Let go of whatever was being held to show pictures.
    *
    * Called when the open note changes. `createObjectURL` keeps its blob alive until it is revoked,

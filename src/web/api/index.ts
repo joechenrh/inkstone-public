@@ -39,6 +39,7 @@ export const backend: VaultBackend = {
   corpus: () => impl.corpus(),
   writeAsset: (bytes: Uint8Array, ext: string) => impl.writeAsset(bytes, ext),
   assetUrl: (path: string) => impl.assetUrl(path),
+  assetPage: (path: string) => impl.assetPage(path),
   releaseAssets: () => { impl.releaseAssets() },
   gitStatus: (): Promise<GitStatus> => impl.gitStatus(),
   gitChanges: (): Promise<{ changes: PendingChange[] }> => impl.gitChanges(),

@@ -94,8 +94,15 @@
 .ink-hist-item.anchor::before {
   content: "";
   position: absolute;
-  top: 1px;
-  bottom: 1px;
+  /*
+   * Inset by the row's own padding, so consecutive commits are marked once each.
+   *
+   * At 1px they were: three commits in a row drew three rails 2px apart, which at this width reads
+   * as one bar with hairlines across it — the ends were round and nobody could see it. The gap has
+   * to be wider than the rail before a reader takes them as separate marks.
+   */
+  top: 6px;
+  bottom: 6px;
   left: 0;
   width: 2px;
   border-radius: var(--ink-r-pill);

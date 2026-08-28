@@ -56,4 +56,20 @@ test('consecutive commits are marked once each, not with one long bar', async ({
   const gaps = rails.slice(1).map((r, i) => r.top - rails[i]!.bottom)
   expect(Math.min(...gaps), `rails ${gaps.join(', ')}px apart at ${rails[0]!.width}px wide`)
     .toBeGreaterThan(rails[0]!.width * 2)
+
+  /*
+   * And level with the entry it marks.
+   *
+   * The separation lives between the entries, not inside the mark. Inset instead, the rail came out
+   * visibly shorter than the fill behind a hovered or open entry — which on a single entry, seen on
+   * its own, reads as a tick belonging to nothing.
+   */
+  const level = await page.evaluate(() => {
+    const item = document.querySelector('.ink-hist-item.anchor')!
+    const box = item.getBoundingClientRect()
+    const s = getComputedStyle(item, '::before')
+    return { top: parseFloat(s.top), bottom: parseFloat(s.bottom), height: box.height }
+  })
+  expect(level.top, 'the rail starts below the top of its entry').toBeLessThanOrEqual(1)
+  expect(level.bottom, 'the rail stops above the bottom of its entry').toBeLessThanOrEqual(1)
 })

@@ -86,6 +86,19 @@
  * Drawn rather than bordered: a border has no ends, so it can only be square, and three different
  * square rails at three different widths were most of what made this application look assembled
  * out of parts. One rail, one shape — the same one a quote gets in the document. */
+/*
+ * Entries stand apart, which is what lets the rail be the height of the one it marks.
+ *
+ * Two goes at this. Flush rows with a full-height rail drew one long bar across three commits;
+ * flush rows with the rail inset instead left it visibly shorter than the hover fill behind it,
+ * which on a single entry reads as a tick that belongs to nothing. The separation belongs between
+ * the entries, not inside the mark: with a gap here, the rail can run the full height of its own
+ * entry — level with the fill, top and bottom — and still never touch its neighbour.
+ */
+.ink-hist-item {
+  margin-bottom: 6px;
+}
+
 .ink-hist-item.anchor {
   position: relative;
   padding-left: 6px;
@@ -94,15 +107,8 @@
 .ink-hist-item.anchor::before {
   content: "";
   position: absolute;
-  /*
-   * Inset by the row's own padding, so consecutive commits are marked once each.
-   *
-   * At 1px they were: three commits in a row drew three rails 2px apart, which at this width reads
-   * as one bar with hairlines across it — the ends were round and nobody could see it. The gap has
-   * to be wider than the rail before a reader takes them as separate marks.
-   */
-  top: 6px;
-  bottom: 6px;
+  top: 0;
+  bottom: 0;
   left: 0;
   width: 2px;
   border-radius: var(--ink-r-pill);

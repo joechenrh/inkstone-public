@@ -1,6 +1,23 @@
 import type { JSX } from 'preact'
 import './icons.css'
 
+/*
+ * How these are drawn.
+ *
+ * Every glyph is made here rather than borrowed, and the rules below are what keeps a set of
+ * twenty-eight from looking like twenty-eight decisions. They are measured, not eyeballed —
+ * `icons.spec.ts` reads the geometry back out of the page and fails on a glyph that breaks them.
+ *
+ *   Grid          24 units, stroke 1.8, round caps and joins. Rendered at 18px unless asked.
+ *   Optical size  the drawn extent fits 18×18 and is centred on (12,12). The gear used to be
+ *                 22×22 with four times the ink of the brackets beside it — the same button row,
+ *                 one glyph half again as big as its neighbour.
+ *   Corners       one radius, 2, on every rounded rect big enough to have corners.
+ *   Ink           40–85 units of stroke. Below that a glyph reads as faint beside its neighbours,
+ *                 above it as a blot.
+ *   Motion        if it moves, the part that moves is the thing the glyph depicts — see icons.css.
+ */
+
 interface IconProps { class?: string; title?: string; size?: number }
 
 function svg(children: JSX.Element, props: IconProps, extra = ''): JSX.Element {
@@ -25,14 +42,14 @@ function svg(children: JSX.Element, props: IconProps, extra = ''): JSX.Element {
 /* The line in these two is the panel's own edge, which is why it is the part that moves. */
 export const IconSidebar = (p: IconProps) =>
   svg(
-    <><rect x="3" y="4" width="18" height="16" rx="1.5" /><line class="ink-panel-edge" x1="9" y1="4" x2="9" y2="20" /></>,
+    <><rect x="3" y="4" width="18" height="16" rx="2" /><line class="ink-panel-edge" x1="9" y1="4" x2="9" y2="20" /></>,
     p,
     'ink-icon-panel ink-icon-panel--left',
   )
 
 export const IconRightPanel = (p: IconProps) =>
   svg(
-    <><rect x="3" y="4" width="18" height="16" rx="1.5" /><line class="ink-panel-edge" x1="15" y1="4" x2="15" y2="20" /></>,
+    <><rect x="3" y="4" width="18" height="16" rx="2" /><line class="ink-panel-edge" x1="15" y1="4" x2="15" y2="20" /></>,
     p,
     'ink-icon-panel ink-icon-panel--right',
   )
@@ -40,8 +57,8 @@ export const IconRightPanel = (p: IconProps) =>
 export const IconSettings = (p: IconProps) =>
   svg(
     <>
-      <circle cx="12" cy="12" r="2.8" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.52 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.52-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      <path d="M19.8 9.6 L19.8 14.4 L17.8 14.6 L17.2 15.7 L18 17.6 L13.8 20 L12.7 18.4 L11.3 18.4 L10.2 20 L6 17.6 L6.8 15.7 L6.2 14.6 L4.2 14.4 L4.2 9.6 L6.2 9.4 L6.8 8.3 L6 6.4 L10.2 4 L11.3 5.6 L12.7 5.6 L13.8 4 L18 6.4 L17.2 8.3 L17.8 9.4 Z" />
+      <circle cx="12" cy="12" r="2.9" />
     </>,
     p,
     'ink-icon-gear',
@@ -52,7 +69,7 @@ export const IconSettings = (p: IconProps) =>
 export const IconFiles = (p: IconProps) =>
   svg(
     <>
-      <rect class="ink-files-front" x="3" y="7" width="13" height="14" rx="1.5" />
+      <rect class="ink-files-front" x="3" y="7" width="13" height="14" rx="2" />
       <path class="ink-files-back" d="M7 7V4.5A1.5 1.5 0 0 1 8.5 3H17l4 4v9.5a1.5 1.5 0 0 1-1.5 1.5H16" />
     </>,
     p,
@@ -215,9 +232,9 @@ export const IconUnsavedDot = (p: IconProps) => (
 export const IconEditMode = (p: IconProps) =>
   svg(
     <>
-      <path d="M5 19l2.2-6.6L15 4.6l4.4 4.4-7.8 7.8z" />
-      <path d="M9.4 14.6l5.2-5.2" />
-      <path d="M5 19l3.1-1.1" />
+      <path d="M4.8 19.2l2.2-6.6L14.8 4.8l4.4 4.4-7.8 7.8z" />
+      <path d="M9.2 14.8l5.2-5.2" />
+      <path d="M4.8 19.2l3.1-1.1" />
     </>,
     p,
     'ink-icon-nib',
@@ -247,8 +264,8 @@ export const IconReadMode = (p: IconProps) =>
 export const IconSource = (p: IconProps) =>
   svg(
     <>
-      <polyline class="ink-bracket ink-bracket--left" points="9.5,7.5 5,12 9.5,16.5" />
-      <polyline class="ink-bracket ink-bracket--right" points="14.5,7.5 19,12 14.5,16.5" />
+      <polyline class="ink-bracket ink-bracket--left" points="9.5,6.5 4.5,12 9.5,17.5" />
+      <polyline class="ink-bracket ink-bracket--right" points="14.5,6.5 19.5,12 14.5,17.5" />
     </>,
     p,
     'ink-icon-brackets',
@@ -316,6 +333,7 @@ export const IconClipboard = (p: IconProps) =>
   svg(
     <>
       <path d="M9 4.5H7A1.5 1.5 0 0 0 5.5 6v13A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2" />
+      {/* Its own radius: 2 on a 3.2-tall clip is a lozenge, not a corner. */}
       <rect x="9" y="3" width="6" height="3.2" rx="1" />
     </>,
     p,

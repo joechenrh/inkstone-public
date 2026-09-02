@@ -144,3 +144,85 @@ test('a notice leaves by itself when nothing else happens', async ({ page }) => 
   // Long enough to read a path, short enough not to become furniture.
   await expect(page.locator('.ink-paste-line')).toHaveCount(0, { timeout: 12_000 })
 })
+
+/**
+ * Two ways the source form got stuck, both reported from real use.
+ *
+ * A link shows its own markdown while the caret is in it and folds back into a link when the caret
+ * leaves. Both of these left the markdown on the screen for good — and the second wrote it to the
+ * file as `[one](https\://…)`, escaped into something that can never render again.
+ */
+async function threeLinks(page: Page) {
+  await page.addInitScript(() => { localStorage.setItem('inkstone.editorEngine', 'crepe') })
+  await page.goto('/')
+  await page.getByPlaceholder('Password').fill('e2e-password')
+  await page.getByRole('button', { name: 'Enter' }).click()
+  await page.evaluate(async () => {
+    await fetch('/api/file', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        path: 'notes/linkrows.md',
+        content: '# Links\n\n- [one](https://example.com/one)\n- [two](https://example.com/two)\n'
+          + '- [three](https://example.com/three)\n\nPlain paragraph.\n',
+      }),
+    })
+  })
+  await page.reload()
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: /^linkrows\.md$/ }).click()
+  await expect(page.locator('.ink-doc')).toContainText('Plain paragraph.', { timeout: 15_000 })
+}
+
+/** The line that is showing its markdown, if any. */
+const openLine = (page: Page) => page.locator('.ink-doc').innerText()
+  .then((t) => t.split('\n').find((l) => l.includes('](')) ?? null)
+
+test('clicking from one link straight to the next opens the next one', async ({ page }) => {
+  await threeLinks(page)
+
+  /*
+   * Every one of them, in a row. The second used to do nothing: ProseMirror hands a plugin the
+   * transactions it has not seen yet, and one the plugin appended itself is not among them — so
+   * the round that folded the first link up was the only round there was, and the click that
+   * asked for the second link was spent on closing the first.
+   */
+  for (const name of ['one', 'two', 'three']) {
+    await page.locator('.ink-doc a').filter({ hasText: name }).first().click()
+    await page.waitForTimeout(350)
+    expect(await openLine(page), `clicking ${name} did not show its markdown`)
+      .toContain(`[${name}](https://example.com/${name})`)
+  }
+
+  // And only ever one at a time.
+  expect((await page.locator('.ink-doc').innerText()).split('\n').filter((l) => l.includes('](')))
+    .toHaveLength(1)
+})
+
+test('a character typed after the closing paren is not part of the link', async ({ page }) => {
+  await threeLinks(page)
+  await page.locator('.ink-doc a').filter({ hasText: 'one' }).first().click()
+  await page.waitForTimeout(350)
+  expect(await openLine(page)).toContain('[one](https://example.com/one)')
+
+  // The link is the whole list item, so End is exactly one place: just after the `)`.
+  await page.keyboard.press('End')
+  await page.waitForTimeout(200)
+  await page.keyboard.type(':')
+  await page.waitForTimeout(400)
+
+  // Typing outside it is leaving it: the markdown folds away there and then.
+  expect(await openLine(page), 'the source stayed open around a character typed outside it').toBeNull()
+  await expect(page.locator('.ink-doc a').filter({ hasText: 'one' })).toHaveCount(1)
+
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(900)
+  const saved = await page.evaluate(async () => {
+    const res = await fetch(`/api/file?path=${encodeURIComponent('notes/linkrows.md')}`)
+    return (await res.json() as { content: string }).content
+  })
+  expect(saved).toContain('- [one](https://example.com/one):')
+  // Never the escaped form, which is a link that can never render again.
+  expect(saved).not.toContain('\\:')
+  expect(saved).not.toContain('\\[')
+})

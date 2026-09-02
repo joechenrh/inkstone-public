@@ -50,9 +50,9 @@ const SOURCE = /^\[([^\]]*)\]\(([^)\s]*)\)$/
 const IMAGE_SOURCE = /^!\[([^\]]*)\]\(([^)\s]*)\)$/
 
 /** The run of text carrying the link mark the selection is in, with its href — or null. */
-function linkAt(state: EditorState, ctx: Parameters<typeof linkSchema.type>[0]) {
+function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof linkSchema.type>[0]) {
   const type = linkSchema.type(ctx)
-  const { $from, empty } = state.selection
+  const { $from, empty } = selection
   if (!empty) return null
   const mark = $from.marks().find((m) => m.type === type)
     // At the very end of a link the caret carries no marks yet; look at what is behind it.
@@ -101,8 +101,7 @@ function preview(src: string, alt: string): HTMLElement {
 }
 
 /** The picture the selection is *on* — a click selects the node, which is the whole gesture. */
-function imageAt(state: EditorState, ctx: Parameters<typeof linkSchema.type>[0]) {
-  const selection = state.selection
+function imageAt(selection: EditorState['selection'], ctx: Parameters<typeof linkSchema.type>[0]) {
   if (!(selection instanceof NodeSelection)) return null
   const node = selection.node
   if (node.type !== imageSchema.type(ctx)) return null
@@ -112,6 +111,59 @@ function imageAt(state: EditorState, ctx: Parameters<typeof linkSchema.type>[0])
     src: String(node.attrs.src ?? ''),
     alt: String(node.attrs.alt ?? ''),
   }
+}
+
+/**
+ * Unfold whatever the selection is in, on the transaction given — a picture, or a link.
+ *
+ * A function rather than two copies inside `appendTransaction` because it has to run in two places:
+ * when the caret moves into something, and **in the same transaction that folds something else up**.
+ * ProseMirror calls a plugin's `appendTransaction` with the transactions it has not seen yet, and a
+ * transaction the plugin appended itself is not one of them — so there is no second round in which
+ * to open anything. Measured: clicking from one link straight to the next opened the first and the
+ * third and silently did nothing for the second, because the second click was spent closing the
+ * first.
+ *
+ * `skip` is the range that has just folded up. The caret is sitting against it, and at the end of a
+ * link the caret carries the link's mark, so without this the plugin unfolds the thing it has just
+ * closed.
+ */
+function openSourceIn(
+  tr: Transaction,
+  ctx: Parameters<typeof linkSchema.type>[0],
+  skip: { from: number; to: number } | null,
+): Transaction | null {
+  const overlaps = (r: { from: number; to: number }) =>
+    skip !== null && r.from < skip.to && r.to > skip.from
+
+  const image = imageAt(tr.selection, ctx)
+  if (image !== null && !overlaps(image)) {
+    const source = `![${image.alt}](${image.src})`
+    tr.replaceWith(image.from, image.to, tr.doc.type.schema.text(source))
+    // The alt text selected, as Typora leaves it: it is the part you are most likely to be there to
+    // write, and typing replaces it rather than landing inside the brackets.
+    const altFrom = image.from + 2
+    const selection = image.alt === ''
+      ? TextSelection.create(tr.doc, altFrom)
+      : TextSelection.create(tr.doc, altFrom, altFrom + image.alt.length)
+    return tr
+      .setSelection(selection)
+      .setMeta(KEY, { from: image.from, to: image.from + source.length, kind: 'image' })
+      .setMeta('addToHistory', false)
+  }
+
+  const link = linkAt(tr.selection, ctx)
+  if (link === null || overlaps(link)) return null
+  const text = tr.doc.textBetween(link.from, link.to, '', '')
+  const source = `[${text}](${link.href})`
+  // The caret keeps its place in the *text*, which is now one character further along because of
+  // the `[` in front of it. Read before the replacement, which is what moves it.
+  const caret = Math.min(tr.selection.from + 1, link.from + source.length)
+  tr.replaceWith(link.from, link.to, tr.doc.type.schema.text(source))
+  return tr
+    .setSelection(TextSelection.create(tr.doc, caret))
+    .setMeta(KEY, { from: link.from, to: link.from + source.length, kind: 'link' })
+    .setMeta('addToHistory', false)
 }
 
 /**
@@ -249,9 +301,19 @@ export const sourceReveal = $prose((ctx) =>
         const meta = tr.getMeta(KEY) as Open | null | undefined
         if (meta !== undefined) return meta
         if (!value) return null
-        // Mapped rather than recomputed: the reader is typing inside this range, so it moves.
-        const from = tr.mapping.map(value.from, -1)
-        const to = tr.mapping.map(value.to, 1)
+        /*
+         * Mapped rather than recomputed: the reader is typing inside this range, so it moves.
+         *
+         * The ends are *exclusive*, which is the whole of the difference. Mapped the other way, a
+         * character typed immediately after the `)` was swallowed into the range — the text then
+         * read `[a](b):`, which is not a link by the pattern below, so it was left as literal
+         * markdown on screen and written to the file as `[a](https\://b):`, escaped into something
+         * that can never render again. Measured; it is what the bug report was.
+         *
+         * The same at the front, for a character typed before the `[`.
+         */
+        const from = tr.mapping.map(value.from, 1)
+        const to = tr.mapping.map(value.to, -1)
         return to > from ? { from, to, kind: value.kind } : null
       },
     },
@@ -261,57 +323,54 @@ export const sourceReveal = $prose((ctx) =>
         // Still inside: leave it open, whatever is being typed.
         const { from, to } = state.selection
         if (from >= open.from && to <= open.to) return null
-        return collapse(state.tr, open, ctx)
+        const tr = collapse(state.tr, open, ctx)
+        /*
+         * The caret has left. If it has landed in another link — or on a picture — that one is
+         * unfolded here, in the same transaction: see `openSourceIn` for why there is no second
+         * chance at it. The range that has just folded up is where the caret is standing, and at
+         * the end of a link the caret carries the link's own mark, so it is excluded by name.
+         */
+        const folded = { from: open.from, to: tr.mapping.map(open.to, -1) }
+        return openSourceIn(tr, ctx, folded) ?? tr
       }
 
-      // A close that has just happened is not an invitation to open again. The caret is still
-      // inside the link it was closed on, so without this the plugin re-opened it in the very next
-      // round — and the save that asked for the close read the open form anyway, brackets and all.
-      if (trs.some((tr) => tr.getMeta(KEY) === null)) return null
+      /*
+       * What this round closed, in the document as it now is.
+       *
+       * Reopening *that* link is the one thing that must not happen: the caret is still inside it,
+       * so the plugin would unfold it again in the very next round and the save that asked for the
+       * close would read the open form anyway. Any *other* link is a different question — see
+       * below.
+       */
+      const was = KEY.getState(_old)
+      const closed = was !== null && was !== undefined && trs.some((tr) => tr.getMeta(KEY) === null)
+        ? trs.reduce(
+          (range, tr) => ({ from: tr.mapping.map(range.from, 1), to: tr.mapping.map(range.to, -1) }),
+          { from: was.from, to: was.to },
+        )
+        : null
 
-      // Opening belongs to the caret *moving into* a link, never to the document changing. Typing
-      // `[1](2)` makes a link, and the caret is inside it the instant it exists — so this opened it
-      // straight back to `[1](2)` and the link looked like it had never been made. Nobody moved
-      // into anything; the link arrived under a caret that was already there.
-      if (trs.some((tr) => tr.docChanged)) return null
+      /*
+       * Opening belongs to the caret *moving into* a link, never to the document changing. Typing
+       * `[1](2)` makes a link, and the caret is inside it the instant it exists — so this opened it
+       * straight back to `[1](2)` and the link looked like it had never been made. Nobody moved
+       * into anything; the link arrived under a caret that was already there.
+       *
+       * A close of our own is not that kind of change. Clicking from one link straight to another
+       * arrives as one round carrying both — the first link folding up, and a click that landed in
+       * the second — and refusing every round that touched the document meant the second link did
+       * not open. Measured: link, link, link opened the first and the third, and clicking anything
+       * else in between made the next one work again.
+       */
+      if (trs.some((tr) => tr.docChanged && tr.getMeta(KEY) !== null)) return null
 
       // Reading, not editing. Read mode shows a picture and a link as themselves; unfolding one
       // under a tap is the behaviour the other engine already declines there.
       if (readOnly.value) return null
 
-      // A picture, clicked. That is a node selection, which is exactly the gesture — Typora and the
-      // other engine both answer a click on a picture with its own markdown, and until now this one
-      // answered with a blue box and no way to see the address, edit it, or delete the picture by
-      // deleting its syntax.
-      const image = imageAt(state, ctx)
-      if (image !== null) {
-        const source = `![${image.alt}](${image.src})`
-        const tr = state.tr.replaceWith(image.from, image.to, state.schema.text(source))
-        // The alt text selected, as Typora leaves it: it is the part you are most likely to be
-        // there to write, and typing replaces it rather than landing inside the brackets.
-        const altFrom = image.from + 2
-        const selection = image.alt === ''
-          ? TextSelection.create(tr.doc, altFrom)
-          : TextSelection.create(tr.doc, altFrom, altFrom + image.alt.length)
-        return tr
-          .setSelection(selection)
-          .setMeta(KEY, { from: image.from, to: image.from + source.length, kind: 'image' })
-          .setMeta('addToHistory', false)
-      }
-
-      // Nothing open. Open the link the caret is in, if it is in one.
-      const link = linkAt(state, ctx)
-      if (!link) return null
-      const text = state.doc.textBetween(link.from, link.to, '', '')
-      const source = `[${text}](${link.href})`
-      const tr = state.tr.replaceWith(link.from, link.to, state.schema.text(source))
-      // The caret keeps its place in the *text*, which is now one character further along because
-      // of the `[` in front of it.
-      const caret = Math.min(state.selection.from + 1, link.from + source.length)
-      return tr
-        .setSelection(TextSelection.create(tr.doc, caret))
-        .setMeta(KEY, { from: link.from, to: link.from + source.length, kind: 'link' })
-        .setMeta('addToHistory', false)
+      // Nothing open. Unfold whatever the caret has moved into, if anything — never the thing that
+      // has just folded up under it.
+      return openSourceIn(state.tr, ctx, closed)
     },
     props: {
       decorations(state) {

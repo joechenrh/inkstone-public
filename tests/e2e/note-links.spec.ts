@@ -226,3 +226,58 @@ test('a character typed after the closing paren is not part of the link', async 
   expect(saved).not.toContain('\\:')
   expect(saved).not.toContain('\\[')
 })
+
+/** A note whose link is the last thing on its line, which is where both of these went wrong. */
+async function linkAtLineEnd(page: Page, content: string) {
+  await page.addInitScript(() => { localStorage.setItem('inkstone.editorEngine', 'crepe') })
+  await page.goto('/')
+  await page.getByPlaceholder('Password').fill('e2e-password')
+  await page.getByRole('button', { name: 'Enter' }).click()
+  await page.evaluate(async (body) => {
+    await fetch('/api/file', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: 'notes/linkend.md', content: body }),
+    })
+  }, content)
+  await page.reload()
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: /^linkend\.md$/ }).click()
+  await expect(page.locator('.ink-doc')).toContainText('End', { timeout: 15_000 })
+}
+
+test('clicking past the end of a line leaves the link it ends with alone', async ({ page }) => {
+  await linkAtLineEnd(page, '# End\n\nA line ending in [xxx](https://example.com/x)\n')
+  const para = page.locator('.ink-doc p').filter({ hasText: 'A line ending' }).first()
+  const box = (await para.boundingBox())!
+
+  // The empty space after the last character, which is where a reader aims to get to the end of a
+  // line. It resolves to the position at the end of the link, and being *at* the end used to count
+  // as being inside: the link unfolded and the caret landed in its brackets, at `[xxx|](…)`.
+  await page.mouse.click(box.x + box.width - 4, box.y + box.height / 2)
+  await page.waitForTimeout(400)
+  await expect(page.locator('.ink-doc')).not.toContainText('](')
+  await expect(page.locator('.ink-doc a')).toHaveCount(1)
+})
+
+test('Enter at a link that is showing its source makes the next list item', async ({ page }) => {
+  await linkAtLineEnd(page, '# End\n\n- item one [xxx](https://example.com/x)\n- item two\n')
+  await page.locator('.ink-doc a').first().click()
+  await page.waitForTimeout(400)
+  await expect(page.locator('.ink-doc')).toContainText('[xxx](https://example.com/x)')
+
+  /*
+   * The plugin closes the link and stands aside. It used to do the split itself, and a plain split
+   * inside a list item makes a second paragraph in the *same* item — so Enter here produced a blank
+   * line rather than the next item. Enter belongs to the editor, which knows what a list is.
+   */
+  await page.keyboard.press('Enter')
+  await page.keyboard.type('typed')
+  await page.waitForTimeout(400)
+
+  await expect(page.locator('.ink-doc li')).toHaveCount(3)
+  await expect(page.locator('.ink-doc li').nth(1)).toContainText('typed')
+  // And the link came back whole, rather than being split down the middle.
+  await expect(page.locator('.ink-doc a').filter({ hasText: 'xxx' })).toHaveCount(1)
+  await expect(page.locator('.ink-doc')).not.toContainText('](')
+})

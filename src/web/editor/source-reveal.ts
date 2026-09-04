@@ -55,7 +55,8 @@ function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof link
   const { $from, empty } = selection
   if (!empty) return null
   const mark = $from.marks().find((m) => m.type === type)
-    // At the very end of a link the caret carries no marks yet; look at what is behind it.
+    // At the very end of a link the caret carries no marks yet; look at what is behind it. Being
+    // *at* the end is still outside — see the run test below.
     ?? $from.nodeBefore?.marks.find((m) => m.type === type)
   if (!mark) return null
 
@@ -72,7 +73,18 @@ function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof link
     if (last && last.to === at) last.to = pos
     else runs.push({ from: at, to: pos })
   })
-  const run = runs.find((r) => $from.pos >= r.from && $from.pos <= r.to)
+  /*
+   * Strictly inside, not touching.
+   *
+   * Clicking past the end of a line puts the caret at the end of the last thing on it, and when
+   * that is a link the caret is exactly at the run's end — so aiming at the empty space after a
+   * line unfolded the link and dropped the caret inside its brackets, at `[xxx|](…)`. Reported;
+   * measured. The end belongs to the text after the link, and the start to the text before it.
+   *
+   * Nothing becomes unreachable: one more press of the same arrow key lands inside the run and
+   * unfolds it, which is the gesture that means "I want to be in this link".
+   */
+  const run = runs.find((r) => $from.pos > r.from && $from.pos < r.to)
   if (!run) return null
   return { ...run, href: String(mark.attrs.href ?? '') }
 }
@@ -231,36 +243,30 @@ export function sourceIsOpen(state: EditorState): boolean {
 }
 
 /**
- * Enter, while something is showing its own markdown: close it first, *then* make the line.
+ * Enter, while something is showing its own markdown: close it, and leave the key alone.
  *
- * Without this the newline lands **inside the source text**, because that is all the document holds
- * while it is open — and a picture opened and split came back as `![⏎11](/assets/…)`, or worse as
- * literal text that a serialiser then escapes into `\![](…)`, which is a picture that can never
- * render again. Measured on both: an Enter after clicking a picture is not an edit to its address.
+ * Without the close the newline lands **inside the source text**, because that is all the document
+ * holds while it is open — a picture opened and split came back as `![⏎11](/assets/…)`, or as
+ * literal text a serialiser then escapes into `\![](…)`, a picture that can never render again.
  *
- * One transaction, so there is no instant in which the document holds a half-closed link. The split
- * goes at the end of what was just closed — the picture, or the link's text — which is where Enter
- * would have gone if the source had never been showing.
+ * The split itself is *not* this plugin's business, and doing it here was a bug of its own: a plain
+ * `tr.split` in a list item makes a second paragraph inside the same item, so Enter at the end of a
+ * list item that ended in a link produced a blank line instead of the next item. Measured. Closing
+ * and then letting the key through gives the editor's own Enter — list-aware, and whatever else it
+ * knows — a document with no brackets in it, which is all it needed.
+ *
+ * The caret is left at the end of what was closed, which is where Enter would have gone if the
+ * source had never been showing.
  */
-export function closeSourceAndSplit(
+export function closeSourceBeforeEnter(
   view: EditorView,
   ctx: Parameters<typeof linkSchema.type>[0],
-): boolean {
+): void {
   const open = KEY.getState(view.state)
-  if (open === null || open === undefined) return false
-
+  if (open === null || open === undefined) return
   const tr = collapse(view.state.tr, open, ctx)
-  const end = tr.mapping.map(open.to)
-  try {
-    tr.split(end)
-  } catch {
-    // Not a position a block can be split at — leave the close, drop the newline. Better than an
-    // exception in a keydown handler, which would take the whole editor with it.
-    view.dispatch(tr)
-    return true
-  }
-  view.dispatch(tr.setSelection(TextSelection.create(tr.doc, end + 1)).scrollIntoView())
-  return true
+  const end = Math.min(tr.mapping.map(open.to, -1), tr.doc.content.size)
+  view.dispatch(tr.setSelection(TextSelection.create(tr.doc, end)))
 }
 
 /**

@@ -24,7 +24,7 @@ import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall, unwrapBlock
 import { setHeadingLevel, unwrapHeadingOnBackspace } from './headings.js'
 import { marksEndAtTheirMarker } from './mark-inclusivity.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
-import { closeSourceAndSplit, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
+import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
 import { writeTablesAsTyped, writeWhatWasTyped } from './markdown-escapes.js'
 import { attachImagePaste } from './image-paste.js'
 import { markerReveal } from './marker-reveal.js'
@@ -352,17 +352,14 @@ export function CrepeEditor() {
       if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return
       const crepe = crepeRef.current
       if (!crepe) return
-      let handled = false
       crepe.editor.action((c) => {
         // A run showing its own markdown closes first, so the newline splits a line of text rather
         // than a line of asterisks. See `mark-reveal.ts`; the link and the picture below are the
         // same hazard and take the same route out.
         collapseMarks(c.get(editorViewCtx), c)
-        handled = closeSourceAndSplit(c.get(editorViewCtx), c)
+        closeSourceBeforeEnter(c.get(editorViewCtx), c)
       })
-      if (!handled) return
-      e.preventDefault()
-      e.stopPropagation()
+      // And the key goes on to the editor, which knows what Enter means in a list.
     }
     host.addEventListener('keydown', closeSourceOnEnter, true)
 

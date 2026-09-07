@@ -246,18 +246,40 @@ async function linkAtLineEnd(page: Page, content: string) {
   await expect(page.locator('.ink-doc')).toContainText('End', { timeout: 15_000 })
 }
 
-test('clicking past the end of a line leaves the link it ends with alone', async ({ page }) => {
-  await linkAtLineEnd(page, '# End\n\nA line ending in [xxx](https://example.com/x)\n')
-  const para = page.locator('.ink-doc p').filter({ hasText: 'A line ending' }).first()
-  const box = (await para.boundingBox())!
+test('clicking past the end of a line opens the link, with the caret after it', async ({ page }) => {
+  // A link whose text is itself a URL, which is the shape this was reported on.
+  await linkAtLineEnd(page, '# End\n\n- [https://example.com/x](https://example.com/x/)\n')
+  const item = page.locator('.ink-doc li').first()
+  const box = (await item.boundingBox())!
 
-  // The empty space after the last character, which is where a reader aims to get to the end of a
-  // line. It resolves to the position at the end of the link, and being *at* the end used to count
-  // as being inside: the link unfolded and the caret landed in its brackets, at `[xxx|](…)`.
-  await page.mouse.click(box.x + box.width - 4, box.y + box.height / 2)
-  await page.waitForTimeout(400)
-  await expect(page.locator('.ink-doc')).not.toContainText('](')
+  /*
+   * The empty space after the last character, which is where a reader aims to get to the end of a
+   * line. It resolves to the position at the end of the link, and standing against a link is being
+   * in it: the markdown appears, as it does in Typora.
+   */
+  await page.mouse.click(box.x + box.width - 6, box.y + box.height / 2)
+  await page.waitForTimeout(450)
+  await expect(page.locator('.ink-doc')).toContainText('](https://example.com/x/)')
+
+  /*
+   * And the caret is after the `)`, not inside the brackets. It used to be inside — so the next
+   * thing typed at the end of a line went into the link's own words. Typed rather than measured,
+   * because where the next character lands is the whole of what the position means.
+   */
+  await page.keyboard.type(' ok')
+  await page.waitForTimeout(450)
+  await expect(page.locator('.ink-doc li').first()).toContainText('https://example.com/x ok')
   await expect(page.locator('.ink-doc a')).toHaveCount(1)
+  // Typing outside it closed it, and the address is untouched.
+  await expect(page.locator('.ink-doc')).not.toContainText('](')
+
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(900)
+  const saved = await page.evaluate(async () => {
+    const res = await fetch(`/api/file?path=${encodeURIComponent('notes/linkend.md')}`)
+    return (await res.json() as { content: string }).content
+  })
+  expect(saved).toContain('- [https://example.com/x](https://example.com/x/) ok')
 })
 
 test('Enter at a link that is showing its source makes the next list item', async ({ page }) => {

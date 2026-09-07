@@ -73,18 +73,10 @@ function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof link
     if (last && last.to === at) last.to = pos
     else runs.push({ from: at, to: pos })
   })
-  /*
-   * Strictly inside, not touching.
-   *
-   * Clicking past the end of a line puts the caret at the end of the last thing on it, and when
-   * that is a link the caret is exactly at the run's end — so aiming at the empty space after a
-   * line unfolded the link and dropped the caret inside its brackets, at `[xxx|](…)`. Reported;
-   * measured. The end belongs to the text after the link, and the start to the text before it.
-   *
-   * Nothing becomes unreachable: one more press of the same arrow key lands inside the run and
-   * unfolds it, which is the gesture that means "I want to be in this link".
-   */
-  const run = runs.find((r) => $from.pos > r.from && $from.pos < r.to)
+  // Both ends included: standing against a link is being in it, which is what Typora does — and
+  // clicking past the end of a line lands exactly there. Where the caret *goes* when the markdown
+  // appears is the other half of that, and it is settled in `openSourceIn`.
+  const run = runs.find((r) => $from.pos >= r.from && $from.pos <= r.to)
   if (!run) return null
   return { ...run, href: String(mark.attrs.href ?? '') }
 }
@@ -168,9 +160,22 @@ function openSourceIn(
   if (link === null || overlaps(link)) return null
   const text = tr.doc.textBetween(link.from, link.to, '', '')
   const source = `[${text}](${link.href})`
-  // The caret keeps its place in the *text*, which is now one character further along because of
-  // the `[` in front of it. Read before the replacement, which is what moves it.
-  const caret = Math.min(tr.selection.from + 1, link.from + source.length)
+  /*
+   * Where the caret goes when the brackets appear under it.
+   *
+   * Inside the text it keeps its place, one character further along because of the `[` now in front
+   * of it. At either *end* of the link it keeps its place too — but its place is outside the link,
+   * so it belongs outside the syntax as well: after the `)`, or before the `[`. Clicking past the
+   * end of a line is the case that matters, and it used to land at `[xxx|](…)` — inside the text,
+   * where the next thing typed went into the link's own words instead of after the link. Typora
+   * puts it after the `)`, and so does this.
+   */
+  const pos = tr.selection.from
+  const caret = pos === link.to
+    ? link.from + source.length
+    : pos === link.from
+      ? link.from
+      : Math.min(pos + 1, link.from + source.length)
   tr.replaceWith(link.from, link.to, tr.doc.type.schema.text(source))
   return tr
     .setSelection(TextSelection.create(tr.doc, caret))

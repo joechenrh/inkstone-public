@@ -303,3 +303,44 @@ test('Enter at a link that is showing its source makes the next list item', asyn
   await expect(page.locator('.ink-doc a').filter({ hasText: 'xxx' })).toHaveCount(1)
   await expect(page.locator('.ink-doc')).not.toContainText('](')
 })
+
+test('deleting back to a link arrives at it, and opens it', async ({ page }) => {
+  await linkAtLineEnd(page, '# End\n\n[111](https://example.com/2) other text\n')
+  await page.locator('.ink-doc p').filter({ hasText: 'other text' }).first().click()
+  await page.keyboard.press('End')
+  await page.waitForTimeout(300)
+
+  /*
+   * Holding Delete along a line is a way of arriving at a link: the caret does not move, the text
+   * between it and the link goes, and the two end up against each other. It used to do nothing —
+   * every round that touched the document was refused, because typing `[1](2)` makes a link under a
+   * caret that was already there and must not unfold it. A round that inserted nothing is a round
+   * the reader spent moving.
+   */
+  for (let i = 0; i < ' other text'.length; i++) await page.keyboard.press('Backspace')
+  await page.waitForTimeout(400)
+  await expect(page.locator('.ink-doc')).toContainText('[111](https://example.com/2)')
+})
+
+test('typing after a link does not unfold it on every keystroke', async ({ page }) => {
+  await linkAtLineEnd(page, '# End\n\n[111](https://example.com/2)\n')
+  await page.locator('.ink-doc p').filter({ hasText: '111' }).first().click()
+  await page.keyboard.press('End')
+  await page.waitForTimeout(300)
+  // Standing against it opens it; the first character typed is outside, so it folds again.
+  await expect(page.locator('.ink-doc')).toContainText('](')
+
+  await page.keyboard.type('abc')
+  await page.waitForTimeout(400)
+  await expect(page.locator('.ink-doc'), 'the source came back under the typing').not.toContainText('](')
+  await expect(page.locator('.ink-doc p').filter({ hasText: '111abc' })).toHaveCount(1)
+  await expect(page.locator('.ink-doc a')).toHaveCount(1)
+
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(900)
+  const saved = await page.evaluate(async () => {
+    const res = await fetch(`/api/file?path=${encodeURIComponent('notes/linkend.md')}`)
+    return (await res.json() as { content: string }).content
+  })
+  expect(saved).toContain('[111](https://example.com/2)abc')
+})

@@ -118,6 +118,24 @@ function imageAt(selection: EditorState['selection'], ctx: Parameters<typeof lin
 }
 
 /**
+ * Whether a transaction only took text away.
+ *
+ * Deleting backwards along a line is a way of *arriving* at a link: the caret does not move at all,
+ * the text between it and the link goes, and the two end up against each other. Typing is not —
+ * `[1](2)` becomes a link under a caret that was already there, and a character typed after a link
+ * puts the caret against one it never entered. Telling them apart is the whole of the difference:
+ * a round that inserted nothing is a round the reader spent moving.
+ */
+function onlyDeleted(tr: Transaction): boolean {
+  for (const map of tr.mapping.maps) {
+    let inserted = false
+    map.forEach((_oldStart, _oldEnd, newStart, newEnd) => { if (newEnd > newStart) inserted = true })
+    if (inserted) return false
+  }
+  return true
+}
+
+/**
  * Unfold whatever the selection is in, on the transaction given — a picture, or a link.
  *
  * A function rather than two copies inside `appendTransaction` because it has to run in two places:
@@ -367,13 +385,21 @@ export const sourceReveal = $prose((ctx) =>
        * straight back to `[1](2)` and the link looked like it had never been made. Nobody moved
        * into anything; the link arrived under a caret that was already there.
        *
-       * A close of our own is not that kind of change. Clicking from one link straight to another
-       * arrives as one round carrying both — the first link folding up, and a click that landed in
-       * the second — and refusing every round that touched the document meant the second link did
-       * not open. Measured: link, link, link opened the first and the third, and clicking anything
-       * else in between made the next one work again.
+       * Two changes are not that kind of change, and both were reported as bugs.
+       *
+       * A close of our own: clicking from one link straight to another arrives as one round
+       * carrying both — the first link folding up, and a click that landed in the second — and
+       * refusing every round that touched the document meant the second link did not open.
+       * Measured: link, link, link opened the first and the third, and clicking anything else in
+       * between made the next one work again.
+       *
+       * And a deletion. Holding Delete along `[111](222) other text` takes the text away one
+       * character at a time until the caret is standing against the link — which is arriving at it,
+       * as much as walking there with the arrow keys is, and it did nothing until the link was
+       * clicked. An insertion stays excluded, and that is not fussiness: without it, typing after a
+       * link would unfold it on every keystroke and fold it again on the next.
        */
-      if (trs.some((tr) => tr.docChanged && tr.getMeta(KEY) !== null)) return null
+      if (trs.some((tr) => tr.docChanged && tr.getMeta(KEY) !== null && !onlyDeleted(tr))) return null
 
       // Reading, not editing. Read mode shows a picture and a link as themselves; unfolding one
       // under a tap is the behaviour the other engine already declines there.

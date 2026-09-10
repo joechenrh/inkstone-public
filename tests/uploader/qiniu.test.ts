@@ -64,7 +64,7 @@ describe('putting a picture', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       calls.push(String(input))
       return String(input).startsWith('https://api.qiniu.com')
-        ? new Response(JSON.stringify({ hosts: [{ up: { acc: { main: ['up-z1.qiniup.com'] } } }] }))
+        ? new Response(JSON.stringify({ hosts: [{ up: { domains: ['up-z1.qiniup.com', 'upload-z1.qiniup.com'] } }] }))
         : new Response('{}')
     })
     const store = qiniu({
@@ -83,7 +83,7 @@ describe('putting a picture', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       if (String(input).startsWith('https://api.qiniu.com')) {
         if (fail) { fail = false; throw new TypeError('offline') }
-        return new Response(JSON.stringify({ hosts: [{ up: { acc: { main: ['up-z0.qiniup.com'] } } }] }))
+        return new Response(JSON.stringify({ hosts: [{ up: { domains: ['up-z0.qiniup.com'] } }] }))
       }
       return new Response('{}')
     })
@@ -94,6 +94,52 @@ describe('putting a picture', () => {
     // One bad minute must not poison every upload for the life of the process.
     await expect(store.put(new Uint8Array([1]), 'webp', 'aa')).rejects.toThrow(UploadFailed)
     await expect(store.put(new Uint8Array([1]), 'webp', 'aa')).resolves.toContain('/assets/aa.webp')
+  })
+
+  /*
+   * The shape of this answer was guessed once and got it wrong — `up.acc.main`, from some other
+   * version of the API — and the test guessed the same way, so it was green while the first real
+   * upload failed. The literal below is what api.qiniu.com actually returned, copied from it.
+   */
+  it('reads the upload domain out of the answer Qiniu really gives', async () => {
+    const real = {
+      hosts: [{
+        region: 'z2', ttl: 86400,
+        io: { domains: ['iovip-z2.qbox.me'] },
+        up: { domains: ['upload-z2.qiniup.com', 'up-z2.qiniup.com'], old: ['upload-z2.qbox.me'] },
+        s3: { region_alias: 'cn-south-1' },
+      }],
+      ttl: 86400,
+    }
+    const seen: string[] = []
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      seen.push(String(input))
+      return String(input).startsWith('https://api.qiniu.com')
+        ? new Response(JSON.stringify(real))
+        : new Response('{}')
+    })
+    const store = qiniu({
+      ...CONFIG, uploadHost: undefined, fetch: fetchMock as unknown as typeof globalThis.fetch,
+    })
+
+    await store.put(new Uint8Array([1]), 'webp', 'aa')
+    expect(seen[1]).toBe('https://upload-z2.qiniup.com')
+  })
+
+  it('says which shape it could not read, when it cannot', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => (
+      String(input).startsWith('https://api.qiniu.com')
+        ? new Response(JSON.stringify({ hosts: [{ up: { acc: { main: ['x'] } } }] }))
+        : new Response('{}')
+    ))
+    const store = qiniu({
+      ...CONFIG, uploadHost: undefined, fetch: fetchMock as unknown as typeof globalThis.fetch,
+    })
+    // Not "unreachable": Qiniu answered, and this driver could not read the answer.
+    await expect(store.put(new Uint8Array([1]), 'webp', 'aa')).rejects.toMatchObject({
+      failure: 'unexpected',
+      message: expect.stringContaining('"acc"'),
+    })
   })
 
   it('says what Qiniu said, in the terms the caller can act on', async () => {

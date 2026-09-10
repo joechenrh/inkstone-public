@@ -63,10 +63,13 @@ async function regionHost(config: QiniuConfig, doFetch: typeof globalThis.fetch)
   if (!res.ok) {
     throw new UploadFailed(`Qiniu would not say where the bucket is (${res.status})`, 'refused')
   }
-  const body = await res.json() as { hosts?: { up?: { acc?: { main?: string[] } } }[] }
-  const host = body.hosts?.[0]?.up?.acc?.main?.[0]
+  const body = await res.json() as { hosts?: { up?: { domains?: string[] } }[] }
+  const host = body.hosts?.[0]?.up?.domains?.[0]
   if (typeof host !== 'string' || host === '') {
-    throw new UploadFailed('Qiniu named no upload host for this bucket', 'unexpected')
+    // Naming what came back instead: the shape of this answer is the thing most likely to be wrong
+    // next time, and "no upload host" without it sends the reader to the wrong file.
+    const shape = JSON.stringify(body.hosts?.[0]?.up ?? body).slice(0, 200)
+    throw new UploadFailed(`Qiniu named no upload host for this bucket — it said ${shape}`, 'unexpected')
   }
   return `https://${host}`
 }
@@ -94,9 +97,14 @@ export function qiniu(config: QiniuConfig): Uploader {
       form.set('key', key)
       form.set('file', new Blob([bytes as unknown as BlobPart]), key.slice(key.lastIndexOf('/') + 1))
 
+      // Resolved before the try, so a bucket whose region could not be read is not reported as a
+      // network failure. Measured: the first real upload said "could not reach Qiniu" when Qiniu
+      // had answered perfectly well and this driver had misread the answer.
+      const where = await host
+
       let res: Response
       try {
-        res = await doFetch(await host, { method: 'POST', body: form })
+        res = await doFetch(where, { method: 'POST', body: form })
       } catch (cause) {
         throw new UploadFailed('could not reach Qiniu', 'unreachable', { cause })
       }

@@ -14,6 +14,7 @@ import * as encode from '../../src/web/assets/encode.js'
  */
 const IMAGE = {
   bytes: new Uint8Array([1, 2, 3, 4]),
+  type: 'image/webp',
   ext: 'webp',
   from: 581_000,
   to: 35_000,

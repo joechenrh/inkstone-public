@@ -21,8 +21,15 @@ import { expect, test, type Page } from '@playwright/test'
  * correctly told the picture was already here. Which is what the third test asserts on purpose.
  */
 
-async function open(page: Page, engine: 'crepe') {
-  await page.addInitScript((e) => { localStorage.setItem('inkstone.editorEngine', e) }, engine)
+async function open(page: Page, engine: 'crepe', toHost = false) {
+  await page.addInitScript(([e, host]) => {
+    localStorage.setItem('inkstone.editorEngine', e!)
+    // Into the vault, which is what every test below is about. The e2e server has a picture host
+    // standing by — see `server.mjs` — and the one test that wants it asks for it here. Set in this
+    // script rather than in a second one: init scripts run in the order they were registered, so a
+    // test that set it first would have this one overwrite it.
+    localStorage.setItem('inkstone.uploadToCdn', host!)
+  }, [engine, toHost ? '1' : '0'] as const)
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()
@@ -43,7 +50,10 @@ async function open(page: Page, engine: 'crepe') {
  * picture just pasted from the ones the tests before left behind.
  */
 async function pasteImage(page: Page, colour: string) {
-  const before = await page.locator('.ink-doc img[data-ink-asset]').count()
+  // Counted by what is on screen with an address, not by `data-ink-asset`: that attribute is the
+  // vault observer's mark, and a picture the host took never gets one.
+  const shown = () => page.evaluate(() => document.querySelectorAll('.ink-doc img[src]:not([src=""])').length)
+  const before = await shown()
   await page.locator('.ink-doc').click()
   await page.keyboard.press('ControlOrMeta+End')
   await page.evaluate(async (fill) => {
@@ -59,10 +69,10 @@ async function pasteImage(page: Page, colour: string) {
     const target = document.querySelector('.ink-doc')!
     target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
   }, colour)
-  await expect
-    .poll(() => page.locator('.ink-doc img[data-ink-asset]').count(), { timeout: 15_000 })
-    .toBeGreaterThan(before)
-  await expect.poll(() => shownSrc(page), { timeout: 15_000 }).toMatch(/assets%2F[a-f0-9]{16}\./)
+  await expect.poll(shown, { timeout: 15_000 }).toBeGreaterThan(before)
+  // Either address the note can hold: the vault's, resolved by the observer, or the host's whole.
+  await expect.poll(() => shownSrc(page), { timeout: 15_000 })
+    .toMatch(/(assets%2F|\/assets\/)[a-f0-9]{16}\./)
 }
 
 /**
@@ -273,4 +283,88 @@ test('crepe: enter after clicking a picture closes it and makes a line', async (
   // many it holds depends on what ran first.
   await expect(page.locator('.ink-doc')).not.toContainText('![](')
   await expect(page.locator('.ink-source-preview')).toHaveCount(0)
+})
+
+/**
+ * A picture that does not live in the vault.
+ *
+ * With a picture host configured, a pasted screenshot goes there and the note holds a whole
+ * `https://…` instead of `/assets/…`. The editor used to build its own address out of the path it
+ * was handed — right while every picture was in the vault, and `![](/https://cdn…/x.webp)` the
+ * moment one was not. Reported from use.
+ */
+test('crepe: an address that is not a vault path is used as it is', async ({ page }) => {
+  await page.addInitScript(() => { localStorage.setItem('inkstone.editorEngine', 'crepe') })
+  await page.goto('/')
+  await page.getByPlaceholder('Password').fill('e2e-password')
+  await page.getByRole('button', { name: 'Enter' }).click()
+  await page.evaluate(async () => {
+    await fetch('/api/file', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        path: 'notes/hosted.md',
+        content: '# Hosted\n\n![](https://cdn.example.com/assets/a1b2c3d4e5f60718.webp)\n',
+      }),
+    })
+  })
+  await page.reload()
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: /^hosted\.md$/ }).click()
+  await expect(page.locator('.ink-doc')).toContainText('Hosted', { timeout: 15_000 })
+
+  // Exactly what the note says: no slash bolted onto the front, and the observer that turns vault
+  // paths into fetchable URLs leaves it alone.
+  const img = page.locator('.ink-doc img').first()
+  await expect(img).toHaveAttribute('src', 'https://cdn.example.com/assets/a1b2c3d4e5f60718.webp')
+  expect(await img.getAttribute('data-ink-asset')).toBeNull()
+
+  // And it survives a save: the address in the file is the address that was there.
+  await page.locator('.ink-doc').click()
+  await page.keyboard.press('ControlOrMeta+End')
+  await page.keyboard.type(' after')
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(900)
+  const saved = await page.evaluate(async () => {
+    const res = await fetch(`/api/file?path=${encodeURIComponent('notes/hosted.md')}`)
+    return (await res.json() as { content: string }).content
+  })
+  expect(saved).toContain('![](https://cdn.example.com/assets/a1b2c3d4e5f60718.webp)')
+  expect(saved).not.toContain('](/https')
+})
+
+/**
+ * The whole way to the picture host and back.
+ *
+ * `tests/e2e/server.mjs` stands a nine-line server up in place of Qiniu, so this exercises the real
+ * driver — credential, multipart body, the address it predicts — and the real seam into the editor.
+ * That seam is where it broke in use: the note came out holding `![](/https://…)`, one slash too
+ * many, because the editor built its own address out of a path that was already whole.
+ */
+test('crepe: a pasted picture goes to the picture host, and the note holds its address', async ({ page }) => {
+  const note = await open(page, 'crepe', true)
+
+  // How many pictures the vault holds before this, since the note is shared with the tests above.
+  const inVault = async () => page.evaluate(async () => {
+    const res = await fetch('/api/tree')
+    return (JSON.stringify(await res.json()).match(/assets\//g) ?? []).length
+  })
+  const before = await inVault()
+
+  await pasteImage(page, '#5f2fc0')
+
+  const src = await shownSrc(page)
+  expect(src, 'the address was rebuilt instead of used').toMatch(
+    /^http:\/\/127\.0\.0\.1:7698\/cdn\/assets\/[a-f0-9]{16}\.\w+$/)
+
+  // Said plainly, because the picture went somewhere other than the vault.
+  await expect(page.locator('.ink-paste-line')).toContainText('uploaded')
+
+  await page.keyboard.press('ControlOrMeta+s')
+  const saved = await savedContent(page, note)
+  expect(saved).toMatch(/!\[\]\(http:\/\/127\.0\.0\.1:7698\/cdn\/assets\/[a-f0-9]{16}\.\w+\)/)
+  expect(saved, 'a slash was bolted onto the front').not.toContain('](/http')
+
+  // And nothing was written into the vault for it: that is the point of a picture host.
+  expect(await inVault()).toBe(before)
 })

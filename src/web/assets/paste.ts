@@ -50,8 +50,15 @@ export type PasteStatus =
   | { kind: 'refused'; head: string; detail: string }
 
 export interface PasteTarget {
-  /** Put `![](path)` where the caret is. Called once per picture, as each one lands. */
-  insert: (markdown: string, path: string) => void
+  /**
+   * Put the picture where the caret is. Called once per picture, as each one lands.
+   *
+   * `src` is the address as it goes into the document — `/assets/a1b2….webp` for one the vault
+   * holds, and a whole `https://…` for one the picture host took. An editor with a document model
+   * uses it as it is: building `/${'{'}path{'}'}` here was right while there was only one kind of
+   * address, and made `/https://cdn…/…` the moment there were two.
+   */
+  insert: (markdown: string, src: string) => void
   /** Every change of the line under the picture, ending in a settled state. */
   report: (status: PasteStatus) => void
 }
@@ -123,7 +130,7 @@ export async function storeImages(files: File[], target: PasteTarget): Promise<v
         onHost = true
       } else {
         const { path, existed } = await backend.writeAsset(image.bytes, image.ext)
-        target.insert(`![](/${path})`, path)
+        target.insert(`![](/${path})`, `/${path}`)
         name = path.slice(path.lastIndexOf('/') + 1)
 
         // The same picture, already here. Worth saying: something visible happened to the note and

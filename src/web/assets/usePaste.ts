@@ -92,7 +92,10 @@ export function useImagePaste(
     const stack = stackRef.current
     if (stack === null) return { rect: { top: 0, left: 0 }, settled: false }
     const box = stack.getBoundingClientRect()
-    const path = pathRef.current
+    // `data-ink-asset` carries the vault path without its leading slash; a hosted picture has no
+    // such attribute at all, and then there is nothing to measure against but the caret.
+    const src = pathRef.current
+    const path = src === null ? null : src.replace(/^\//, '')
 
     // The *last* one, not the first. A picture already in the note is linked rather than written
     // again, so the same path can appear twice — and anchoring to the first put the line about what

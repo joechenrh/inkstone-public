@@ -115,14 +115,16 @@ export function CrepeEditor() {
   const hostRef = useRef<HTMLDivElement>(null)
   const stackRef = useRef<HTMLDivElement>(null)
   const crepeRef = useRef<Crepe | null>(null)
-  const { line, paste } = useImagePaste(stackRef, (_markdown, path) => {
+  const { line, paste } = useImagePaste(stackRef, (_markdown, src) => {
     const crepe = crepeRef.current
     if (!crepe) return
     // A node rather than the text of one: this editor has a document model, and inserting `![](…)`
     // as characters would leave it to an input rule that fires on typing.
     crepe.editor.action((c) => {
       const view = c.get(editorViewCtx)
-      const image = imageSchema.type(c).create({ src: `/${path}` })
+      // The address as given: a vault path arrives with its slash and a hosted picture arrives
+      // whole, and prefixing here made `/https://cdn…` of the second.
+      const image = imageSchema.type(c).create({ src })
       view.dispatch(view.state.tr.replaceSelectionWith(image).scrollIntoView())
     })
   })

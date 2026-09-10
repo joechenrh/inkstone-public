@@ -1,3 +1,4 @@
+import { createServer } from 'node:http'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -310,6 +311,55 @@ runGit(['commit', '-m', 'initial'])
 delete process.env.GITHUB_CLIENT_ID
 delete process.env.GITHUB_CLIENT_SECRET
 delete process.env.GITHUB_APP_SLUG
+
+/*
+ * A picture host that is not Qiniu, on this machine.
+ *
+ * The upload path is worth exercising for real — the credential, the multipart body, the address
+ * that comes back and where it lands in the note — and none of that needs Qiniu to be involved. So
+ * a nine-line server stands in for it: it takes the form upload the driver posts, keeps nothing,
+ * and serves back whatever was uploaded under the address the driver predicts.
+ *
+ * The bug this caught in use is exactly here: the note came out holding `![](/https://cdn…)`,
+ * because the editor built its own address out of a path that was already whole.
+ */
+const uploaded = new Map()
+const host = createServer((req, res) => {
+  if (req.method === 'POST') {
+    const chunks = []
+    req.on('data', (c) => chunks.push(c))
+    req.on('end', () => {
+      const body = Buffer.concat(chunks).toString('latin1')
+      const key = /name="key"\r\n\r\n([^\r]+)/.exec(body)?.[1] ?? 'unknown'
+      const token = /name="token"\r\n\r\n([^\r]+)/.exec(body)?.[1] ?? ''
+      // The driver's credential has three colon-separated parts and the policy names this key.
+      const [, , policy = ''] = token.split(':')
+      const scope = JSON.parse(Buffer.from(policy.replace(/-/g, '+').replace(/_/g, '/'), 'base64')
+        .toString('utf8') || '{}').scope ?? ''
+      if (!scope.endsWith(key)) {
+        res.writeHead(401, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ error: 'the credential does not cover that key' }))
+        return
+      }
+      uploaded.set(key, true)
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ key }))
+    })
+    return
+  }
+  const key = decodeURIComponent(new URL(req.url, 'http://x').pathname.replace(/^\/cdn\//, ''))
+  if (!uploaded.has(key)) { res.writeHead(404); res.end(); return }
+  res.writeHead(200, { 'content-type': 'image/webp' })
+  res.end(Buffer.from([1, 2, 3]))
+})
+await new Promise((resolve) => host.listen(7698, '127.0.0.1', resolve))
+
+process.env.INKSTONE_UPLOAD = 'qiniu'
+process.env.QINIU_ACCESS_KEY = 'e2e-access-key'
+process.env.QINIU_SECRET_KEY = 'e2e-secret-key'
+process.env.QINIU_BUCKET = 'e2e'
+process.env.QINIU_BASE_URL = 'http://127.0.0.1:7698/cdn'
+process.env.QINIU_UPLOAD_HOST = 'http://127.0.0.1:7698'
 
 process.env.VAULT_ROOT = root
 process.env.AUTH_PASSWORD = 'e2e-password'

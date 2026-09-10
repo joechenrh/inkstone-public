@@ -24,12 +24,15 @@ const IMAGE = {
 
 function run() {
   const inserted: string[] = []
+  /** What the editor is handed to put in `src` — the half of the seam that broke. */
+  const srcs: string[] = []
   const reported: PasteStatus[] = []
   return {
     inserted,
+    srcs,
     reported,
     target: {
-      insert: (markdown: string) => { inserted.push(markdown) },
+      insert: (markdown: string, src: string) => { inserted.push(markdown); srcs.push(src) },
       report: (status: PasteStatus) => { reported.push(status) },
     },
     last: () => reported[reported.length - 1]!,
@@ -55,6 +58,13 @@ describe('with a picture host', () => {
     await storeImages([file], r.target)
 
     expect(r.inserted).toEqual(['![](https://cdn.example.com/assets/a1b2c3d4e5f60718.webp)'])
+    /*
+     * And the editor is handed the address whole.
+     *
+     * This is the half that broke in use: the editor built `/${src}` for itself, which was right
+     * while every picture lived in the vault and made `![](/https://cdn…)` the moment one did not.
+     */
+    expect(r.srcs).toEqual(['https://cdn.example.com/assets/a1b2c3d4e5f60718.webp'])
     expect(write, 'the vault was written to anyway').not.toHaveBeenCalled()
     expect(describeStatus(r.last()).detail).toContain('uploaded')
   })
@@ -69,6 +79,8 @@ describe('with a picture host', () => {
 
     // The picture is in the note and in the vault. Nothing was lost.
     expect(r.inserted).toEqual(['![](/assets/a1b2c3d4e5f60718.webp)'])
+    // A vault path arrives with its slash, so the editor never has to add one.
+    expect(r.srcs).toEqual(['/assets/a1b2c3d4e5f60718.webp'])
     expect(write).toHaveBeenCalledOnce()
 
     // And the line says where it went, and why it went there rather than to the host.

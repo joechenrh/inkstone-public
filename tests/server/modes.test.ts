@@ -12,6 +12,7 @@ function config(over: Partial<Config> = {}): Config {
     vault: null,
     github: null,
     share: null,
+    upload: null,
     sessionSecret: 'signing-secret',
     listenAddr: '127.0.0.1',
     port: 0,
@@ -31,21 +32,21 @@ describe('/api/config', () => {
   it('says github when the App is configured', async () => {
     const app = authOnly(config({ github: GITHUB }))
     const res = await app.inject({ method: 'GET', url: '/api/config' })
-    expect(res.json()).toEqual({ signIn: 'github', sharing: false })
+    expect(res.json()).toEqual({ signIn: 'github', sharing: false, upload: null })
     await app.close()
   })
 
   it('says password when only a vault is configured', async () => {
     const app = authOnly(config({ vault: { root: '/tmp/v', password: 'pw' } }))
     expect((await app.inject({ method: 'GET', url: '/api/config' })).json())
-      .toEqual({ signIn: 'password', sharing: false })
+      .toEqual({ signIn: 'password', sharing: false, upload: null })
     await app.close()
   })
 
   it('prefers github when both are, which is the development arrangement', async () => {
     const app = authOnly(config({ github: GITHUB, vault: { root: '/tmp/v', password: 'pw' } }))
     expect((await app.inject({ method: 'GET', url: '/api/config' })).json())
-      .toEqual({ signIn: 'github', sharing: false })
+      .toEqual({ signIn: 'github', sharing: false, upload: null })
     await app.close()
   })
 

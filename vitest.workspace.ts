@@ -27,6 +27,14 @@ export default defineWorkspace([
   },
   {
     test: {
+      name: 'uploader',
+      environment: 'node',
+      globals: true,
+      include: ['tests/uploader/**/*.test.ts'],
+    },
+  },
+  {
+    test: {
       name: 'agent',
       environment: 'node',
       globals: true,

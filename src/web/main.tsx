@@ -9,6 +9,7 @@ import { applyThemeChoice, readThemeChoice } from './theme/useTheme.js'
 import { initSettings } from './state/settings.js'
 import { initViewport } from './state/ui.js'
 import { sharingAvailable } from './state/share.js'
+import { uploadDriver } from './assets/cdn.js'
 
 initSettings()
 initViewport()
@@ -30,10 +31,17 @@ async function signIn(): Promise<'github' | 'password'> {
   try {
     const res = await fetch('/api/config')
     if (!res.ok) return 'password'
-    const cfg = await res.json() as { signIn: 'github' | 'password'; sharing?: boolean }
+    const cfg = await res.json() as {
+      signIn: 'github' | 'password'
+      sharing?: boolean
+      upload?: string | null
+    }
     // Whether this deployment was given anywhere to keep shared notes. Without it the Share item
     // never appears, rather than appearing and leading to a 404.
     sharingAvailable.value = cfg.sharing === true
+    // Whether pictures can go anywhere but the vault. Without this the switch in Settings never
+    // appears, rather than appearing and doing nothing.
+    uploadDriver.value = cfg.upload ?? null
     return cfg.signIn
   } catch {
     return 'password'

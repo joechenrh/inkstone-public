@@ -1,7 +1,9 @@
 import { backend } from '../api/index.js'
+import { cdnIsOn, uploadToHost } from './cdn.js'
 import {
   describeSaving,
   encodeForNote,
+  hashName,
   ImageTooLarge,
   isImage,
   MAX_BYTES,
@@ -25,8 +27,26 @@ import {
 /** What the line under the picture is saying. Every state the design named has one of these. */
 export type PasteStatus =
   | { kind: 'working'; done: number; total: number }
-  | { kind: 'kept'; name: string; count: number; from: number; to: number; width: number; height: number }
+  | {
+    kind: 'kept'
+    name: string
+    count: number
+    from: number
+    to: number
+    width: number
+    height: number
+    /** Whether it went to the picture host rather than into the vault. */
+    onHost?: boolean
+  }
   | { kind: 'linked'; name: string }
+  /**
+   * It went into the vault, and it was not supposed to.
+   *
+   * Not a refusal — the picture is safe and the note is whole. But saying nothing would leave the
+   * reader believing it is on the picture host, and finding out otherwise months later, when the
+   * repository has quietly grown by every screenshot since.
+   */
+  | { kind: 'fell-back'; why: string }
   | { kind: 'refused'; head: string; detail: string }
 
 export interface PasteTarget {
@@ -73,26 +93,51 @@ export async function storeImages(files: File[], target: PasteTarget): Promise<v
   let width = 0
   let height = 0
   let name = ''
+  /** Empty unless the picture host was asked and could not take it. */
+  let fellBack = ''
+  let onHost = false
 
   for (const [index, file] of files.entries()) {
     target.report({ kind: 'working', done: index, total: files.length })
     try {
       const image = await encodeForNote(file)
-      const { path, existed } = await backend.writeAsset(image.bytes, image.ext)
 
-      target.insert(`![](/${path})`, path)
-      name = path.slice(path.lastIndexOf('/') + 1)
+      /*
+       * The picture host first, when there is one and the reader wants it.
+       *
+       * Falling back is the point rather than a safety net: a picture that could not be uploaded
+       * still belongs in the note, and the vault is always there. So a failure here is not thrown —
+       * it is a sentence to say afterwards, and the vault takes the bytes as it always did.
+       */
+      let hosted: string | null = null
+      if (cdnIsOn()) {
+        const named = await hashName(image.bytes, image.ext)
+        const result = await uploadToHost(image.bytes, image.ext, named.slice(0, named.indexOf('.')))
+        hosted = result.url
+        if (result.url === null) fellBack = result.why
+      }
+
+      if (hosted !== null) {
+        target.insert(`![](${hosted})`, hosted)
+        name = hosted.slice(hosted.lastIndexOf('/') + 1)
+        onHost = true
+      } else {
+        const { path, existed } = await backend.writeAsset(image.bytes, image.ext)
+        target.insert(`![](/${path})`, path)
+        name = path.slice(path.lastIndexOf('/') + 1)
+
+        // The same picture, already here. Worth saying: something visible happened to the note and
+        // nothing at all happened to the repository, and those look identical from the outside.
+        if (existed && files.length === 1 && fellBack === '') {
+          target.report({ kind: 'linked', name })
+          return
+        }
+      }
+
       from += image.from
       to += image.to
       width = image.width
       height = image.height
-
-      // The same picture, already here. Worth saying: something visible happened to the note and
-      // nothing at all happened to the repository, and those look identical from the outside.
-      if (existed && files.length === 1) {
-        target.report({ kind: 'linked', name })
-        return
-      }
     } catch (err) {
       target.report(refusal(err))
       return
@@ -100,7 +145,13 @@ export async function storeImages(files: File[], target: PasteTarget): Promise<v
   }
 
   if (files.length === 0) return
-  target.report({ kind: 'kept', name, count: files.length, from, to, width, height })
+  // The failure wins the line. Where the picture ended up is the thing that was not expected, and a
+  // saving of 546 KB is not news beside it.
+  if (fellBack !== '') {
+    target.report({ kind: 'fell-back', why: fellBack })
+    return
+  }
+  target.report({ kind: 'kept', name, count: files.length, from, to, width, height, onHost })
 }
 
 /**
@@ -135,11 +186,16 @@ export function describeStatus(status: PasteStatus): { head: string; detail: str
         : { head: 'compressing', detail: 'the picture…' }
     case 'linked':
       return { head: 'linked', detail: 'the same picture is already here · nothing written' }
+    case 'fell-back':
+      // Where it went, then why it went there. The first half is what the reader has to know; the
+      // second is what they would ask next.
+      return { head: 'kept in the vault', detail: `the picture host could not take it · ${status.why}` }
     case 'refused':
       return { head: status.head, detail: status.detail }
     case 'kept': {
       const what = status.count > 1 ? `${status.count} pictures` : `${status.width}×${status.height}`
-      return { head: 'kept', detail: `${describeSaving(status.from, status.to)} · ${what}` }
+      const where = status.onHost === true ? ' · uploaded' : ''
+      return { head: 'kept', detail: `${describeSaving(status.from, status.to)} · ${what}${where}` }
     }
   }
 }

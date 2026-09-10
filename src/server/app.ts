@@ -12,6 +12,7 @@ import type { Config } from './config.js'
 import { broadcastGitStatus } from './git-broadcast.js'
 import { VaultGitError, type VaultGit } from './git/index.js'
 import { registerFileRoutes } from './routes/files.js'
+import { registerUploadRoutes } from './routes/upload.js'
 import { registerShareRoutes } from './share/routes.js'
 import type { ShareStore } from './share/store.js'
 import { VaultError, type Vault } from './vault/index.js'
@@ -110,6 +111,9 @@ export function buildApp(deps: AppDeps): App {
   registerAuth(app, deps.config)
   registerGitHubAuth(app, deps.config.github)
   registerShareRoutes(app, { store: deps.shareStore ?? null })
+  // Only where a driver was named. A route that answers "no uploader here" on every request is a
+  // route that has to be explained; absent is the same answer and needs no words.
+  if (deps.config.upload) registerUploadRoutes(app, { config: deps.config.upload })
   // In github mode these are simply not registered: a route that would read a vault this server
   // does not have is better absent than present and failing.
   if (deps.vault && git && deps.autoCommit && watcher) {

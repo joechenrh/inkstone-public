@@ -11,6 +11,7 @@ import {
   signOut as signOutOfGitHub,
 } from '../auth/identity.js'
 import { connection, forgetPairing, pairing, refresh, setPairing } from '../state/agent.js'
+import { setUploadToCdn, uploadDriver, uploadToCdn } from '../assets/cdn.js'
 import {
   editorFontSize,
   setEditorFontSize,
@@ -262,6 +263,34 @@ export function SettingsModal() {
             </button>
           </div>
         </div>
+
+        {/* Only where the server was given somewhere to put them. A switch that does nothing is
+            worse than no switch, and this one's absence says the true thing: there is no picture
+            host on this deployment. Failure is not a reason to hide it — a picture that cannot be
+            uploaded goes into the vault and says so, which is where it would have gone anyway. */}
+        {uploadDriver.value !== null && (
+          <div class="ink-settings-row">
+            <span class="ink-settings-label">New pictures</span>
+            <div class="ink-theme-control">
+              <button
+                type="button"
+                class="ink-theme-btn"
+                aria-pressed={!uploadToCdn.value}
+                onClick={() => { setUploadToCdn(false) }}
+              >
+                In the vault
+              </button>
+              <button
+                type="button"
+                class="ink-theme-btn"
+                aria-pressed={uploadToCdn.value}
+                onClick={() => { setUploadToCdn(true) }}
+              >
+                {uploadDriver.value}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div class="ink-settings-row">
           <span class="ink-settings-label">{onGitHub ? 'Repository' : 'Vault'}</span>

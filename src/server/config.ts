@@ -1,4 +1,5 @@
 import path from 'node:path'
+import type { QiniuConfig } from '../uploader/index.js'
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -33,9 +34,33 @@ export interface Config {
    * See `docs/design/sharing.md`.
    */
   share: { root: string } | null
+  /**
+   * Where pasted pictures go, when they are not to go into the vault.
+   *
+   * Null unless a driver is named, and off is the honest default: an upload target is somebody's
+   * account with somebody's bill attached, and a note application should not invent one. See
+   * `src/uploader`, which is the package this hands the bytes to — it takes its configuration as
+   * an argument, so reading the environment is this file's job and only this file's.
+   */
+  upload: UploadConfig | null
   sessionSecret: string
   listenAddr: string
   port: number
+}
+
+/** The driver, its settings, and who is allowed to use it. */
+export interface UploadConfig {
+  driver: 'qiniu'
+  qiniu: QiniuConfig
+  /**
+   * The GitHub login allowed to upload, on a deployment where that is how people sign in.
+   *
+   * Null leaves the route open to anyone the vault password lets in, which on a vault deployment is
+   * the owner and nobody else. On the GitHub route there is no password, so without a name here the
+   * route would be an image host open to everyone with a GitHub account — somebody else's pictures,
+   * on this account's bill.
+   */
+  owner: string | null
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv): Config {
@@ -63,6 +88,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     vault,
     github,
     share,
+    upload: readUpload(env),
     sessionSecret,
     listenAddr: env.LISTEN_ADDR ?? '127.0.0.1',
     port,
@@ -98,6 +124,38 @@ function readShare(env: NodeJS.ProcessEnv, github: Config['github']): Config['sh
     throw new ConfigError('SHARE_DIR needs GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET: every share is attributed to the account that made it')
   }
   return { root: path.resolve(root) }
+}
+
+function readUpload(env: NodeJS.ProcessEnv): Config['upload'] {
+  const driver = env.INKSTONE_UPLOAD
+  if (!driver) return null
+  if (driver !== 'qiniu') {
+    throw new ConfigError(`INKSTONE_UPLOAD: no driver called ${driver}. There is qiniu.`)
+  }
+
+  const accessKey = env.QINIU_ACCESS_KEY
+  const secretKey = env.QINIU_SECRET_KEY
+  const bucket = env.QINIU_BUCKET
+  const baseUrl = env.QINIU_BASE_URL
+  // Named one at a time: "the upload is misconfigured" sends someone reading all five.
+  for (const [name, value] of [
+    ['QINIU_ACCESS_KEY', accessKey], ['QINIU_SECRET_KEY', secretKey],
+    ['QINIU_BUCKET', bucket], ['QINIU_BASE_URL', baseUrl],
+  ] as const) {
+    if (!value) throw new ConfigError(`${name} is required when INKSTONE_UPLOAD=qiniu`)
+  }
+
+  return {
+    driver: 'qiniu',
+    qiniu: {
+      accessKey: accessKey!,
+      secretKey: secretKey!,
+      bucket: bucket!,
+      baseUrl: baseUrl!,
+      uploadHost: env.QINIU_UPLOAD_HOST,
+    },
+    owner: env.GITHUB_OWNER ?? null,
+  }
 }
 
 function readGitHub(env: NodeJS.ProcessEnv): Config['github'] {

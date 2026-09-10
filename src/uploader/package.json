@@ -1,0 +1,10 @@
+{
+  "name": "@inkstone/uploader",
+  "version": "0.1.0",
+  "description": "Bytes in, a public URL out. One small interface, one driver per picture host.",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "license": "MIT",
+  "dependencies": {}
+}

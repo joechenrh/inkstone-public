@@ -63,3 +63,13 @@
   background: var(--ink-danger);
   color: #ffffff;
 }
+
+/* Kept, but not where it was meant to go.
+ *
+ * Not the refusal red: the picture is safe and the note is whole — the vault took it, which is
+ * where it would have gone if there were no picture host at all. What is worth saying is only that
+ * it is not on the host, so this is the colour of a caveat rather than of a failure. */
+.ink-paste-line--fell-back {
+  background: var(--ink-warn);
+  color: var(--ink-bg);
+}

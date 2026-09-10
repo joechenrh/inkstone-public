@@ -48,6 +48,7 @@ export async function makeUnreadyTestApp(): Promise<TestApp> {
     port: 0,
     github: null,
     share: null,
+    upload: null,
   }
 
   const gitWrapper = new VaultGit(root)

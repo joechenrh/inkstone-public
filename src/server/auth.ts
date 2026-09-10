@@ -19,6 +19,16 @@ const PUBLIC_API = new Set([
   '/api/github/callback',
   '/api/github/token',
   '/api/github/signout',
+  /*
+   * Uploading is guarded by the route itself, not by this hook.
+   *
+   * There are two ways to be signed in and only one of them has a session cookie: the GitHub route
+   * has no password at all, so a blanket rule here would shut out the very people it is for. The
+   * route asks both questions — the cookie, or a GitHub token belonging to `GITHUB_OWNER` — and
+   * refuses when neither answers. See `routes/upload.ts`; it is registered only when a driver was
+   * named, so on a deployment without one this name matches nothing.
+   */
+  '/api/upload',
 ])
 
 function constantTimeEquals(a: string, b: string): boolean {
@@ -99,6 +109,10 @@ export function registerAuth(app: FastifyInstance, cfg: Config): void {
     // Whether this server was given somewhere to keep shared notes. A Share item that leads to a
     // 404 is worse than no Share item, so the app asks before it offers one.
     sharing: cfg.share !== null,
+    // Whether pictures can go somewhere other than the vault. The switch for it is only worth
+    // drawing where the server can actually do it — a setting that does nothing is worse than no
+    // setting.
+    upload: cfg.upload?.driver ?? null,
   }))
 }
 

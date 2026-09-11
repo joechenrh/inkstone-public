@@ -360,6 +360,27 @@ test('crepe: a pasted picture goes to the picture host, and the note holds its a
   // Said plainly, because the picture went somewhere other than the vault.
   await expect(page.locator('.ink-paste-line')).toContainText('uploaded')
 
+  /*
+   * The line about it sits with the picture, not in the corner of the editor.
+   *
+   * A picture on a host is behind a network round trip, and this line used to be positioned only
+   * once the picture had a height — so it fell back to the caret, found none after a paste, and
+   * landed at the top-left corner of the editor. Reported. An `<img>` with no bytes yet still has a
+   * top and a left, and they are where the picture is going to be.
+   *
+   * Measured against the worst case on purpose: the stand-in host answers with three bytes, so the
+   * picture in this test can never be drawn at all.
+   */
+  const placed = await page.evaluate(() => {
+    const line = document.querySelector('.ink-paste-line')?.getBoundingClientRect()
+    const img = Array.from(document.querySelectorAll<HTMLImageElement>('.ink-doc img'))
+      .filter((i) => (i.getAttribute('src') ?? '').includes('/cdn/'))
+      .pop()?.getBoundingClientRect()
+    if (!line || !img) return null
+    return { sameColumn: Math.abs(line.left - img.left) < 2, below: line.top >= img.top - 1 }
+  })
+  expect(placed).toEqual({ sameColumn: true, below: true })
+
   await page.keyboard.press('ControlOrMeta+s')
   const saved = await savedContent(page, note)
   expect(saved).toMatch(/!\[\]\(http:\/\/127\.0\.0\.1:7698\/cdn\/assets\/[a-f0-9]{16}\.\w+\)/)
@@ -367,4 +388,5 @@ test('crepe: a pasted picture goes to the picture host, and the note holds its a
 
   // And nothing was written into the vault for it: that is the point of a picture host.
   expect(await inVault()).toBe(before)
+
 })

@@ -92,21 +92,43 @@ export function useImagePaste(
     const stack = stackRef.current
     if (stack === null) return { rect: { top: 0, left: 0 }, settled: false }
     const box = stack.getBoundingClientRect()
-    // `data-ink-asset` carries the vault path without its leading slash; a hosted picture has no
-    // such attribute at all, and then there is nothing to measure against but the caret.
+    /*
+     * Found by either name it can have on screen.
+     *
+     * A picture the vault holds is marked by the observer with `data-ink-asset`, which carries the
+     * path without its leading slash — and by the time it is drawn its `src` has been rewritten to
+     * something fetchable, so the attribute is the only handle left. A picture the host took is
+     * never touched by the observer and has no attribute at all; its `src` is the address that was
+     * inserted, exactly. Asking for one and not the other is what put this line in the corner of
+     * the editor for every hosted paste: nothing matched, nothing was drawn to measure against, and
+     * the fallback is the corner.
+     */
     const src = pathRef.current
     const path = src === null ? null : src.replace(/^\//, '')
 
     // The *last* one, not the first. A picture already in the note is linked rather than written
     // again, so the same path can appear twice — and anchoring to the first put the line about what
     // just happened under a picture from further up the document.
-    const matches = path === null
+    const matches = src === null || path === null
       ? []
-      : stack.querySelectorAll<HTMLImageElement>(`img[data-ink-asset="${CSS.escape(path)}"]`)
+      : stack.querySelectorAll<HTMLImageElement>(
+        `img[data-ink-asset="${CSS.escape(path)}"], img[src="${CSS.escape(src)}"]`,
+      )
     const img = matches.length === 0 ? null : matches[matches.length - 1]
     const drawn = img?.getBoundingClientRect()
     const settled = drawn !== undefined && drawn.height > 0
-    const from = settled ? drawn : (pointRect(atRef.current) ?? caretRect())
+    /*
+     * The picture's own box as soon as there is one, drawn or not.
+     *
+     * An `<img>` whose bytes have not arrived is still laid out: no height yet, but a top and a
+     * left, and they are where the picture is going to be. Waiting for the height before using any
+     * of it is what put this line in the corner of the editor — a picture on a host is behind a
+     * network round trip, and by the time it had one nobody was measuring any more.
+     *
+     * `settled` still means what it meant, so the re-measuring below keeps going until the picture
+     * really is drawn and the line can sit under it rather than beside it.
+     */
+    const from = drawn ?? pointRect(atRef.current) ?? caretRect()
     if (from === null || from === undefined) return { rect: { top: 0, left: 0 }, settled }
 
     /*
@@ -123,7 +145,7 @@ export function useImagePaste(
      * would push a long path off the right edge, and there is no picture under it to line up with —
      * so it keeps the column's left edge, the same one a paste line uses.
      */
-    const left = settled
+    const left = drawn !== undefined
       ? from.left
       : atRef.current !== null
         ? (blockLeftAt(atRef.current) ?? from.left)

@@ -69,6 +69,14 @@ const MAX_NOTE_BYTES = 512 * 1024
 /** How many blobs to have in flight at once. Enough to be quick, few enough to stay polite. */
 const FETCH_WIDTH = 8
 const AUTOCOMMIT_MS = 5 * 60 * 1000
+/**
+ * How long a run of unattended commits keeps folding into one.
+ *
+ * The same hour the history panel uses to decide where one writing session ends and the next
+ * begins, so a commit in the repository and a row in that panel are the same thing. See
+ * `history/sessions.ts`.
+ */
+const BURST_MS = 60 * 60 * 1000
 /** How many filenames an unattended commit names before it starts counting instead. */
 const MAX_FILES_IN_MESSAGE = 3
 /** A regular file. Everything this app writes is one. */
@@ -282,10 +290,47 @@ export function createGitHubBackend(options: GitHubBackendOptions): VaultBackend
     return extra > 0 ? `autosave: ${shown} (+${extra} more)` : `autosave: ${shown}`
   }
 
-  async function doCommit(message: string): Promise<{ sha: string; files: string[] } | null> {
+  /**
+   * The run of unattended commits this tab is currently folding into one.
+   *
+   * `parent` is what came *before* the run — the commit every rewrite of it is built on — and `sha`
+   * is the last one written. Null means the next unattended commit starts a new run.
+   */
+  let burst: { parent: string; sha: string; startedAt: number; day: string } | null = null
+
+  /** Local, because a run must not span a date the history panel draws a heading for. */
+  const dayOf = (at: number) => new Date(at).toDateString()
+
+  async function doCommit(message: string, unattended = false): Promise<{ sha: string; files: string[] } | null> {
     await loadBase()
     const changes = await pending()
     if (changes.length === 0) return null
+
+    /*
+     * Whether this commit replaces the last one instead of following it.
+     *
+     * Autosave runs every five minutes, so an afternoon on one note is forty commits that say
+     * nothing but the timer. A run of them is rewritten in place: same parent, new content, the
+     * branch moved forward by force.
+     *
+     * Forcing a branch is only ever safe under one condition, and it is this one — **the branch is
+     * still exactly where this tab left it**. `loadBase` has just asked GitHub, so `baseCommitSha`
+     * is what the branch actually holds; if anything else has committed, that is not our run any
+     * more and this becomes an ordinary commit on top of theirs. Nothing of anyone's is overwritten,
+     * ever, and nothing of the writer's is at risk either: the content of each rewrite is the whole
+     * working store, so a run that ends early has simply been kept in more commits than it needed.
+     *
+     * Deliberate commits never fold — a point somebody chose to mark is not the timer talking.
+     */
+    // The injected clock, not `Date.now()`: the run's length is a rule worth testing, and a rule
+    // that can only be tested by waiting an hour is a rule nobody tests.
+    const at = now()
+    const amending = unattended
+      && burst !== null
+      && burst.sha === store.baseCommitSha
+      && at - burst.startedAt < BURST_MS
+      && burst.day === dayOf(at)
+    const parent = amending ? burst!.parent : store.baseCommitSha
 
     // One blob per changed file. GitHub returns the same sha for identical content, so uploading
     // one that already exists costs a request and nothing else.
@@ -322,14 +367,17 @@ export function createGitHubBackend(options: GitHubBackendOptions): VaultBackend
       body: {
         message: message === '' ? autosaveMessage(changes.map((c) => c.path)) : message,
         tree: newTree.sha,
-        parents: [store.baseCommitSha],
+        parents: [parent],
       },
     })
 
     try {
       await rest.request(`${repoPath}/git/refs/heads/${encodeURIComponent(ref)}`, {
         method: 'PATCH',
-        body: { sha: commit.sha, force: false },
+        // Forced only when rewriting this tab's own last commit, which the branch was just checked
+        // to still be sitting on. Everywhere else the refusal is the point: it is how a branch that
+        // moved underneath gets noticed rather than flattened.
+        body: { sha: commit.sha, force: amending },
       })
     } catch (err) {
       // The branch moved while this was being assembled. Nothing is lost — the store still holds
@@ -347,6 +395,12 @@ export function createGitHubBackend(options: GitHubBackendOptions): VaultBackend
       throw err
     }
 
+    burst = unattended
+      ? { parent, sha: commit.sha, startedAt: amending ? burst!.startedAt : at, day: dayOf(at) }
+      // A deliberate commit ends the run as well as standing alone: the next autosave builds on it
+      // rather than rewriting it.
+      : null
+
     store.rebase(commit.sha, newTree.sha)
     items = null
     options.onCommitted?.()
@@ -359,7 +413,7 @@ export function createGitHubBackend(options: GitHubBackendOptions): VaultBackend
       if (store.isEmpty) return
       // Unattended: a failure here is not a press waiting to hear back, and the next tick or an
       // explicit commit will say so.
-      void doCommit('').catch(() => {})
+      void doCommit('', true).catch(() => {})
     }, options.autocommitMs ?? AUTOCOMMIT_MS)
   }
 

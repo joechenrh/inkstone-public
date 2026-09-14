@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createGitHubBackend } from '../../../../src/web/api/github/backend.js'
-import { fakeGitHub, fakeSha, type FakeRepo } from './fake-github.js'
+import { fakeGitHub, type FakeGitHub, fakeSha, type FakeRepo } from './fake-github.js'
 
 beforeEach(() => { localStorage.clear() })
 
@@ -598,5 +598,140 @@ describe('assets', () => {
   it('has no page to offer for anything that is not a picture', async () => {
     const { backend } = backendFor2(VAULT)
     expect(await backend.assetPage('notes/a.md')).toBeNull()
+  })
+})
+
+/**
+ * A run of unattended commits is one commit, rewritten as it grows.
+ *
+ * Autosave runs every five minutes, so an afternoon on one note is forty commits that report the
+ * timer and nothing else. They fold: same parent, new content, the branch moved by force. The whole
+ * design rests on one condition — the branch is still exactly where this tab left it — and every
+ * test below is about the moment that stops being true.
+ */
+describe('folding a run of autosaves', () => {
+  /** A backend whose timer and clock the test holds. */
+  function ticking(repo: FakeRepo, clock: { at: number }) {
+    const github = fakeGitHub(repo)
+    let tick: (() => void) | undefined
+    const backend = createGitHubBackend({
+      owner: 'octocat',
+      repo: 'notes',
+      ref: 'main',
+      token: () => 'tok',
+      fetch: github.fetch,
+      setInterval: (fn) => { tick = fn; return 0 },
+      now: () => clock.at,
+    })
+    return { github, backend, tick: () => tick!() }
+  }
+
+  const settle = async (github: FakeGitHub, expected: string) => {
+    await vi.waitFor(() => { expect(github.files()['notes/a.md']).toBe(expected) })
+  }
+
+  it('keeps the run in one commit, built on what came before it', async () => {
+    const clock = { at: Date.parse('2026-09-14T14:00:00Z') }
+    const { github, backend, tick } = ticking(VAULT, clock)
+    const base = github.head()
+
+    await backend.writeFile('notes/a.md', 'first thought')
+    tick()
+    await settle(github, 'first thought')
+    const first = github.head()
+    expect(github.parent(first)).toBe(base)
+
+    clock.at += 5 * 60 * 1000
+    await backend.writeFile('notes/a.md', 'second thought')
+    tick()
+    await settle(github, 'second thought')
+
+    // A different commit — it carries different text — standing in the same place.
+    const second = github.head()
+    expect(second).not.toBe(first)
+    expect(github.parent(second), 'the run grew a second commit instead of rewriting its own')
+      .toBe(base)
+  })
+
+  it('starts a new commit once the run has gone on for an hour', async () => {
+    const clock = { at: Date.parse('2026-09-14T14:00:00Z') }
+    const { github, backend, tick } = ticking(VAULT, clock)
+
+    await backend.writeFile('notes/a.md', 'early')
+    tick()
+    await settle(github, 'early')
+    const first = github.head()
+
+    clock.at += 61 * 60 * 1000
+    await backend.writeFile('notes/a.md', 'much later')
+    tick()
+    await settle(github, 'much later')
+    expect(github.parent(github.head()), 'an hour of writing came out as one commit').toBe(first)
+  })
+
+  it('starts a new commit rather than letting one run span two days', async () => {
+    /*
+     * The history panel draws a heading per day; a commit belonging to both is in neither.
+     *
+     * Built in local time on purpose, because that is the day the rule is about — the reader's.
+     * Written as a UTC instant this test passed for the wrong reason anywhere east of Greenwich:
+     * two timestamps either side of midnight in London are the same working day in Shanghai.
+     */
+    const clock = { at: new Date(2026, 8, 14, 23, 58).getTime() }
+    const { github, backend, tick } = ticking(VAULT, clock)
+
+    await backend.writeFile('notes/a.md', 'before midnight')
+    tick()
+    await settle(github, 'before midnight')
+    const first = github.head()
+
+    clock.at += 5 * 60 * 1000
+    await backend.writeFile('notes/a.md', 'after midnight')
+    tick()
+    await settle(github, 'after midnight')
+    expect(github.parent(github.head())).toBe(first)
+  })
+
+  it('never rewrites a commit somebody pressed a button for', async () => {
+    const clock = { at: Date.parse('2026-09-14T14:00:00Z') }
+    const { github, backend, tick } = ticking(VAULT, clock)
+
+    await backend.writeFile('notes/a.md', 'drafting')
+    tick()
+    await settle(github, 'drafting')
+
+    await backend.writeFile('notes/a.md', 'worth keeping')
+    const deliberate = await backend.commit('worth keeping')
+    expect(github.message(deliberate!.sha)).toBe('worth keeping')
+
+    clock.at += 60 * 1000
+    await backend.writeFile('notes/a.md', 'and on')
+    tick()
+    await settle(github, 'and on')
+    // On top of the marked point, not over it.
+    expect(github.parent(github.head())).toBe(deliberate!.sha)
+    expect(github.message(deliberate!.sha)).toBe('worth keeping')
+  })
+
+  it('leaves somebody else’s commit alone and lands on top of it', async () => {
+    const clock = { at: Date.parse('2026-09-14T14:00:00Z') }
+    const { github, backend, tick } = ticking(VAULT, clock)
+
+    await backend.writeFile('notes/a.md', 'mine, first')
+    tick()
+    await settle(github, 'mine, first')
+
+    // Another device commits into the same branch. The run is over, whatever the clock says.
+    github.moveBranch()
+    const theirs = github.head()
+
+    clock.at += 60 * 1000
+    await backend.writeFile('notes/a.md', 'mine, second')
+    tick()
+    await settle(github, 'mine, second')
+
+    expect(github.parent(github.head()), 'the branch was forced over another commit').toBe(theirs)
+    expect(github.files()['someone-else.md'], 'somebody else’s work was overwritten')
+      .toBe('written elsewhere')
   })
 })

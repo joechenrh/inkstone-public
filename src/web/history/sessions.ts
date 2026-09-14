@@ -1,7 +1,12 @@
 import type { FileCommit } from '../../shared/types.js'
 
-/** A run of quiet this long ends a writing session. */
-export const DEFAULT_GAP_MS = 30 * 60 * 1000
+/**
+ * A run of quiet this long ends a writing session.
+ *
+ * The same hour the GitHub route folds its unattended commits over, so that one row here is one
+ * commit there rather than a grouping laid over a different grouping.
+ */
+export const DEFAULT_GAP_MS = 60 * 60 * 1000
 
 export interface Session {
   /** Deliberate commits stand alone; autosaves group. */

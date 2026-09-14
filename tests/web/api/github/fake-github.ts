@@ -27,6 +27,8 @@ export interface FakeGitHub {
   head(): string
   /** The message of a commit this fake accepted. */
   message(sha: string): string
+  /** What a commit was built on, so a test can tell a rewrite from a commit on top of one. */
+  parent(sha: string): string
   /** Moves the branch behind the app's back, which is the conflict this design has to survive. */
   moveBranch(): void
 }
@@ -77,9 +79,13 @@ export function fakeGitHub(repo: FakeRepo): FakeGitHub {
     if (path.includes('/git/ref/heads/')) return json({ object: { sha: head } })
 
     if (method === 'PATCH' && path.includes('/git/refs/heads/')) {
-      const wanted = (body as { sha: string }).sha
+      const wanted = (body as { sha: string; force?: boolean }).sha
       const parent = commitParent.get(wanted)
-      if (parent !== head) return json({ message: 'Update is not a fast forward' }, 422)
+      // `force` is GitHub's own escape from the fast-forward rule, and the app uses it for exactly
+      // one thing — rewriting the commit it wrote a moment ago. Modelled here so a test can tell a
+      // rewrite from an overwrite.
+      const force = (body as { force?: boolean }).force === true
+      if (!force && parent !== head) return json({ message: 'Update is not a fast forward' }, 422)
       head = wanted
       headTree = commitTree.get(wanted)!
       files = { ...trees.get(headTree)! }
@@ -175,6 +181,8 @@ export function fakeGitHub(repo: FakeRepo): FakeGitHub {
     files: () => ({ ...files }),
     head: () => head,
     message: (sha: string) => commitMessage.get(sha) ?? '',
+    /** What a commit was built on, so a test can tell a rewrite from a commit on top. */
+    parent: (sha: string) => commitParent.get(sha) ?? '',
     moveBranch: () => {
       const next = { ...files, 'someone-else.md': 'written elsewhere' }
       headTree = remember(next)

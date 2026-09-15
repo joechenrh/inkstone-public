@@ -3,6 +3,7 @@ import { computed, signal } from '@preact/signals'
 const EDITOR_KEY = 'inkstone.editorFontSize'
 const READ_ONLY_KEY = 'inkstone.readOnly'
 const SHOW_ASSETS_KEY = 'inkstone.showAssets'
+const TOOLBAR_KEY = 'inkstone.floatingToolbar'
 const EDITOR_SIZES = [12, 14, 16, 18]
 
 function safeGet(key: string): string | null {
@@ -32,6 +33,34 @@ export const editorFontSize = signal(coerce(safeGet(EDITOR_KEY), EDITOR_SIZES, 1
  * keeps trying to shrink.
  */
 export const showAssets = signal(safeGet(SHOW_ASSETS_KEY) === '1')
+
+/**
+ * The bar that follows a selection, carrying bold, italic and the rest.
+ *
+ * On by default, because it is what the editor comes with. Off is for people who reach for the
+ * keys and would rather the text not be walked over by a window — which is also Typora's posture,
+ * where the same commands live in a menu and nothing floats.
+ */
+export const floatingToolbar = signal(safeGet(TOOLBAR_KEY) !== '0')
+
+export function setFloatingToolbar(on: boolean): void {
+  floatingToolbar.value = on
+  safeSet(TOOLBAR_KEY, on ? '1' : '0')
+  applyFloatingToolbar()
+}
+
+/**
+ * Written onto the root, where the stylesheet can see it.
+ *
+ * Not a Crepe feature flag, which is read once when the editor is built: turning the bar off would
+ * mean tearing the editor down and putting it back, losing the caret and the scroll to change a
+ * preference. The bar is drawn by a plugin that only draws when there is a selection to draw for,
+ * so a rule that stops it being drawn is the whole of "off" from where the reader sits.
+ */
+export function applyFloatingToolbar(): void {
+  if (typeof document === 'undefined') return
+  document.documentElement.dataset.inkToolbar = floatingToolbar.value ? 'on' : 'off'
+}
 
 export function setShowAssets(next: boolean): void {
   showAssets.value = next

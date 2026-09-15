@@ -14,7 +14,9 @@ import { connection, forgetPairing, pairing, refresh, setPairing } from '../stat
 import { setUploadToCdn, uploadDriver, uploadToCdn } from '../assets/cdn.js'
 import {
   editorFontSize,
+  floatingToolbar,
   setEditorFontSize,
+  setFloatingToolbar,
   setShowAssets,
   showAssets,
 } from '../state/settings.js'
@@ -260,6 +262,28 @@ export function SettingsModal() {
               onClick={() => { setShowAssets(true) }}
             >
               Shown
+            </button>
+          </div>
+        </div>
+
+        <div class="ink-settings-row">
+          <span class="ink-settings-label">Selection toolbar</span>
+          <div class="ink-theme-control">
+            <button
+              type="button"
+              class="ink-theme-btn"
+              aria-pressed={!floatingToolbar.value}
+              onClick={() => { setFloatingToolbar(false) }}
+            >
+              Off
+            </button>
+            <button
+              type="button"
+              class="ink-theme-btn"
+              aria-pressed={floatingToolbar.value}
+              onClick={() => { setFloatingToolbar(true) }}
+            >
+              On
             </button>
           </div>
         </div>

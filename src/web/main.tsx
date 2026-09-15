@@ -6,6 +6,7 @@ import './theme/print.css'
 import { applyDocTheme, readDocTheme } from './theme/docThemes.js'
 import { printsInLight } from './theme/useTheme.js'
 import { applyThemeChoice, readThemeChoice } from './theme/useTheme.js'
+import { applyFloatingToolbar } from './state/settings.js'
 import { initSettings } from './state/settings.js'
 import { initViewport } from './state/ui.js'
 import { sharingAvailable } from './state/share.js'
@@ -16,6 +17,8 @@ initViewport()
 // The document theme first: it decides which appearances are even available.
 applyDocTheme(readDocTheme())
 applyThemeChoice(readThemeChoice())
+// Before the first paint, so the bar is never drawn once and then taken away.
+applyFloatingToolbar()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('#root not found')

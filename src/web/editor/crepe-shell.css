@@ -688,3 +688,14 @@
   font-size: 12px;
   white-space: pre-wrap;
 }
+
+
+/* The bar that follows a selection, switched off.
+ *
+ * `display: none` rather than a Crepe feature flag: a feature is read once, when the editor is
+ * built, so turning this off would mean tearing the editor down and putting it back — the caret and
+ * the scroll position lost to change a preference. The bar is drawn only when there is a selection
+ * to draw it for, and this stops it being drawn. See `state/settings.ts`. */
+:root[data-ink-toolbar="off"] .milkdown-toolbar {
+  display: none !important;
+}

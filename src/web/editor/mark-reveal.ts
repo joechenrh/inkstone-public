@@ -195,6 +195,62 @@ function openAt(tr: Transaction, pos: number, ctx: Ctx): Transaction {
     .setMeta('addToHistory', false)
 }
 
+/**
+ * A complete piece of syntax the reader typed *around* their text rather than into it.
+ *
+ * `**bold**` typed left to right is turned into a mark by an input rule, on the last asterisk. Typed
+ * the other way round — the four stars first, the word after — no rule ever fires: an input rule
+ * matches what is behind the caret, and the closing pair is in front of it. So the text sat there
+ * as four literal asterisks for ever, which is what was reported.
+ *
+ * What comes back is the run as {@link Open} describes one, *including* its markers, so the caller
+ * can put the mark on it and record it as open. Nothing about the screen changes at that moment —
+ * an open run wears its own markers — and the collapse that happens when the caret leaves is the
+ * one that has always been there.
+ */
+const AROUND: { syntax: string; pattern: RegExp }[] = [
+  // Longest first: `**a**` is strong, not emphasis wrapped in stray asterisks.
+  { syntax: '**', pattern: /\*\*([^*\n]+)\*\*/g },
+  { syntax: '~~', pattern: /~~([^~\n]+)~~/g },
+  { syntax: '*', pattern: /(?<!\*)\*([^*\n]+)\*(?!\*)/g },
+  { syntax: '`', pattern: /`([^`\n]+)`/g },
+]
+
+function typedAround(state: EditorState, ctx: Ctx): Open | null {
+  const { $from, empty } = state.selection
+  if (!empty || !$from.parent.isTextblock) return null
+  const start = $from.start()
+  const text = $from.parent.textBetween(0, $from.parent.content.size, '\n', '\n')
+  const caret = $from.pos - start
+
+  for (const { syntax, pattern } of AROUND) {
+    const mark = MARKS.find((m) => m.syntax === syntax)
+    if (mark === undefined) continue
+    const type = mark.schema.type(ctx)
+    pattern.lastIndex = 0
+    for (let m = pattern.exec(text); m !== null; m = pattern.exec(text)) {
+      const from = start + m.index
+      const to = from + m[0].length
+      /*
+       * In the text between the markers, its ends included.
+       *
+       * Both ends count: the caret sits right after the last letter typed, which is exactly the end
+       * of the inner text — measured, and the first version of this test excluded precisely the
+       * position every reader is in when the pair closes. Outside the markers does not count:
+       * typing past the closing pair is finishing with the run, not writing in it.
+       */
+      if ($from.pos < from + syntax.length || $from.pos > to - syntax.length) continue
+      // Already a mark of this kind — `runAt` handles those, and it looked first.
+      if (type.isInSet(state.doc.resolve(from + syntax.length + 1).marks())) continue
+      // Inside code, the asterisks are the text. Nothing in a code span is emphasis.
+      const codeType = inlineCodeSchema.type(ctx)
+      if (syntax !== '`' && codeType.isInSet(state.doc.resolve(from + syntax.length + 1).marks())) continue
+      return { from, to, syntax, mark: type.name }
+    }
+  }
+  return null
+}
+
 /** Whether the run was already marked before this round of transactions. */
 function existedBefore(run: Open, trs: readonly Transaction[], old: EditorState, ctx: Ctx): boolean {
   const type = typeOf(run.mark, ctx)
@@ -255,7 +311,26 @@ export const markReveal = $prose((ctx) =>
       if (!state.selection.empty) return null
 
       const run = runAt(state.doc, state.selection.from, ctx)
-      if (run === null) return null
+      if (run === null) {
+        /*
+         * Nothing marked here — but the reader may have just closed a pair around their own text.
+         *
+         * Only on a round that changed the document. Asterisks that were already sitting in a note
+         * are somebody's literal asterisks, escaped in the file as `\*\*`, and walking a caret
+         * through them must not quietly turn them into emphasis.
+         */
+        if (!trs.some((tr) => tr.docChanged)) return null
+        const typed = typedAround(state, ctx)
+        if (typed === null) return null
+        const type = typeOf(typed.mark, ctx)
+        if (type === null) return null
+        // The markers wear the mark too, which is what an open run looks like — so the screen does
+        // not change now, and the collapse when the caret leaves is the usual one.
+        return state.tr
+          .addMark(typed.from, typed.to, type.create())
+          .setMeta(KEY, typed)
+          .setMeta('addToHistory', false)
+      }
       /*
        * A run that was *just made* is not one to open.
        *

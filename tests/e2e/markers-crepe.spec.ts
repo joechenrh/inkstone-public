@@ -487,3 +487,65 @@ test('taking an offer inside a shortcode replaces all of it', async ({ page }) =
   expect(saved).toContain('x :taco: y')
   expect(saved).not.toContain('::')
 })
+
+/**
+ * Syntax typed *around* text, rather than into it.
+ *
+ * `**bold**` typed left to right becomes a mark on the last asterisk, by an input rule. Typed the
+ * other way — the four stars first, the word after — no rule can fire: an input rule matches what is
+ * behind the caret and the closing pair is in front of it. The asterisks stayed literal for ever.
+ * Reported.
+ */
+test('crepe: stars first, the word after, and it is still bold', async ({ page }) => {
+  await open(page)
+  await page.locator('.ink-doc').click()
+  await page.keyboard.press('ControlOrMeta+End')
+  await page.keyboard.press('Enter')
+
+  await page.keyboard.type('****')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.type('bold')
+  await page.waitForTimeout(400)
+
+  // While the caret is in it, it shows its own markers — the same as every other open run.
+  await expect(page.locator('.ink-doc')).toContainText('**bold**')
+
+  // Out of it, and it is emphasis rather than four asterisks.
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.type(' after')
+  await page.waitForTimeout(400)
+  // Exactly this word: the note already carries a `bold text` of its own.
+  await expect(page.locator('.ink-doc strong').filter({ hasText: /^bold$/ })).toHaveCount(1)
+  await expect(page.locator('.ink-doc')).not.toContainText('**bold**')
+})
+
+test('crepe: walking a caret through literal asterisks leaves them alone', async ({ page }) => {
+  await open(page)
+  /*
+   * A note *about* markdown holds `\*\*not bold\*\*` — escaped in the file, plain text in the
+   * document. Only a round that changed the document may close a pair, or moving a caret through
+   * somebody's literal asterisks would quietly turn them into emphasis.
+   */
+  await page.evaluate(async () => {
+    await fetch('/api/file', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ path: 'notes/literal.md', content: '# Literal\n\nsee \\*\\*not bold\\*\\* here\n' }),
+    })
+  })
+  await page.reload()
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: /^literal\.md$/ }).click()
+  await expect(page.locator('.ink-doc')).toContainText('not bold', { timeout: 15_000 })
+
+  // Into the middle of them, with the arrow keys, changing nothing.
+  await page.locator('.ink-doc p').filter({ hasText: 'not bold' }).first().click()
+  await page.keyboard.press('Home')
+  for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowRight')
+  await page.waitForTimeout(400)
+
+  await expect(page.locator('.ink-doc strong')).toHaveCount(0)
+  await expect(page.locator('.ink-doc')).toContainText('**not bold**')
+})

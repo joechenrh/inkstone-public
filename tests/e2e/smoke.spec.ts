@@ -1031,3 +1031,60 @@ test('row menu opens fully outside the sidebar and closes on Escape', async ({ p
   await page.keyboard.press('Escape')
   await expect(menu).toHaveCount(0)
 })
+
+/**
+ * The bar that follows a selection, and the switch that stops it.
+ *
+ * Off is a setting rather than a rebuild: a Crepe feature is read once, when the editor is made, so
+ * turning the bar off that way would tear the editor down and put it back — the caret and the
+ * scroll position spent on a preference.
+ */
+test('the selection toolbar can be switched off, and stays off', async ({ page }) => {
+  await page.addInitScript(() => { localStorage.setItem('inkstone.editorEngine', 'crepe') })
+  await login(page)
+  await treeItem(page, 'notes').click()
+  await treeItem(page, 'rich.md').click()
+  await waitForEditor(page)
+
+  /*
+   * Measured by selecting something, because that is the only time the bar is drawn at all. Asking
+   * for its `display` with nothing selected answers `none` whatever the setting says — the first
+   * version of this test passed for that reason and proved nothing.
+   */
+  const barAfterSelecting = async () => {
+    const para = page.locator('.ink-doc p').filter({ hasText: 'Text below the code block.' }).first()
+    const box = (await para.boundingBox())!
+    // Cleared first: selecting the same words twice is not a new selection, and the bar answers
+    // changes. Without this the second measurement reports the first one's aftermath.
+    await page.mouse.click(box.x + box.width - 4, box.y + box.height / 2)
+    await page.waitForTimeout(150)
+    await page.mouse.move(box.x + 4, box.y + box.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(box.x + 80, box.y + box.height / 2, { steps: 8 })
+    await page.mouse.up()
+    await page.waitForTimeout(600)
+    return page.evaluate(() => {
+      const bar = document.querySelector('.milkdown-toolbar')
+      return bar === null ? 0 : Math.round(bar.getBoundingClientRect().height)
+    })
+  }
+
+  expect(await barAfterSelecting(), 'the bar never appeared, so this proves nothing').toBeGreaterThan(0)
+
+  await page.getByTitle('Settings').click()
+  await page.getByRole('button', { name: 'Off', exact: true }).click()
+  await page.keyboard.press('Escape')
+  expect(await barAfterSelecting()).toBe(0)
+
+  // Remembered, which is the whole point of a setting.
+  await page.reload()
+  await treeItem(page, 'notes').click()
+  await treeItem(page, 'rich.md').click()
+  await waitForEditor(page)
+  expect(await barAfterSelecting()).toBe(0)
+
+  await page.getByTitle('Settings').click()
+  await page.getByRole('button', { name: 'On', exact: true }).click()
+  await page.keyboard.press('Escape')
+  expect(await barAfterSelecting()).toBeGreaterThan(0)
+})

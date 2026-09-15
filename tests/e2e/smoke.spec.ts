@@ -24,6 +24,20 @@ async function login(page: import('@playwright/test').Page) {
   await expect(treeItem(page, 'notes')).toBeVisible()
 }
 
+/**
+ * Choose a document theme, through the fold the swatches live behind.
+ *
+ * They used to be on screen the moment Settings opened. They are behind the name of the one in use
+ * now — a third of the panel given back to the switches people touch daily — so picking one is two
+ * gestures, and every test that picks one goes through here.
+ */
+async function pickTheme(page: Page, themeId: string) {
+  if (await page.locator('.ink-swatch').count() === 0) {
+    await page.locator('.ink-settings-disclosure').click()
+  }
+  await page.locator(`.ink-swatch[data-doc-theme-preview="${themeId}"]`).click()
+}
+
 /** Wait for the document to be present and click into it. */
 async function waitForEditor(page: import('@playwright/test').Page) {
   const editable = page.locator('.ink-doc')
@@ -441,7 +455,7 @@ test('switching the document theme repaints the document and the shell, and it s
   expect(lapis.h2Bg).not.toBe('rgba(0, 0, 0, 0)')
 
   await page.locator('button[title="Settings"]').click()
-  await page.locator('.ink-swatch[data-doc-theme-preview="plain"]').click()
+  await pickTheme(page, 'plain')
 
   const plain = await state()
   expect(plain.theme).toBe('plain')
@@ -491,7 +505,7 @@ test('code blocks behave the same under every document theme', async ({ page }) 
   for (const themeId of ['lapis', 'plain', 'aspartate', 'forest', 'tailwind', 'everforest', 'bitclean']) {
     if (themeId !== 'lapis') {
       await page.locator('button[title="Settings"]').click()
-      await page.locator(`.ink-swatch[data-doc-theme-preview="${themeId}"]`).click()
+      await pickTheme(page, themeId)
       await page.keyboard.press('Escape')
       await page.waitForFunction((id) => document.documentElement.getAttribute('data-doc-theme') === id, themeId)
     }
@@ -552,7 +566,7 @@ test('no document theme paints the application directly', async ({ page }) => {
   await page.locator('button[title="Settings"]').click()
 
   for (const themeId of ['lapis', 'plain', 'aspartate', 'forest', 'tailwind', 'everforest', 'bitclean']) {
-    await page.locator(`.ink-swatch[data-doc-theme-preview="${themeId}"]`).click()
+    await pickTheme(page, themeId)
     await page.waitForFunction((id) => document.documentElement.getAttribute('data-doc-theme') === id, themeId)
 
     const btn = await page.locator('.ink-theme-btn').first().evaluate((el) => {
@@ -1087,4 +1101,38 @@ test('the selection toolbar can be switched off, and stays off', async ({ page }
   await page.getByRole('button', { name: 'On', exact: true }).click()
   await page.keyboard.press('Escape')
   expect(await barAfterSelecting()).toBeGreaterThan(0)
+})
+
+/**
+ * Settings, in sections.
+ *
+ * Ten rows of four different kinds — how it looks, how it edits, where things are kept, what this
+ * machine is doing — sat in one list with nothing to say they were different kinds, and the seven
+ * theme swatches took a third of the panel at the top of it for a choice made once. Measured before
+ * this: 950px of content in a 666px phone screen, with every daily switch below the fold.
+ */
+test('settings is grouped, and the theme swatches are folded away', async ({ page }) => {
+  await login(page)
+  await page.getByTitle('Settings').click()
+
+  await expect(page.locator('.ink-settings-section')).toHaveText(
+    ['Appearance', 'Editing', 'Pictures', 'Storage', 'This device'])
+
+  // The swatches are behind the name of the one in use, not in front of everything else.
+  await expect(page.locator('.ink-swatch')).toHaveCount(0)
+  const disclosure = page.locator('.ink-settings-disclosure')
+  await expect(disclosure).toHaveText(/Lapis/)
+
+  await disclosure.click()
+  await expect(page.locator('.ink-swatch')).toHaveCount(7)
+
+  // And it is still the way a theme is chosen.
+  await page.locator('.ink-swatch[data-doc-theme-preview="plain"]').click()
+  await expect.poll(() => page.evaluate(() => document.documentElement.dataset.docTheme)).toBe('plain')
+  await expect(disclosure).toHaveText(/Plain/)
+
+  // Shut again next time: a choice made once should not keep costing the panel a third of itself.
+  await page.keyboard.press('Escape')
+  await page.getByTitle('Settings').click()
+  await expect(page.locator('.ink-swatch')).toHaveCount(0)
 })

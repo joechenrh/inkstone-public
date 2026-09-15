@@ -79,9 +79,18 @@ export function SettingsModal() {
   const repositories = session.value?.repositories ?? []
 
   const isOpen = settingsOpen.value
+
+  // Shut again whenever the panel is closed. It is not unmounted — `settingsOpen` only hides it —
+  // so without this the swatches stayed open from one visit to the next, which is exactly the third
+  // of the panel this fold exists to give back.
+  useEffect(() => {
+    if (!settingsOpen.value) setThemesOpen(false)
+  }, [settingsOpen.value])
   const [vaultRoot, setVaultRoot] = useState<string | null>(null)
   const [hasRemote, setHasRemote] = useState<boolean | null>(null)
   const [themeChoice, setThemeChoice] = useState<ThemeChoice>(() => readThemeChoice())
+  /** Shut on every open: a choice made once should not keep costing the panel a third of itself. */
+  const [themesOpen, setThemesOpen] = useState(false)
   const [pastedPairing, setPastedPairing] = useState('')
   const [pairingRefused, setPairingRefused] = useState(false)
   const activeTheme = findDocTheme(docTheme.value)
@@ -156,6 +165,9 @@ export function SettingsModal() {
             rows this grows. */}
         <div class="ink-settings-body">
 
+        <h3 class="ink-settings-section">Appearance</h3>
+
+
         {/* Appearance is no longer a global switch: a theme that ships one look cannot show the
             other, so the control follows the theme rather than accepting a click that does
             nothing. */}
@@ -195,9 +207,28 @@ export function SettingsModal() {
           </div>
         </div>
 
-        {/* You pick a theme by what it looks like, so the control shows what it looks like. */}
-        <div class="ink-settings-row ink-settings-row--stacked">
+        {/*
+          * You pick a theme by what it looks like, so the control shows what it looks like — but
+          * only while it is being used. Seven swatches were a third of this panel's height, at the
+          * top of it, for a choice somebody makes once and then lives with; on a phone they pushed
+          * every switch anybody touches daily below the fold. Folded away, with the current one
+          * named on the line, which is the part worth reading when you are not changing it.
+          */}
+        <div class="ink-settings-row">
           <span class="ink-settings-label">Document theme</span>
+          <button
+            type="button"
+            class="ink-settings-disclosure"
+            aria-expanded={themesOpen}
+            onClick={() => { setThemesOpen(!themesOpen) }}
+          >
+            {findDocTheme(docTheme.value)?.name ?? docTheme.value}
+            <span class="ink-settings-chevron" aria-hidden="true">{themesOpen ? '⌄' : '›'}</span>
+          </button>
+        </div>
+
+        {themesOpen && (
+        <div class="ink-settings-row ink-settings-row--stacked">
           <div class="ink-swatches">
             {DOC_THEMES.map((t) => (
               <button
@@ -224,6 +255,7 @@ export function SettingsModal() {
             ))}
           </div>
         </div>
+        )}
 
         <div class="ink-settings-row">
           <label class="ink-settings-label" for="ink-editor-font-select">Editor font size</label>
@@ -241,30 +273,7 @@ export function SettingsModal() {
           </select>
         </div>
 
-        {/* A two-button group rather than a new kind of control: the appearance row above is the
-            same shape, and a window this application keeps trying to shrink does not need a second
-            way to draw a choice of two. */}
-        <div class="ink-settings-row">
-          <span class="ink-settings-label">Pictures folder</span>
-          <div class="ink-theme-control">
-            <button
-              type="button"
-              class="ink-theme-btn"
-              aria-pressed={!showAssets.value}
-              onClick={() => { setShowAssets(false) }}
-            >
-              Hidden
-            </button>
-            <button
-              type="button"
-              class="ink-theme-btn"
-              aria-pressed={showAssets.value}
-              onClick={() => { setShowAssets(true) }}
-            >
-              Shown
-            </button>
-          </div>
-        </div>
+        <h3 class="ink-settings-section">Editing</h3>
 
         <div class="ink-settings-row">
           <span class="ink-settings-label">Selection toolbar</span>
@@ -287,6 +296,8 @@ export function SettingsModal() {
             </button>
           </div>
         </div>
+
+        <h3 class="ink-settings-section">Pictures</h3>
 
         {/* Only where the server was given somewhere to put them. A switch that does nothing is
             worse than no switch, and this one's absence says the true thing: there is no picture
@@ -315,6 +326,33 @@ export function SettingsModal() {
             </div>
           </div>
         )}
+
+        {/* A two-button group rather than a new kind of control: the appearance row above is the
+            same shape, and a window this application keeps trying to shrink does not need a second
+            way to draw a choice of two. */}
+        <div class="ink-settings-row">
+          <span class="ink-settings-label">Pictures folder</span>
+          <div class="ink-theme-control">
+            <button
+              type="button"
+              class="ink-theme-btn"
+              aria-pressed={!showAssets.value}
+              onClick={() => { setShowAssets(false) }}
+            >
+              Hidden
+            </button>
+            <button
+              type="button"
+              class="ink-theme-btn"
+              aria-pressed={showAssets.value}
+              onClick={() => { setShowAssets(true) }}
+            >
+              Shown
+            </button>
+          </div>
+        </div>
+
+        <h3 class="ink-settings-section">Storage</h3>
 
         <div class="ink-settings-row">
           <span class="ink-settings-label">{onGitHub ? 'Repository' : 'Vault'}</span>
@@ -357,6 +395,8 @@ export function SettingsModal() {
 
         {/* One row, beside the other facts about this installation — not a screen and nothing in
             the top bar. It never says which backend it runs: see `src/agent/backend.ts`. */}
+        <h3 class="ink-settings-section">This device</h3>
+
         <div class="ink-settings-row ink-settings-row--stacked">
           <span class="ink-settings-label">Agent</span>
           {/* A phone cannot reach an agent at all: the pairing string names `127.0.0.1`, which on

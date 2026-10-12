@@ -344,3 +344,65 @@ test('typing after a link does not unfold it on every keystroke', async ({ page 
   })
   expect(saved).toContain('[111](https://example.com/2)abc')
 })
+
+/**
+ * Enter at the start of a list item that begins with a link.
+ *
+ * The same keystroke on an item of plain text pushes an empty item *above* and keeps the words with
+ * the caret. Beginning with a link it did the reverse — the link went up, the caret stayed below —
+ * because closing the link's source first sent the caret to the end of what it had closed, and at
+ * the start of a run those are opposite ends. Reported.
+ *
+ * Asserted against the plain item rather than against a literal, because the thing being fixed is
+ * that the two should not differ.
+ */
+test('Enter at the start of an item is the same whether or not it begins with a link', async ({ page }) => {
+  await page.addInitScript(() => { localStorage.setItem('inkstone.editorEngine', 'crepe') })
+  await page.goto('/')
+  await page.getByPlaceholder('Password').fill('e2e-password')
+  await page.getByRole('button', { name: 'Enter' }).click()
+  await expect(page.locator('[role="tree"]')).toBeVisible()
+
+  // Both notes written before either is opened: a reload with unsaved text in the editor is a
+  // different test, and a slow one.
+  await page.evaluate(async () => {
+    for (const [path, content] of [
+      ['notes/enter-plain.md', '# Enter\n\n- one\n- 2\n- 3\n'],
+      ['notes/enter-link.md', '# Enter\n\n- [1](https://example.com/1)\n- 2\n- 3\n'],
+    ]) {
+      await fetch('/api/file', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ path, content }),
+      })
+    }
+  })
+  await page.reload()
+  await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+
+  const itemsAfterEnter = async (note: string, intoLink: boolean) => {
+    await page.locator('.ink-tree-name').filter({ hasText: new RegExp(`^${note}$`) }).click()
+    await expect(page.locator('.ink-doc li').first()).toBeVisible({ timeout: 15_000 })
+    await page.waitForTimeout(500)
+
+    if (intoLink) await page.locator('.ink-doc a').first().click()
+    else await page.locator('.ink-doc li').first().click()
+    await page.keyboard.press('Home')
+    await page.waitForTimeout(300)
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('X')
+    await page.waitForTimeout(400)
+    return page.locator('.ink-doc li').allInnerTexts()
+  }
+
+  const plain = await itemsAfterEnter('enter-plain\\.md', false)
+  // An empty item above, the words still with the caret.
+  expect(plain[0]!.trim()).toBe('')
+  expect(plain[1]).toContain('Xone')
+
+  const linked = await itemsAfterEnter('enter-link\\.md', true)
+  expect(linked[0]!.trim(), 'the empty item went below the link instead of above it').toBe('')
+  expect(linked[1]).toContain('X')
+  expect(linked[1]).toContain('1')
+  expect(linked).toHaveLength(plain.length)
+})

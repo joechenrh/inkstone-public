@@ -31,7 +31,7 @@ async function login(page: import('@playwright/test').Page) {
  * now — a third of the panel given back to the switches people touch daily — so picking one is two
  * gestures, and every test that picks one goes through here.
  */
-async function pickTheme(page: Page, themeId: string) {
+async function pickTheme(page: import('@playwright/test').Page, themeId: string) {
   if (await page.locator('.ink-swatch').count() === 0) {
     await page.locator('.ink-settings-disclosure').click()
   }

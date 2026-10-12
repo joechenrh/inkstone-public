@@ -287,9 +287,23 @@ export function closeSourceBeforeEnter(
 ): void {
   const open = KEY.getState(view.state)
   if (open === null || open === undefined) return
+  /*
+   * Where the caret was, not where the thing it was in ended.
+   *
+   * At the *start* of the run those are opposite ends, and sending it to the far one turned Enter
+   * inside out: in a list whose item begins with a link, pressing Enter at the start of the line
+   * pushed the empty item *below* instead of above — the link went up and the caret stayed down,
+   * which is the reverse of what the same keystroke does on an item of plain text. Reported.
+   *
+   * Anywhere else it is still the end. Enter in the middle of `[te|xt](url)` cannot mean "cut this
+   * link in half"; the link stays whole and the line starts after it.
+   */
+  const was = view.state.selection.from
   const tr = collapse(view.state.tr, open, ctx)
-  const end = Math.min(tr.mapping.map(open.to, -1), tr.doc.content.size)
-  view.dispatch(tr.setSelection(TextSelection.create(tr.doc, end)))
+  const at = was <= open.from
+    ? Math.min(open.from, tr.doc.content.size)
+    : Math.min(tr.mapping.map(open.to, -1), tr.doc.content.size)
+  view.dispatch(tr.setSelection(TextSelection.create(tr.doc, at)))
 }
 
 /**

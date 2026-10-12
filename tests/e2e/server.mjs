@@ -120,6 +120,13 @@ fs.writeFileSync(
   ].join('\n'),
 )
 
+// The copy test pastes and saves, so it does not share the marker note — that one is asserted
+// byte-identical.
+fs.writeFileSync(
+  path.join(root, 'notes', 'copy-crepe.md'),
+  'A paragraph with **bold text** in it.\n\nTail.\n',
+)
+
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.
 // A wall is a block that fills its own line and has nowhere to stand beside it; the keystrokes
 // these exercise only exist there.

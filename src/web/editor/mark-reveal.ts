@@ -4,6 +4,7 @@ import { emphasisSchema, inlineCodeSchema, strongSchema } from '@milkdown/kit/pr
 import { strikethroughSchema } from '@milkdown/kit/preset/gfm'
 import type { Ctx } from '@milkdown/kit/ctx'
 import type { EditorState, Transaction } from '@milkdown/kit/prose/state'
+import { Fragment, Slice } from '@milkdown/kit/prose/model'
 import type { MarkType, Node } from '@milkdown/kit/prose/model'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { readOnly } from '../state/settings.js'
@@ -66,6 +67,39 @@ function typeOf(name: string, ctx: Ctx): MarkType | null {
     if (type.name === name) return type
   }
   return null
+}
+
+/**
+ * The same content with the open run's markers taken out of it, for anything leaving the editor.
+ *
+ * While a run is open the document really does hold `**aa**`, and the markers wear the mark
+ * themselves — that is what makes an open run look like what it is. Copied, that went to the
+ * clipboard as `<strong>**aa**</strong>`, and pasting it back gave a bold run whose text was
+ * `**aa**`, which the serialiser wrapped again: `****aa****`. Reported.
+ *
+ * Only the markers go. The mark stays, so bold copied out of the editor is still bold when it comes
+ * back, and `text/plain` is the `**aa**` anybody pasting into a terminal would want.
+ */
+function withoutMarkers(fragment: Fragment, ctx: Ctx): Fragment {
+  const out: Node[] = []
+  fragment.forEach((child) => {
+    if (!child.isText || child.text === undefined) {
+      out.push(child.copy(withoutMarkers(child.content, ctx)))
+      return
+    }
+    const worn = MARKS.find(({ schema }) => schema.type(ctx).isInSet(child.marks))
+    if (worn === undefined) {
+      out.push(child)
+      return
+    }
+    let text = child.text
+    const len = worn.syntax.length
+    // Each end on its own: a partial selection carries one marker and not the other.
+    if (text.startsWith(worn.syntax)) text = text.slice(len)
+    if (text.endsWith(worn.syntax)) text = text.slice(0, -len)
+    if (text !== '') out.push(child.type.schema.text(text, child.marks))
+  })
+  return Fragment.fromArray(out)
 }
 
 /**
@@ -354,6 +388,17 @@ export const markReveal = $prose((ctx) =>
       handleDOMEvents: {
         // Focus leaving the document closes the run, so nothing else ever sees the escaped form.
         blur: (view) => { collapseMarks(view, ctx); return false },
+      },
+
+      /*
+       * What leaves on the clipboard is the closed form.
+       *
+       * Only while something is open — with nothing revealed there are no markers in the document
+       * to mistake for text, and a copy should pass through untouched.
+       */
+      transformCopied(slice, view) {
+        if (KEY.getState(view.state) == null) return slice
+        return new Slice(withoutMarkers(slice.content, ctx), slice.openStart, slice.openEnd)
       },
     },
   }),

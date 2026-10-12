@@ -549,3 +549,71 @@ test('crepe: walking a caret through literal asterisks leaves them alone', async
   await expect(page.locator('.ink-doc strong')).toHaveCount(0)
   await expect(page.locator('.ink-doc')).toContainText('**not bold**')
 })
+
+/**
+ * What leaves on the clipboard is the closed form.
+ *
+ * While a run is open the document really holds `**bold text**`, and the markers wear the mark
+ * themselves — that is what makes an open run look like what it is. Copied, it went out as
+ * `<strong>**bold text**</strong>`, and pasting that back gave a bold run whose text was
+ * `**bold text**`, which the serialiser wrapped again: `****bold text****`. Reported.
+ *
+ * The payload is read off the copy event and the paste is dispatched from what was captured: the
+ * real clipboard goes through the operating system and is not reliably readable from a driven
+ * browser.
+ */
+test('crepe: copying an open run carries the mark, not the markers', async ({ page }) => {
+  await open(page, 'copy-crepe.md')
+  await caretIn(page, 'bold text')
+  await expect(page.locator('.ink-doc')).toContainText('**bold text**')
+
+  // The run is selected over its own text node: pressing Home would close the reveal, and the
+  // re-render loses the browser's selection with it.
+  await page.evaluate(() => {
+    const open = Array.from(document.querySelectorAll('.ink-doc strong'))
+      .find((el) => el.textContent === '**bold text**')
+    if (open?.firstChild == null) throw new Error('the run did not open')
+    const range = document.createRange()
+    range.selectNodeContents(open.firstChild)
+    const selection = getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+    document.addEventListener('copy', (e) => {
+      const data = (e as ClipboardEvent).clipboardData!
+      ;(globalThis as Record<string, unknown>).__copied =
+        { text: data.getData('text/plain'), html: data.getData('text/html') }
+    }, { once: true })
+  })
+  await page.keyboard.press('ControlOrMeta+c')
+  const copied = await page.evaluate(() =>
+    (globalThis as Record<string, unknown>).__copied as { text: string; html: string })
+
+  expect(copied, 'the copy never reached the clipboard').toBeTruthy()
+  expect(copied.text, 'the markers went to the clipboard as text').toBe('bold text')
+  expect(copied.html, 'the markers went to the clipboard inside the bold')
+    .toContain('<strong>bold text</strong>')
+
+  // And back in, from exactly what was captured. The caret is moved to the other paragraph rather
+  // than by keystrokes: leaving the run closes it, and a keypress racing that transaction is what
+  // made the first version of this test flaky.
+  await caretIn(page, 'Tail')
+  await page.waitForTimeout(400)
+  await page.evaluate((payload) => {
+    const data = new DataTransfer()
+    data.setData('text/plain', payload.text)
+    data.setData('text/html', payload.html)
+    // On the editable itself: the editor listens there, and an event dispatched on an ancestor
+    // never passes through it.
+    const editable = document.querySelector('.ink-doc [contenteditable="true"]')
+      ?? document.querySelector('.ink-doc')!
+    editable.dispatchEvent(
+      new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
+  }, copied)
+  await page.waitForTimeout(500)
+
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.waitForTimeout(900)
+  const saved = await read(page, 'notes/copy-crepe.md')
+  expect(saved, 'the asterisks came back doubled').not.toContain('****')
+  expect(saved.match(/\*\*bold text\*\*/g), 'the pasted run lost its bold').toHaveLength(2)
+})

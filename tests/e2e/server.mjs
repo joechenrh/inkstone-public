@@ -124,7 +124,13 @@ fs.writeFileSync(
 // byte-identical.
 fs.writeFileSync(
   path.join(root, 'notes', 'copy-crepe.md'),
-  'A paragraph with **bold text** in it.\n\nTail.\n',
+  ['A paragraph with **bold text** in it.',
+   '',
+   'And *italic text*, ~~struck out~~, `inline code`, [a link](linked/target.md) and',
+   '![a picture](assets/none.webp).',
+   '',
+   'Tail.',
+   ''].join('\n'),
 )
 
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.

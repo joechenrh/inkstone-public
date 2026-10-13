@@ -23,6 +23,7 @@ import { fenceInput } from './fence-input.js'
 import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall, unwrapBlockOnBackspace } from './block-escape.js'
 import { setHeadingLevel, unwrapHeadingOnBackspace } from './headings.js'
 import { marksEndAtTheirMarker } from './mark-inclusivity.js'
+import { copyClosed } from './copy-closed.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
 import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
 import { writeTablesAsTyped, writeWhatWasTyped } from './markdown-escapes.js'
@@ -228,7 +229,7 @@ export function CrepeEditor() {
     // Before `create()`: a Milkdown editor takes its plugins while it is being built. See
     // `link-input.ts` — without these, `[1](2)` typed into a note is not a link and is saved
     // escaped, which is the only way this application could not write one.
-    crepe.editor.use(linkInputRule).use(linkPasteRule).use(sourceReveal).use(markerReveal).use(markReveal).use(alertReveal).use(tableRowInput).use(fenceInput).use(emojiReveal).use(emojiMenu)
+    crepe.editor.use(linkInputRule).use(linkPasteRule).use(copyClosed).use(sourceReveal).use(markerReveal).use(markReveal).use(alertReveal).use(tableRowInput).use(fenceInput).use(emojiReveal).use(emojiMenu)
     // A run of emphasis ends where its closing `*` is; see `mark-inclusivity.ts`.
     for (const schema of marksEndAtTheirMarker) crepe.editor.use(schema)
     // Crepe has an upload button and no paste handler; see `image-paste.ts`.

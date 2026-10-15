@@ -6,6 +6,7 @@ import { currentPath, expandAncestors } from './vault.js'
 import { isPhone, phoneScreen } from './ui.js'
 import { invalidateCorpus } from './search.js'
 import { setViewMode, viewMode } from './settings.js'
+import { suspendedPath } from './suspend.js'
 
 export const DRAFT_KEY_PREFIX = 'inkstone.draft:'
 
@@ -171,6 +172,10 @@ export function flushSave(): Promise<void> {
 async function doFlushSave(): Promise<void> {
   const path = currentPath.value
   if (!path || !dirty.value) return
+  // Not while this note is being edited with other people: the session ends with one write. The
+  // text is not at risk — `editContent` has already put the draft in local storage. See
+  // `state/suspend.ts`.
+  if (path === suspendedPath.value) return
   const snapshot = content.value
   try {
     const result = await backend.writeFile(path, snapshot, baseRev.value ?? undefined)

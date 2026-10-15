@@ -23,6 +23,9 @@ import { fenceInput } from './fence-input.js'
 import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall, unwrapBlockOnBackspace } from './block-escape.js'
 import { setHeadingLevel, unwrapHeadingOnBackspace } from './headings.js'
 import { marksEndAtTheirMarker } from './mark-inclusivity.js'
+import { collab, collabServiceCtx } from '@milkdown/plugin-collab'
+import type { LiveWire } from '../live/provider.js'
+import { provideEditorText } from './current.js'
 import { copyClosed } from './copy-closed.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
 import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
@@ -112,7 +115,26 @@ function closedMarkdown(ctx: Ctx, given: string): string {
   return ctx.get(serializerCtx)(tr.doc)
 }
 
-export function CrepeEditor() {
+export interface CrepeEditorProps {
+  /**
+   * The live session this editor is a window onto, or nothing for the ordinary case.
+   *
+   * Taken once, at mount: a Milkdown editor takes its plugins while it is being built, so joining
+   * or leaving a session rebuilds the editor rather than reconfiguring it. The caller gives this
+   * component a `key` that changes with the session, which is what makes that happen.
+   */
+  collab?: LiveWire | null
+  /**
+   * True on the page a guest opens.
+   *
+   * A guest has no vault, no file and nothing to save to: the document of record is the session,
+   * and the owner writes it. Without this the first keystroke would try to save a file that this
+   * browser has no credential for and no backend behind.
+   */
+  guest?: boolean
+}
+
+export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorProps = {}) {
   const hostRef = useRef<HTMLDivElement>(null)
   const stackRef = useRef<HTMLDivElement>(null)
   const crepeRef = useRef<Crepe | null>(null)
@@ -229,7 +251,21 @@ export function CrepeEditor() {
     // Before `create()`: a Milkdown editor takes its plugins while it is being built. See
     // `link-input.ts` — without these, `[1](2)` typed into a note is not a link and is saved
     // escaped, which is the only way this application could not write one.
-    crepe.editor.use(linkInputRule).use(linkPasteRule).use(copyClosed).use(sourceReveal).use(markerReveal).use(markReveal).use(alertReveal).use(tableRowInput).use(fenceInput).use(emojiReveal).use(emojiMenu)
+    /*
+     * The reveal plugins put the note's own markdown *into the document* — `**bold**` while the
+     * caret is in it, `[a](b)` while it is in a link — which is what makes this editor feel like
+     * markdown. In a shared document that text is shared: every marker a caret opened would appear
+     * and disappear on everybody else's screen, and two carets in overlapping runs would fight over
+     * the same characters. So a live session trades them away, which is the trade that was asked
+     * for — collaboration first. `copyClosed` goes with them: with nothing revealed there is
+     * nothing for it to close.
+     */
+    crepe.editor.use(linkInputRule).use(linkPasteRule).use(markerReveal).use(alertReveal).use(tableRowInput).use(fenceInput).use(emojiReveal).use(emojiMenu)
+    if (wire === null) {
+      crepe.editor.use(copyClosed).use(sourceReveal).use(markReveal)
+    } else {
+      crepe.editor.use(collab)
+    }
     // A run of emphasis ends where its closing `*` is; see `mark-inclusivity.ts`.
     for (const schema of marksEndAtTheirMarker) crepe.editor.use(schema)
     // Crepe has an upload button and no paste handler; see `image-paste.ts`.
@@ -272,6 +308,9 @@ export function CrepeEditor() {
         // having saved while one was open. Nothing is dispatched: the reader keeps what they see.
         const markdown = closedMarkdown(c, given)
         if (markdown === lastSyncedRef.current) return
+        // A guest's keystrokes go to the room, not to a file: this browser has no vault behind it.
+        // The owner's editor keeps `content` current, and that is what the session is saved from.
+        if (guest) { lastSyncedRef.current = markdown; return }
         window.clearTimeout(debounce)
         debounce = window.setTimeout(() => {
           lastSyncedRef.current = markdown
@@ -283,8 +322,29 @@ export function CrepeEditor() {
     void crepe.create().then(() => {
       if (disposed) { void crepe.destroy(); return }
       readyRef.current = true
+      if (wire !== null) {
+        /*
+         * Hand the editor the shared document.
+         *
+         * `applyTemplate` seeds it from the markdown *only when the shared document is empty*,
+         * which is exactly the division wanted: whoever starts the session puts the note in, and
+         * everybody who joins afterwards — and the owner reconnecting — takes what is already
+         * there. Seeding unconditionally would overwrite the session with a stale file on every
+         * reconnection.
+         */
+        crepe.editor.action((c) => {
+          const service = c.get(collabServiceCtx).bindDoc(wire.doc).setAwareness(wire.awareness)
+          // Only the owner has a note to seed from. A guest's `content` is empty — this browser has
+          // no vault — and offering that as a template is offering to empty the room.
+          if (!guest) service.applyTemplate(mountedWith)
+          service.connect()
+        })
+      }
       // The editor's own spelling of what it was built with; see the note in the sync effect.
       lastSyncedRef.current = crepe.getMarkdown()
+      // What this editor holds, for anything that cannot wait for the debounce below. See
+      // `current.ts` — ending a live session is the case that proved this necessary.
+      provideEditorText(() => closedMarkdown(crepe.editor.ctx, crepe.getMarkdown()))
       const surface = host.querySelector<HTMLElement>('.ProseMirror')
       surface?.classList.add(DOC_SURFACE)
       crepe.setReadonly(readOnly.value)
@@ -415,6 +475,9 @@ export function CrepeEditor() {
      * the top of the document pointing at nothing.
      */
     const barFits = () => {
+      // What this editor holds, for anything that cannot wait for the debounce below. See
+      // `current.ts` — ending a live session is the case that proved this necessary.
+      provideEditorText(() => closedMarkdown(crepe.editor.ctx, crepe.getMarkdown()))
       const surface = host.querySelector<HTMLElement>('.ProseMirror')
       const box = tableRef.current?.dom.getBoundingClientRect()
       if (!surface || !box) return false
@@ -467,6 +530,7 @@ export function CrepeEditor() {
     return () => {
       disposed = true
       readyRef.current = false
+      provideEditorText(null)
       stopImages()
       stopPaste()
       window.clearTimeout(debounce)
@@ -498,6 +562,14 @@ export function CrepeEditor() {
     const crepe = crepeRef.current
     if (!crepe || !readyRef.current) return
     if (sourceMode.value) return
+    /*
+     * Never during a session.
+     *
+     * In a shared document the authority is the session, not this signal — and `content` is kept
+     * current *from* the editor, so pushing it back would be this browser overwriting everybody's
+     * work with its own echo of it, once per keystroke.
+     */
+    if (wire !== null) return
     const next = content.value
     if (next === lastSyncedRef.current) return
     settingRef.current = true

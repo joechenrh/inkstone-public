@@ -171,6 +171,24 @@ export const IconShare = (p: IconProps) =>
     p,
   )
 
+/**
+ * Two people, for a live session.
+ *
+ * Drawn to the same vocabulary as its neighbours: circles on the grid, open shoulders, no diagonal
+ * that is not load-bearing. The second head is smaller and set back, which is what says "and
+ * somebody else" without a third shape — a plus sign or a dot would have read as an action.
+ */
+export const IconUsers = (p: IconProps) =>
+  svg(
+    <>
+      <circle cx="9" cy="8.5" r="2.9" />
+      <path d="M3.6 18.4c0-2.7 2.4-4.4 5.4-4.4s5.4 1.7 5.4 4.4" />
+      <circle cx="16.4" cy="10" r="2.2" />
+      <path d="M15.4 14.2c2.6 0 4.6 1.5 4.6 4.2" />
+    </>,
+    p,
+  )
+
 export const IconRename = (p: IconProps) =>
   svg(
     <>

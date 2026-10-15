@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { App } from '../App.js'
 import { useBackend } from '../api/index.js'
 import { createGitHubBackend } from '../api/github/backend.js'
+import { suspendedPath } from '../state/suspend.js'
 import { GitHubSignIn } from './GitHubSignIn.js'
 import { rebaseOpenDocument } from '../state/document.js'
 import {
@@ -66,6 +67,7 @@ function RepoApp({ repo, identity }: { repo: Repository; identity: IdentityProvi
 
   if (!installed) {
     useBackend(createGitHubBackend({
+      suspended: () => suspendedPath.value,
       owner: repo.owner,
       repo: repo.name,
       ref: repo.defaultBranch,

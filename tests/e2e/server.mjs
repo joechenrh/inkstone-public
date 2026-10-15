@@ -133,6 +133,12 @@ fs.writeFileSync(
    ''].join('\n'),
 )
 
+// The live-collaboration tests open these in two browsers at once and save them, so they are
+// nobody else's notes — and one per test, because the first one writes into its own fixture.
+for (const name of ['live-crepe', 'live-marks-crepe']) {
+  fs.writeFileSync(path.join(root, 'notes', `${name}.md`), 'Before.\n\nAfter.\n')
+}
+
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.
 // A wall is a block that fills its own line and has nowhere to stand beside it; the keystrokes
 // these exercise only exist there.
@@ -374,6 +380,9 @@ process.env.QINIU_BUCKET = 'e2e'
 process.env.QINIU_BASE_URL = 'http://127.0.0.1:7698/cdn'
 process.env.QINIU_UPLOAD_HOST = 'http://127.0.0.1:7698'
 
+// Live collaboration, which this deployment is: a vault password is one owner, and the guests
+// need nothing. See `docs/design/live-share.md`.
+process.env.INKSTONE_LIVE = '1'
 process.env.VAULT_ROOT = root
 process.env.AUTH_PASSWORD = 'e2e-password'
 process.env.SESSION_SECRET = 'e2e-session-secret'

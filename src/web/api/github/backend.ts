@@ -33,6 +33,15 @@ export interface GitHubBackendOptions extends RestOptions {
    * means there is one place a commit is known to have happened, whoever asked for it.
    */
   onCommitted?: () => void
+  /**
+   * A path whose commits are on hold, or null.
+   *
+   * A live session is a conversation and its intermediate states are nobody's history: the note is
+   * left out of every commit for the duration and goes in once, when the session ends. Asked each
+   * time rather than captured, and injected rather than imported, so this module keeps knowing
+   * nothing about the application's state. See `state/live.ts`.
+   */
+  suspended?: () => string | null
   now?: () => number
 }
 
@@ -303,7 +312,8 @@ export function createGitHubBackend(options: GitHubBackendOptions): VaultBackend
 
   async function doCommit(message: string, unattended = false): Promise<{ sha: string; files: string[] } | null> {
     await loadBase()
-    const changes = await pending()
+    const held = options.suspended?.() ?? null
+    const changes = (await pending()).filter((change) => change.path !== held)
     if (changes.length === 0) return null
 
     /*

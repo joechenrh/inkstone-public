@@ -43,12 +43,33 @@ export interface Config {
    * an argument, so reading the environment is this file's job and only this file's.
    */
   upload: UploadConfig | null
+  /**
+   * Whether this deployment offers live collaboration, and who may start a session.
+   *
+   * Off unless asked for, and asked for with a switch of its own rather than inherited from
+   * sharing: a live session is a socket anybody holding the link may *write* through, which is a
+   * different thing to be running than a page anybody may read. The sessions themselves are held
+   * in memory and nothing of them reaches this disk — see `docs/design/live-share.md`.
+   */
+  live: LiveConfig | null
   sessionSecret: string
   listenAddr: string
   port: number
 }
 
 /** The driver, its settings, and who is allowed to use it. */
+/** Who may start a session. The guests need nothing: the link is what they have. */
+export interface LiveConfig {
+  /**
+   * The GitHub login allowed to start one, on a deployment where that is how people sign in.
+   *
+   * Null only where there is no GitHub sign-in at all, and then the vault password is the
+   * credential. `loadConfig` refuses to start a GitHub deployment with live collaboration on and
+   * no name here, because the alternative is a button that can never work.
+   */
+  owner: string | null
+}
+
 export interface UploadConfig {
   driver: 'qiniu'
   qiniu: QiniuConfig
@@ -70,6 +91,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
   const vault = readVault(env, sessionSecret)
   const github = readGitHub(env)
   const share = readShare(env, github)
+  const live = readLive(env, github)
 
   if (vault === null && github === null) {
     throw new ConfigError(
@@ -88,6 +110,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     vault,
     github,
     share,
+    live,
     upload: readUpload(env),
     sessionSecret,
     listenAddr: env.LISTEN_ADDR ?? '127.0.0.1',
@@ -117,6 +140,16 @@ function readVault(env: NodeJS.ProcessEnv, sessionSecret: string): Config['vault
  * Without that, `POST /api/share` would be an open text host on someone's domain — which is the
  * whole reason the design leans on the GitHub session rather than inventing one.
  */
+function readLive(env: NodeJS.ProcessEnv, github: Config['github']): Config['live'] {
+  const on = env.INKSTONE_LIVE
+  if (on !== '1' && on !== 'true') return null
+  const owner = env.GITHUB_OWNER ?? null
+  if (github !== null && owner === null) {
+    throw new ConfigError('INKSTONE_LIVE needs GITHUB_OWNER: a session is started by one account and ended by it')
+  }
+  return { owner }
+}
+
 function readShare(env: NodeJS.ProcessEnv, github: Config['github']): Config['share'] {
   const root = env.SHARE_DIR
   if (!root) return null

@@ -10,6 +10,7 @@ import { applyFloatingToolbar } from './state/settings.js'
 import { initSettings } from './state/settings.js'
 import { initViewport } from './state/ui.js'
 import { sharingAvailable } from './state/share.js'
+import { liveAvailable } from './state/live.js'
 import { uploadDriver } from './assets/cdn.js'
 
 initSettings()
@@ -38,6 +39,7 @@ async function signIn(): Promise<'github' | 'password'> {
       signIn: 'github' | 'password'
       sharing?: boolean
       upload?: string | null
+      live?: boolean
     }
     // Whether this deployment was given anywhere to keep shared notes. Without it the Share item
     // never appears, rather than appearing and leading to a 404.
@@ -45,6 +47,9 @@ async function signIn(): Promise<'github' | 'password'> {
     // Whether pictures can go anywhere but the vault. Without this the switch in Settings never
     // appears, rather than appearing and doing nothing.
     uploadDriver.value = cfg.upload ?? null
+    // Whether a note can be opened for other people to edit. Without it the item never appears,
+    // rather than appearing and leading nowhere.
+    liveAvailable.value = cfg.live === true
     return cfg.signIn
   } catch {
     return 'password'
@@ -64,6 +69,18 @@ function sharedNoteId(): string | null {
 }
 
 /**
+ * The other address a stranger opens, and the only one they can write through.
+ *
+ * Checked in the same breath and for the same reasons as a shared link: it must not depend on
+ * being signed in, on a repository having been chosen, or on any of the state the app restores
+ * first. The difference is that this page is an editor.
+ */
+function liveSessionId(): string | null {
+  const match = /^\/live\/([^/?#]+)\/?$/.exec(location.pathname)
+  return match?.[1] ? decodeURIComponent(match[1]) : null
+}
+
+/**
  * Every root is imported dynamically, which is what keeps the reader's page small: it is the only
  * page people who do not use this app ever open, and it has no business downloading an editor.
  */
@@ -79,6 +96,15 @@ async function start(): Promise<void> {
     // and the page is read-only for everybody, which is still a working page.
     const identity = await signIn() === 'github' ? githubIdentity() : null
     render(<SharedNote id={shared} identity={identity} />, root!)
+    return
+  }
+
+  const joining = liveSessionId()
+  if (joining !== null) {
+    // Scrolls like a document, as the shared page does. See `share/shared.css`.
+    document.documentElement.setAttribute('data-page', 'shared')
+    const { LiveNote } = await import('./live/LiveNote.js')
+    render(<LiveNote id={joining} />, root!)
     return
   }
 

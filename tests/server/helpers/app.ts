@@ -48,6 +48,7 @@ export async function makeUnreadyTestApp(): Promise<TestApp> {
     port: 0,
     github: null,
     share: null,
+    live: null,
     upload: null,
   }
 

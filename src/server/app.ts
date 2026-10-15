@@ -13,6 +13,7 @@ import { broadcastGitStatus } from './git-broadcast.js'
 import { VaultGitError, type VaultGit } from './git/index.js'
 import { registerFileRoutes } from './routes/files.js'
 import { registerUploadRoutes } from './routes/upload.js'
+import { registerLiveRoutes } from './live/routes.js'
 import { registerShareRoutes } from './share/routes.js'
 import type { ShareStore } from './share/store.js'
 import { VaultError, type Vault } from './vault/index.js'
@@ -220,6 +221,14 @@ export function buildApp(deps: AppDeps): App {
   // top-level rule applies uniformly to every route here.
   app.after(() => {
     hub.registerRoute(app)
+    // And live collaboration, for exactly the reason written out above: it has a `{websocket: true}`
+    // route of its own, and a websocket route registered before the plugin has loaded is treated as
+    // a plain HTTP route — the handler then receives a Reply where it expects a socket and the
+    // handshake answers 500. Which is what it did, until this call moved in here.
+    //
+    // Off unless the deployment asked for it: a socket anybody holding the link may write through
+    // is not something to start running by default. See `docs/design/live-share.md`.
+    registerLiveRoutes(app, { config: deps.config.live })
   })
 
   // Global fallback error handler. Fastify's default error handler echoes a

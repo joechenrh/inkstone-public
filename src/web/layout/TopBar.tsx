@@ -27,6 +27,7 @@ import {
   toggleRightPanel,
 } from '../state/ui.js'
 import { shareMenuItem } from '../share/menuItem.js'
+import { liveMenuItem } from '../live/menuItem.js'
 import { currentPath } from '../state/vault.js'
 
 export interface TopBarProps {
@@ -90,6 +91,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
                 { label: 'Agent', icon: <IconAgent />, onSelect: () => { togglePhoneSheet('agent') } },
                 // Only on a phone. A desktop reaches this from the tree row, which is on screen.
                 ...shareMenuItem(path),
+                ...liveMenuItem(path, path.split('/').pop() ?? path),
               ]
               : []),
             // Git was unreachable on a phone: the bottom bar is the view control and Save, and

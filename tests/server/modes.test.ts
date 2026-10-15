@@ -12,6 +12,7 @@ function config(over: Partial<Config> = {}): Config {
     vault: null,
     github: null,
     share: null,
+    live: null,
     upload: null,
     sessionSecret: 'signing-secret',
     listenAddr: '127.0.0.1',
@@ -32,21 +33,28 @@ describe('/api/config', () => {
   it('says github when the App is configured', async () => {
     const app = authOnly(config({ github: GITHUB }))
     const res = await app.inject({ method: 'GET', url: '/api/config' })
-    expect(res.json()).toEqual({ signIn: 'github', sharing: false, upload: null })
+    expect(res.json()).toEqual({ signIn: 'github', sharing: false, upload: null, live: false })
     await app.close()
   })
 
   it('says password when only a vault is configured', async () => {
     const app = authOnly(config({ vault: { root: '/tmp/v', password: 'pw' } }))
     expect((await app.inject({ method: 'GET', url: '/api/config' })).json())
-      .toEqual({ signIn: 'password', sharing: false, upload: null })
+      .toEqual({ signIn: 'password', sharing: false, upload: null, live: false })
+    await app.close()
+  })
+
+  it('says live when the deployment asked for it, which is what makes the item appear', async () => {
+    const app = authOnly(config({ github: GITHUB, live: { owner: 'octocat' } }))
+    expect((await app.inject({ method: 'GET', url: '/api/config' })).json())
+      .toEqual({ signIn: 'github', sharing: false, upload: null, live: true })
     await app.close()
   })
 
   it('prefers github when both are, which is the development arrangement', async () => {
     const app = authOnly(config({ github: GITHUB, vault: { root: '/tmp/v', password: 'pw' } }))
     expect((await app.inject({ method: 'GET', url: '/api/config' })).json())
-      .toEqual({ signIn: 'github', sharing: false, upload: null })
+      .toEqual({ signIn: 'github', sharing: false, upload: null, live: false })
     await app.close()
   })
 

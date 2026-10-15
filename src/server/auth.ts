@@ -62,6 +62,10 @@ export function registerAuth(app: FastifyInstance, cfg: Config): void {
     // On a deployment that is both a vault and a GitHub sign-in, the vault's password is not the
     // credential any of these routes are about.
     if (pathOnly === '/api/shares' || pathOnly === '/api/share' || pathOnly.startsWith('/api/share/')) return
+    // Live collaboration authenticates itself the same way and for the same reasons: starting a
+    // session is checked against the account that owns the notes, and a guest holding the link
+    // needs nothing — a link that needs an account is not a link. See `live/routes.ts`.
+    if (pathOnly === '/api/live' || pathOnly.startsWith('/api/live/')) return
     if (isAuthenticated(req)) return
     return reply.code(401).send({ error: 'unauthorized' })
   })
@@ -113,6 +117,9 @@ export function registerAuth(app: FastifyInstance, cfg: Config): void {
     // drawing where the server can actually do it — a setting that does nothing is worse than no
     // setting.
     upload: cfg.upload?.driver ?? null,
+    // Whether a note can be opened for other people to edit. Without it the item never appears,
+    // rather than appearing and leading nowhere.
+    live: cfg.live !== null,
   }))
 }
 

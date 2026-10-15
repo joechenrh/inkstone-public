@@ -1,5 +1,6 @@
 import { useBackend } from './api/index.js'
 import { createGitHubBackend } from './api/github/backend.js'
+import { suspendedPath } from './state/suspend.js'
 import { rebaseOpenDocument } from './state/document.js'
 import { fakeIdentity } from './auth/fake.js'
 import { GitHubRoot } from './auth/GitHubRoot.js'
@@ -61,6 +62,7 @@ export function installDirectBackend(config: DevConfig): boolean {
   if (!config.owner || !config.repo || !config.token) return false
   const token = config.token
   useBackend(createGitHubBackend({
+      suspended: () => suspendedPath.value,
     owner: config.owner,
     repo: config.repo,
     ref: config.ref ?? 'main',

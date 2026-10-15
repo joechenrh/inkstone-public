@@ -10,7 +10,9 @@ import { PhoneBar } from './layout/PhoneBar.js'
 import { PhoneSheet } from './layout/PhoneSheet.js'
 import { CommitPanel } from './git/CommitPanel.js'
 import { SharePanel } from './share/SharePanel.js'
+import { LivePanel } from './live/LivePanel.js'
 import { CrepeEditor } from './editor/CrepeEditor.js'
+import { liveSession, liveWire, restoreLive } from './state/live.js'
 import { Sidebar } from './layout/Sidebar.js'
 import { RightPanel } from './layout/RightPanel.js'
 import { Shell } from './layout/Shell.js'
@@ -39,6 +41,9 @@ export function App() {
     // Which notes are already shared, so the menu can say so without a request per row. A silent
     // no-op unless this deployment offers sharing at all.
     void loadShares()
+    // And whether this account is already hosting a session: a reload must land back *inside* one
+    // rather than beside it, editing the file on its own while the guests keep typing.
+    void restoreLive()
 
     const disconnect = backend.connect({
       onEvent: (event) => {
@@ -87,6 +92,7 @@ export function App() {
     {isPhone.value && <PhoneSheet />}
     <CommitPanel />
     <SharePanel />
+      <LivePanel />
     <Shell
       topBar={<TopBar onOpenSettings={openSettings} />}
       listTopBar={<TopBar onOpenSettings={openSettings} forceList />}
@@ -95,7 +101,10 @@ export function App() {
         <>
           <ConflictBar />
           <SaveErrorBar />
-          <CrepeEditor />
+          {/* Keyed on the session, which is how joining or leaving one rebuilds the editor: a
+              Milkdown editor takes its plugins while it is being built, and a shared document
+              cannot carry the reveal plugins. See `CrepeEditor`'s own note. */}
+          <CrepeEditor key={liveSession.value?.id ?? 'solo'} collab={liveWire.value} />
           {/* Over the editor, not instead of it — the editor stays mounted so opening a note
               does not rebuild the whole Vditor instance. */}
           {currentPath.value === null && <EmptyState />}

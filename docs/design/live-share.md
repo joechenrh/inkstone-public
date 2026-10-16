@@ -88,6 +88,19 @@ browser to GitHub, never through this server — except a note you choose to sha
 note goes through this server too, in both directions, for as long as the session lasts. Pressing
 the button is choosing that.
 
+## On the owner's own screen
+
+Two marks, because a session is two facts in two places. The top bar says *who* — beside the note's
+name, with the faces of everybody else in it, because the note's own heading is where the people
+editing it belong. The status bar says what the session is doing to the application: this note is
+not being saved or committed until it ends. Both open the panel, as sharing's menu item does: the
+state is the control.
+
+The first version had neither, and a session looked exactly like no session. Reported as the
+interface losing what the design had at the top and the bottom, which it had. The marks belong to
+the session's note, not to the application — open another note and they are not there, because
+nothing live is happening in it.
+
 ## Three things worth keeping written down
 
 **The interface was in the wrong language and the wrong vocabulary.** The first version of the

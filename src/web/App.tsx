@@ -17,6 +17,7 @@ import { Sidebar } from './layout/Sidebar.js'
 import { RightPanel } from './layout/RightPanel.js'
 import { Shell } from './layout/Shell.js'
 import { StatusBar } from './layout/StatusBar.js'
+import { LiveStatusMark } from './live/LiveMarks.js'
 import { TopBar } from './layout/TopBar.js'
 import { content, dirty, handleExternalChange, openFile } from './state/document.js'
 import { gitStatus, refreshGitStatus } from './state/git.js'
@@ -125,6 +126,9 @@ export function App() {
       right={<RightPanel />}
       statusBar={isPhone.value ? <PhoneBar /> : (
         <>
+          {/* First, and pushed to the left by its own margin: a session is the loudest fact about
+              the open note, and the counters are the quietest. */}
+          <LiveStatusMark />
           {/* Only with a document: "0 words 0 chars" beside an empty editor is a measurement of
               nothing. The git state stays either way — it describes the vault, not the file. */}
           {currentPath.value !== null && (

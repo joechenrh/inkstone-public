@@ -78,7 +78,9 @@ async function reopenPanel(page: Page, note: string) {
   const row = page.locator('.ink-tree-row').filter({ hasText: note })
   await row.hover()
   await page.getByRole('button', { name: `Actions for ${note}` }).click()
-  await page.getByText(/^Live · /).click()
+  // The menu's item, not the status bar's text: both say the same thing, which is the point of
+  // the state being the label, and a bare text match picks up whichever it finds first.
+  await page.getByRole('menuitem', { name: /^Live · / }).click()
   await expect(page.locator('.ink-share')).toContainText('End session')
 }
 
@@ -179,6 +181,56 @@ test('every socket is under /ws, which is the one path a proxy is told about', a
 })
 
 /**
+ * A session is visible on the owner's own screen, in both bars.
+ *
+ * The first version had neither mark: a session looked exactly like no session, and the only way to
+ * tell was to open the menu. Reported as the interface losing what the design had at the top and
+ * the bottom — which it had. Both are also the way back into the panel.
+ */
+test('a running session shows in the top bar and the status bar, and is the way back in', async ({ browser }) => {
+  const owner = await browser.newContext()
+  const guest = await browser.newContext()
+  const mine = await owner.newPage()
+  const theirs = await guest.newPage()
+
+  try {
+    await signIn(mine, 'live-marks2-crepe.md', 'Before.')
+    // Neither mark before there is a session, rather than an empty one.
+    await expect(mine.locator('.ink-live-mark')).toHaveCount(0)
+    await expect(mine.locator('.ink-live-status')).toHaveCount(0)
+
+    const url = await startSession(mine, 'live-marks2-crepe.md')
+    await closePanel(mine)
+    await expect(mine.locator('.ink-live-mark')).toContainText('Live')
+    await expect(mine.locator('.ink-live-status')).toContainText('Live ·')
+    // And what the session is doing to the note, said rather than left as an absence.
+    await expect(mine.locator('.ink-live-status')).toContainText('saving when the session ends')
+
+    // A guest arriving is a face in the bar, with no panel open.
+    await theirs.goto(url)
+    await theirs.locator('#ink-live-name').fill('Lin')
+    await theirs.getByRole('button', { name: 'Join' }).click()
+    await expect(theirs.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
+    await expect(mine.locator('.ink-live-mark .ink-live-face')).toHaveCount(1, { timeout: 15_000 })
+    await expect(mine.locator('.ink-live-status')).toContainText('1 person')
+
+    // The mark is the way back in: the state is the control, as sharing's menu item is.
+    await mine.locator('.ink-live-mark').click()
+    await expect(mine.locator('.ink-share')).toContainText('End session')
+    await mine.getByRole('button', { name: 'End session' }).click()
+    await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
+    await closePanel(mine)
+
+    // And both go when it ends.
+    await expect(mine.locator('.ink-live-mark')).toHaveCount(0)
+    await expect(mine.locator('.ink-live-status')).toHaveCount(0)
+  } finally {
+    await owner.close()
+    await guest.close()
+  }
+})
+
+/**
  * A session belongs to one note, and the editor for every other note is the ordinary one.
  *
  * The first version passed the session's document to whatever was open, so opening a second note
@@ -197,6 +249,9 @@ test('another note opened during a session is that note, not the session', async
     await mine.locator('.ink-tree-name').filter({ hasText: /^live-second-crepe\.md$/ }).click()
     await expect(mine.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
     await expect(mine.locator('.ink-doc')).not.toContainText('Elsewhere.')
+    // And it does not claim to be live: the marks belong to the session's note, not to the app.
+    await expect(mine.locator('.ink-live-mark')).toHaveCount(0)
+    await expect(mine.locator('.ink-live-status')).toHaveCount(0)
 
     // And it is the ordinary editor: the syntax reveals itself, which it never does in a session.
     await caretAfter(mine, 'Before.')

@@ -170,3 +170,85 @@
   white-space: nowrap;
   user-select: none;
 }
+
+/*
+ * What says a session is running, on the owner's screen: one mark in the bar, one in the status
+ * bar. Both are the way into the panel, as sharing's menu item is the way into its own.
+ */
+.ink-live-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-sizing: border-box;
+  height: 26px;
+  margin-left: 10px;
+  padding: 0 9px;
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--ink-r-pill);
+  background: transparent;
+  color: var(--ink-fg-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ink-live-mark:hover {
+  background: var(--ink-sidebar-hover);
+  color: var(--ink-fg);
+}
+
+.ink-live-mark-text {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* The one lit thing. A dot, like the branch's dirty dot — not a filled pill, which would be the
+   loudest thing in a bar that is otherwise outlines and text. */
+.ink-live-led {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: var(--ink-r-pill);
+  background: var(--ink-added);
+}
+
+.ink-live-led.waiting {
+  background: var(--ink-warn);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ink-live-led.waiting {
+    animation: ink-live-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes ink-live-pulse {
+  50% { opacity: 0.35; }
+}
+
+/* The status bar is right-justified; this is the one thing in it that belongs on the left. */
+.ink-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--ink-fg-muted);
+}
+
+.ink-live-status-aside {
+  padding-left: 8px;
+  border-left: 1px solid var(--ink-rule);
+}
+
+/* On a phone the status bar is not on screen, so the mark in the bar carries it alone. */
+@media (max-width: 720px) {
+  .ink-live-mark {
+    margin-left: 6px;
+    padding: 0 7px;
+  }
+
+  .ink-live-mark .ink-live-mark-text {
+    /* The word goes, the dot and the faces stay: a 390px bar has room for a state, not a sentence. */
+    display: none;
+  }
+}

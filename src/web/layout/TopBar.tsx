@@ -28,6 +28,7 @@ import {
 } from '../state/ui.js'
 import { shareMenuItem } from '../share/menuItem.js'
 import { liveMenuItem } from '../live/menuItem.js'
+import { LiveTopMark } from '../live/LiveMarks.js'
 import { currentPath } from '../state/vault.js'
 
 export interface TopBarProps {
@@ -77,6 +78,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
                 {path && dirty.value ? <IconUnsavedDot /> : null}
                 {path}
               </span>
+              <LiveTopMark />
             </>
           )}
         <span style={{ marginLeft: 'auto' }} />
@@ -130,6 +132,8 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
         {path && dirty.value ? <IconUnsavedDot /> : null}
         {path}
       </span>
+      {/* Beside the note's name, because that is what the session is about. */}
+      <LiveTopMark />
       <span style={{ marginLeft: 'auto' }} />
 
       {/* Edit, read and source are three answers to one question, so they are one control with

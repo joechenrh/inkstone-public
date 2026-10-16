@@ -5,6 +5,7 @@ import { connectLive, type LiveStatus, type LiveUser, type LiveWire } from '../l
 import { editorText } from '../editor/current.js'
 import { content, editContent, flushSave } from './document.js'
 import { suspendedPath } from './suspend.js'
+import { currentPath } from './vault.js'
 
 /**
  * Whether a note is open for other people to edit, and what the panel is saying about it.
@@ -34,12 +35,25 @@ export type LivePanel =
   /** Before it starts: what pressing the button will do. */
   | { kind: 'offer'; path: string; title: string }
   | { kind: 'starting'; path: string }
-  | { kind: 'running'; copied: boolean }
+  /** `selectable` only when the clipboard refused: the link is selected and nothing is said. */
+  | { kind: 'running'; copied: boolean; selectable?: boolean }
   /** Ended, and reporting what happened — a panel that just vanishes says nothing. */
   | { kind: 'ended'; saved: boolean; guests: number }
   | { kind: 'failed'; detail: string }
 
 export const livePanel = signal<LivePanel>({ kind: 'closed' })
+
+/**
+ * The session, but only when the note it is about is the one on screen.
+ *
+ * What the editor is keyed on. A session belongs to one note; the editor must be the ordinary one
+ * for every other note, or opening a second note during a session would write into the session's
+ * document instead of its own.
+ */
+export const liveHere = computed<LiveStarted | null>(() => {
+  const session = liveSession.value
+  return session !== null && session.path === currentPath.value ? session : null
+})
 
 /** How many other people are in, which is what the dot and the status bar count. */
 export const livePeers = computed<LiveUser[]>(() => liveWire.value?.peers.value ?? [])

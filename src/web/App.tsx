@@ -12,7 +12,7 @@ import { CommitPanel } from './git/CommitPanel.js'
 import { SharePanel } from './share/SharePanel.js'
 import { LivePanel } from './live/LivePanel.js'
 import { CrepeEditor } from './editor/CrepeEditor.js'
-import { liveSession, liveWire, restoreLive } from './state/live.js'
+import { liveHere, liveWire, restoreLive } from './state/live.js'
 import { Sidebar } from './layout/Sidebar.js'
 import { RightPanel } from './layout/RightPanel.js'
 import { Shell } from './layout/Shell.js'
@@ -101,10 +101,16 @@ export function App() {
         <>
           <ConflictBar />
           <SaveErrorBar />
-          {/* Keyed on the session, which is how joining or leaving one rebuilds the editor: a
-              Milkdown editor takes its plugins while it is being built, and a shared document
-              cannot carry the reveal plugins. See `CrepeEditor`'s own note. */}
-          <CrepeEditor key={liveSession.value?.id ?? 'solo'} collab={liveWire.value} />
+          {/*
+            * Keyed on the session, which is how joining or leaving one rebuilds the editor: a
+            * Milkdown editor takes its plugins while it is being built, and a shared document
+            * cannot carry the reveal plugins. See `CrepeEditor`'s own note.
+            *
+            * And only for *that* note. The first version passed the session's document to whatever
+            * was open, so opening a second note during a session left the editor bound to the
+            * session's document — every word typed into the other note went into the shared one.
+            */}
+          <CrepeEditor key={liveHere.value?.id ?? 'solo'} collab={liveHere.value === null ? null : liveWire.value} />
           {/* Over the editor, not instead of it — the editor stays mounted so opening a note
               does not rebuild the whole Vditor instance. */}
           {currentPath.value === null && <EmptyState />}

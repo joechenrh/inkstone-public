@@ -56,18 +56,21 @@ async function startSession(page: Page, note: string): Promise<string> {
   await row.hover()
   await page.getByRole('button', { name: `Actions for ${note}` }).click()
   await page.getByText('Live share…').click()
-  await page.getByRole('button', { name: '开始协作' }).click()
-  const link = page.locator('#ink-live-link')
-  await expect(link).toBeVisible({ timeout: 15_000 })
-  const url = await link.inputValue()
+  // Scoped to the panel: a note called `emojistart-crepe.md` has a row button whose label
+  // contains the word too.
+  await page.locator('.ink-share').getByRole('button', { name: 'Start' }).click()
+  // The link is selectable text beside one button, as the share panel's is — not a boxed input.
+  const link = page.locator('.ink-share-url .ink-share-urltext')
+  await expect(link).toContainText('/live/', { timeout: 15_000 })
+  const url = `http://${(await link.innerText()).trim()}`
   expect(url).toMatch(/\/live\/[abcdefghjkmnpqrstuvwxyz23456789]{6}$/)
   return url
 }
 
 /** Out of the panel and back to the note. The panel is modal: it covers the document. */
 async function closePanel(page: Page) {
-  await page.getByRole('button', { name: '关闭' }).click()
-  await expect(page.locator('.ink-live-card')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Close live share' }).click()
+  await expect(page.locator('.ink-share')).toHaveCount(0)
 }
 
 /** Back into it, from the note's own menu — which is where a running session is reached. */
@@ -75,8 +78,8 @@ async function reopenPanel(page: Page, note: string) {
   const row = page.locator('.ink-tree-row').filter({ hasText: note })
   await row.hover()
   await page.getByRole('button', { name: `Actions for ${note}` }).click()
-  await page.getByText('协作中').click()
-  await expect(page.locator('.ink-live-card')).toContainText('协作中')
+  await page.getByText(/^Live · /).click()
+  await expect(page.locator('.ink-share')).toContainText('End session')
 }
 
 // Two editors, two contexts and a document going round twice: the default budget is for one page.
@@ -95,9 +98,9 @@ test('crepe: a guest with the link edits the note, and the owner keeps the resul
 
     // A stranger: no cookie, no account, no name yet.
     await theirs.goto(url)
-    await expect(theirs.locator('.ink-live-card')).toContainText('加入协作')
-    await theirs.locator('#ink-live-name').fill('小林')
-    await theirs.getByRole('button', { name: '加入' }).click()
+    await expect(theirs.locator('.ink-live-join')).toContainText('edit together')
+    await theirs.locator('#ink-live-name').fill('Lin')
+    await theirs.getByRole('button', { name: 'Join' }).click()
 
     // The note arrives from the room rather than from a file: this browser cannot read the vault.
     await expect(theirs.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
@@ -114,12 +117,12 @@ test('crepe: a guest with the link edits the note, and the owner keeps the resul
 
     // The guest is in the owner's presence list, by the name they chose.
     await reopenPanel(mine, 'live-crepe.md')
-    await expect(mine.locator('.ink-live-who')).toContainText('小林')
+    await expect(mine.locator('.ink-live-who')).toContainText('Lin')
 
     // Ending saves what the two of them wrote, and tells the guest so.
-    await mine.getByRole('button', { name: '结束协作' }).click()
-    await expect(mine.locator('.ink-live-card')).toContainText('协作已结束', { timeout: 15_000 })
-    await expect(theirs.locator('.ink-live-banner-over')).toContainText('协作已结束', { timeout: 15_000 })
+    await mine.getByRole('button', { name: 'End session' }).click()
+    await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
+    await expect(theirs.locator('.ink-live-said')).toContainText('has ended', { timeout: 15_000 })
 
     const saved = await mine.evaluate(async () => {
       const res = await fetch(`/api/file?path=${encodeURIComponent('notes/live-crepe.md')}`)
@@ -133,11 +136,89 @@ test('crepe: a guest with the link edits the note, and the owner keeps the resul
   }
 })
 
+/**
+ * Every socket this app opens is under `/ws`.
+ *
+ * Not a style rule: a reverse proxy only forwards an upgrade on the paths it was told about, and
+ * the deployment's nginx has one `location /ws`. The session socket lived at `/live-ws/<id>` for
+ * one release — every test passed, and in production every session reported "connection lost",
+ * because nginx proxied the handshake as an ordinary request. There is no nginx in this suite, so
+ * the invariant it depends on is what gets asserted.
+ */
+test('every socket is under /ws, which is the one path a proxy is told about', async ({ browser }) => {
+  const owner = await browser.newContext()
+  const guest = await browser.newContext()
+  const mine = await owner.newPage()
+  const theirs = await guest.newPage()
+  const opened: string[] = []
+  mine.on('websocket', (ws) => { opened.push(ws.url()) })
+  theirs.on('websocket', (ws) => { opened.push(ws.url()) })
+
+  try {
+    await signIn(mine, 'live-ws-crepe.md', 'Before.')
+    const url = await startSession(mine, 'live-ws-crepe.md')
+    await closePanel(mine)
+    await theirs.goto(url)
+    await theirs.locator('#ink-live-name').fill('Lin')
+    await theirs.getByRole('button', { name: 'Join' }).click()
+    await expect(theirs.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
+
+    expect(opened.length, 'no socket was opened at all').toBeGreaterThan(1)
+    for (const one of opened) {
+      expect(new URL(one).pathname, one).toMatch(/^\/ws(\/|$)/)
+    }
+
+    // Ended, not merely abandoned: one session per account, and the next test is the same account.
+    await reopenPanel(mine, 'live-ws-crepe.md')
+    await mine.getByRole('button', { name: 'End session' }).click()
+    await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
+  } finally {
+    await owner.close()
+    await guest.close()
+  }
+})
+
+/**
+ * A session belongs to one note, and the editor for every other note is the ordinary one.
+ *
+ * The first version passed the session's document to whatever was open, so opening a second note
+ * during a session left the editor bound to the session — every word typed into the other note went
+ * into the shared one, and the other note's own text was never on screen at all.
+ */
+test('another note opened during a session is that note, not the session', async ({ browser }) => {
+  const owner = await browser.newContext()
+  const mine = await owner.newPage()
+  try {
+    await signIn(mine, 'live-other-crepe.md', 'Elsewhere.')
+    await startSession(mine, 'live-other-crepe.md')
+    await closePanel(mine)
+
+    // A different note, while the session runs.
+    await mine.locator('.ink-tree-name').filter({ hasText: /^live-second-crepe\.md$/ }).click()
+    await expect(mine.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
+    await expect(mine.locator('.ink-doc')).not.toContainText('Elsewhere.')
+
+    // And it is the ordinary editor: the syntax reveals itself, which it never does in a session.
+    await caretAfter(mine, 'Before.')
+    await mine.keyboard.type(' **bold**')
+    await mine.waitForTimeout(400)
+    await mine.locator('.ink-doc strong').first().click()
+    await mine.waitForTimeout(400)
+    await expect(mine.locator('.ink-doc')).toContainText('**bold**')
+
+    await reopenPanel(mine, 'live-other-crepe.md')
+    await mine.getByRole('button', { name: 'End session' }).click()
+    await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
+  } finally {
+    await owner.close()
+  }
+})
+
 test('a link that is not a session says so, in one sentence for every reason', async ({ page }) => {
   await page.goto('/live/zzzzzz')
-  await expect(page.locator('.ink-live-blank')).toContainText('这个链接用不了')
+  await expect(page.locator('.ink-shared-gone-title')).toContainText('does not work')
   // And nothing about which note, which account, or whether it ever existed.
-  await expect(page.locator('.ink-live-blank')).not.toContainText('notes/')
+  await expect(page.locator('.ink-shared-gone')).not.toContainText('notes/')
 })
 
 test('the syntax does not reveal itself during a session: the markers would travel', async ({ browser }) => {
@@ -166,8 +247,8 @@ test('the syntax does not reveal itself during a session: the markers would trav
     await expect(mine.locator('.ink-doc strong')).toContainText('加粗')
 
     await reopenPanel(mine, 'live-marks-crepe.md')
-    await mine.getByRole('button', { name: '结束协作' }).click()
-    await expect(mine.locator('.ink-live-card')).toContainText('协作已结束', { timeout: 15_000 })
+    await mine.getByRole('button', { name: 'End session' }).click()
+    await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
   } finally {
     await owner.close()
   }

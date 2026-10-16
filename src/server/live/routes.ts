@@ -232,7 +232,7 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
    * the owner, and everything after that is `protocol.ts` — deliberately the only part of this
    * server that touches a document.
    */
-  app.get('/live-ws/:id', { websocket: true }, (socket: WebSocket, req) => {
+  app.get('/ws/live/:id', { websocket: true }, (socket: WebSocket, req) => {
     const { id } = req.params as { id: string }
     const session = store.get(id)
     if (session === null) {

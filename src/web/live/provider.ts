@@ -76,10 +76,16 @@ export function connectLive(options: LiveWireOptions): LiveWire {
   const status = signal<LiveStatus>('connecting')
   const peers = signal<LiveUser[]>([])
 
+  /*
+   * Under `/ws`, with the editor's own socket.
+   *
+   * A reverse proxy only forwards an upgrade on the paths it was told about, and the deployment's
+   * nginx has one `location /ws`. See the note on the route in `server/live/routes.ts`.
+   */
   const url = () => {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
     const ticket = options.ticket === undefined ? '' : `?t=${encodeURIComponent(options.ticket)}`
-    return `${protocol}//${location.host}/live-ws/${encodeURIComponent(options.id)}${ticket}`
+    return `${protocol}//${location.host}/ws/live/${encodeURIComponent(options.id)}${ticket}`
   }
 
   let socket: WebSocket | null = null

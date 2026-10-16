@@ -135,9 +135,11 @@ fs.writeFileSync(
 
 // The live-collaboration tests open these in two browsers at once and save them, so they are
 // nobody else's notes — and one per test, because the first one writes into its own fixture.
-for (const name of ['live-crepe', 'live-marks-crepe']) {
+for (const name of ['live-crepe', 'live-marks-crepe', 'live-ws-crepe', 'live-second-crepe']) {
   fs.writeFileSync(path.join(root, 'notes', `${name}.md`), 'Before.\n\nAfter.\n')
 }
+// Plainly not the one a session is about, so a test can tell which note is on screen.
+fs.writeFileSync(path.join(root, 'notes', 'live-other-crepe.md'), 'Elsewhere.\n')
 
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.
 // A wall is a block that fills its own line and has nowhere to stand beside it; the keystrokes

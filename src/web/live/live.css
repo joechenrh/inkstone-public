@@ -1,66 +1,17 @@
 /*
- * The guest's page, and the carets.
+ * What live collaboration adds, and nothing it does not.
  *
- * Two jobs. The first is the page a stranger opens: a bar, a banner and the editor, with none of
- * the application's three-section shell — `data-page="shared"` on the root lets it scroll, as the
- * read-only shared page does, and the note at the top of `share/shared.css` is the one to read for
- * why that is not the default.
- *
- * The second is `y-prosemirror`'s own caret and selection, which arrive as two class names and no
- * opinion. They are drawn here the way everything else in this application draws a mark that is
- * not text: a rail with round ends, in somebody's own colour, and the name only where it will not
- * cover a line of the note.
+ * The panel is the share panel's markup and the guest's page is the shared page's chrome, so there
+ * is no second vocabulary here: `share.css` and `shared.css` do that work. What is left is the
+ * three things neither of those has — who is here, the card that asks a guest their name, and
+ * somebody else's caret.
  */
 
-.ink-live-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--ink-bg);
-  color: var(--ink-fg);
-}
-
-.ink-live-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  box-sizing: border-box;
-  height: var(--ink-topbar-height);
-  padding: 0 20px;
-  border-bottom: 1px solid var(--ink-rule);
-  /* Above the editor's own floating furniture, and still there when the note is scrolled. */
-  position: sticky;
-  top: env(safe-area-inset-top, 0px);
-  z-index: 5;
-  background: var(--ink-bg);
-}
-
-.ink-live-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.ink-live-title {
-  font-size: 15px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ink-live-by {
-  color: var(--ink-fg-muted);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
+/* Who is here, in the bar: the shared page's own 26px round. */
 .ink-live-faces {
   display: flex;
   align-items: center;
-  flex: none;
+  margin-left: auto;
 }
 
 .ink-live-face {
@@ -68,8 +19,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border: 2px solid var(--ink-bg);
   border-radius: var(--ink-r-pill);
   color: #ffffff;
@@ -81,120 +32,86 @@
   margin-left: -7px;
 }
 
-.ink-live-banner {
+/* And in the panel, as a row of names rather than a list: there are at most eight. */
+.ink-live-who {
   display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  color: var(--ink-fg-muted);
+  font-size: 13px;
+}
+
+.ink-live-one {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  box-sizing: border-box;
-  padding: 7px 20px;
-  border-bottom: 1px solid var(--ink-rule);
-  font-size: 12px;
+  gap: 7px;
 }
 
-.ink-live-banner-ok {
-  background: color-mix(in srgb, var(--ink-added) 12%, var(--ink-bg));
-  border-bottom-color: color-mix(in srgb, var(--ink-added) 26%, var(--ink-bg));
-  color: color-mix(in srgb, var(--ink-added) 78%, var(--ink-fg));
-  font-weight: 600;
-}
-
-.ink-live-banner-over {
-  background: color-mix(in srgb, var(--ink-warn) 12%, var(--ink-bg));
-  border-bottom-color: color-mix(in srgb, var(--ink-warn) 26%, var(--ink-bg));
-  color: color-mix(in srgb, var(--ink-warn) 78%, var(--ink-fg));
-}
-
-.ink-live-dot {
-  width: 6px;
-  height: 6px;
+.ink-live-pip {
+  width: 8px;
+  height: 8px;
   flex: none;
   border-radius: var(--ink-r-pill);
-  background: var(--ink-added);
 }
 
-.ink-live-dot-warn {
-  background: var(--ink-warn);
-}
-
-/* The name card, over the note rather than instead of it: you can see what you are joining. */
-.ink-live-gate {
-  position: fixed;
-  inset: var(--ink-topbar-height) 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: var(--ink-backdrop);
-  z-index: 10;
-}
-
-.ink-live-card {
-  display: flex;
-  flex-direction: column;
-  width: min(420px, 100%);
+/* What the status says, where the page has no status bar to say it in. */
+.ink-live-said {
   box-sizing: border-box;
-  border-radius: var(--ink-r-lg);
-  background: var(--ink-bg);
-  box-shadow: var(--ink-shadow-modal);
-  overflow: hidden;
-}
-
-/* Lid and base the same height, as the commit panel's are: a box whose two edges disagree looks
-   wrong before anyone can say why. See `docs/design/sharing.md`. */
-.ink-live-card-head,
-.ink-live-card-foot {
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-  height: var(--ink-topbar-height);
-  padding: 0 20px;
-  font-size: 15px;
-  font-weight: 600;
-  gap: 8px;
-}
-
-.ink-live-card-head {
+  padding: 8px 20px;
   border-bottom: 1px solid var(--ink-rule);
+  color: var(--ink-fg-muted);
+  font-size: 13px;
 }
 
-.ink-live-card-foot {
-  justify-content: flex-end;
-  border-top: 1px solid var(--ink-rule);
+/* The name card, on the page rather than over it: there is nothing behind it to look at yet. */
+.ink-live-gate {
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px;
 }
 
-.ink-live-card-body {
+.ink-live-join {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 18px 20px;
+  gap: 10px;
+  width: min(420px, 100%);
 }
 
-.ink-live-intro {
-  margin: 0 0 6px;
+.ink-live-join-head,
+.ink-live-join-fine {
+  margin: 0;
   line-height: 1.6;
 }
 
-.ink-live-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.ink-live-join-fine {
   color: var(--ink-fg-muted);
-  text-transform: uppercase;
+  font-size: 13px;
 }
 
-.ink-live-input {
+.ink-live-join-label {
+  color: var(--ink-fg-muted);
+  font-size: 13px;
+}
+
+.ink-live-join-name {
   box-sizing: border-box;
-  height: 40px;
+  height: 38px;
   padding: 0 11px;
-  border: 1px solid var(--ink-link);
+  border: 1px solid var(--ink-rule);
   border-radius: var(--ink-r-sm);
   background: var(--ink-bg);
   color: var(--ink-fg);
   font: inherit;
+  /* 16px, or an iPhone zooms the page when it takes focus. */
   font-size: 16px;
 }
 
-.ink-live-colors {
+.ink-live-join-name:focus {
+  outline: none;
+  border-color: var(--ink-link);
+}
+
+.ink-live-join-colors {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -202,7 +119,7 @@
 }
 
 /* 44px, because this is a page people open on a phone. */
-.ink-live-color {
+.ink-live-swatch {
   width: 44px;
   height: 44px;
   padding: 0;
@@ -211,71 +128,28 @@
   cursor: pointer;
 }
 
-.ink-live-color-on {
+.ink-live-swatch.on {
   border-color: var(--ink-fg);
 }
 
-.ink-live-note {
-  margin: 0;
-  padding: 11px 13px;
-  border-radius: var(--ink-r-md);
-  background: var(--ink-code-bg);
-  color: var(--ink-fg-muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.ink-live-go {
-  height: 36px;
-  padding: 0 18px;
-  border: 1px solid color-mix(in srgb, var(--ink-link) 80%, #000000);
-  border-radius: var(--ink-r-sm);
-  background: var(--ink-link);
-  color: #ffffff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ink-live-wait,
-.ink-live-blank {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 100vh;
-  padding: 32px;
-  text-align: center;
-  color: var(--ink-fg);
-  background: var(--ink-bg);
-}
-
-.ink-live-blank h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.ink-live-blank p {
-  margin: 0;
-  max-width: 34em;
-  color: var(--ink-fg-muted);
-  line-height: 1.6;
+.ink-live-join .ink-share-btn {
+  align-self: flex-start;
+  margin-top: 4px;
 }
 
 /*
  * Somebody else's caret.
  *
- * `y-prosemirror` inserts a zero-width span for each remote caret and gives it a child for the
- * name; both are drawn here. The rail has round ends, like the quote rail and the history rail —
- * square ends are the thing the interface review was about.
+ * `y-prosemirror` inserts a zero-width span per remote caret and a child for the name; both are
+ * drawn here. The rail has round ends, like the quote rail and the history rail — square ends are
+ * the thing the interface review was about.
  */
 .ProseMirror-yjs-cursor {
   position: relative;
   display: inline-block;
   width: 0;
-  /* The rail itself is the border, so the span keeps no width of its own and the text does not
-     reflow when somebody's caret enters the line. */
+  /* The rail is the border, so the span keeps no width of its own and the line does not reflow
+     when somebody's caret enters it. */
   border-left: 2px solid currentColor;
   border-radius: var(--ink-r-pill);
   margin: 0 -1px;
@@ -295,162 +169,4 @@
   line-height: 1.3;
   white-space: nowrap;
   user-select: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .ProseMirror-yjs-cursor > div {
-    transition: opacity 120ms ease;
-  }
-}
-
-/* The owner's panel. A centred modal on a desktop, a sheet on a phone — the commit panel's shape. */
-.ink-live-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: var(--ink-backdrop);
-}
-
-@media (max-width: 720px) {
-  .ink-live-modal {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .ink-live-modal .ink-live-card {
-    width: 100%;
-    border-radius: var(--ink-r-lg) var(--ink-r-lg) 0 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-}
-
-.ink-live-card-foot-pair {
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.ink-live-terms {
-  margin: 0;
-  padding-left: 20px;
-  color: var(--ink-fg-muted);
-  line-height: 1.7;
-}
-
-.ink-live-terms code {
-  padding: 1px 5px;
-  border-radius: var(--ink-r-sm);
-  background: var(--ink-code-bg);
-  font-family: var(--ink-font-mono);
-  font-size: 13px;
-}
-
-.ink-live-linkrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.ink-live-link {
-  flex: 1 1 auto;
-  min-width: 0;
-  box-sizing: border-box;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid var(--ink-rule);
-  border-radius: var(--ink-r-sm);
-  background: var(--ink-code-bg);
-  color: var(--ink-fg);
-  font-family: var(--ink-font-mono);
-  font-size: 13px;
-}
-
-/* One width for both words, so the panel does not twitch when the label changes. */
-.ink-live-copy {
-  flex: none;
-  width: 76px;
-  height: 34px;
-  padding: 0;
-}
-
-.ink-live-who {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.ink-live-one {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.ink-live-pip {
-  width: 8px;
-  height: 8px;
-  flex: none;
-  border-radius: var(--ink-r-pill);
-}
-
-.ink-live-line {
-  margin: 0;
-  line-height: 1.6;
-}
-
-.ink-live-fine {
-  color: var(--ink-fg-muted);
-  font-size: 12px;
-}
-
-.ink-live-quiet,
-.ink-live-stop {
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--ink-rule);
-  border-radius: var(--ink-r-sm);
-  background: var(--ink-bg);
-  color: var(--ink-fg);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.ink-live-stop {
-  border-color: color-mix(in srgb, var(--ink-danger) 60%, var(--ink-bg));
-  color: var(--ink-danger);
-  font-weight: 600;
-}
-
-/* A label that belongs to a field but has no business being read out twice. */
-.ink-live-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-/* Closing the panel, which is not the same as ending the session. */
-.ink-live-x {
-  margin-left: auto;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: var(--ink-r-sm);
-  background: transparent;
-  color: var(--ink-fg-muted);
-  font: inherit;
-  font-size: 15px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.ink-live-x:hover {
-  background: var(--ink-sidebar-hover);
-  color: var(--ink-fg);
 }

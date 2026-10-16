@@ -28,9 +28,10 @@ export function liveMenuItem(path: string, title: string): MenuItem[] {
   const others = Math.max(0, livePeers.value.length - 1)
   const mine = session.path === path
   return [{
+    // The state is the label, as sharing's is. No badge, no dot, no second item.
     label: mine
-      ? `协作中 · ${others} 人`
-      : `协作中 · ${session.title}`,
+      ? `Live · ${others} ${others === 1 ? 'person' : 'people'}`
+      : `Live · ${session.title}`,
     icon: <IconUsers size={15} />,
     onSelect: () => { openLivePanel(session.path, session.title) },
   }]

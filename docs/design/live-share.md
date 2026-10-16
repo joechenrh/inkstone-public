@@ -61,6 +61,12 @@ away work that was really done, and the memory is a few kilobytes. Then: eight g
 minutes idle (measured from the last *change*, not the last connection — a room full of moving
 carets is an idle room), eight hours for a sitting.
 
+**Every socket is under `/ws`.** A reverse proxy only forwards an upgrade on the paths it was told
+about, and the deployment's nginx has one `location /ws` doing that. The session socket lived at
+`/live-ws/<id>` for one release: every test passed and every session in production said "connection
+lost", because nginx proxied the handshake as an ordinary request. An e2e test now asserts the
+invariant rather than the configuration, since there is no nginx in the suite.
+
 **The owner's socket is told apart by a ticket.** A browser cannot put a header on a WebSocket
 handshake, so `POST /api/live` hands back a random ticket and the owner's socket carries it in the
 query. It grants one thing — to be treated as the owner of a session this account started and can
@@ -82,7 +88,14 @@ browser to GitHub, never through this server — except a note you choose to sha
 note goes through this server too, in both directions, for as long as the session lasts. Pressing
 the button is choosing that.
 
-## Two bugs worth keeping written down
+## Three things worth keeping written down
+
+**The interface was in the wrong language and the wrong vocabulary.** The first version of the
+panel and the guest page invented their own look — Chinese copy in an English interface, a coloured
+dot in the panel head, uppercase mini-labels, a bulleted list of terms, a boxed input for the link.
+Reported as "UI 风格不对", which it was. They are now the share panel's markup and the shared page's
+chrome, class for class: `share.css` and `shared.css` do the work, and `live.css` holds only what
+neither of them has — who is here, the name card, and the remote caret.
 
 **A websocket route registered before the plugin is a plain HTTP route.** `app.ts` already says this
 at length for `/ws`, and live collaboration earned it again: registered next to the other routes,

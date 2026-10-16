@@ -1,4 +1,7 @@
-import { useEffect, useRef } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
+import type { RefObject } from 'preact'
+import { isPhone } from '../state/ui.js'
+import { usePendingPlaceholder } from '../state/pending.js'
 import {
   closeLivePanel,
   livePanel,
@@ -7,34 +10,36 @@ import {
   liveStatus,
   startLive,
   stopLive,
+  type LivePanel as PanelState,
 } from '../state/live.js'
+import '../share/share.css'
 import './live.css'
 
 /**
- * The panel the owner starts and ends a session from.
+ * The panel a session is started and ended from.
  *
- * The commit panel's shape, because that is this application's shape for a thing you need to look
- * at: a centred modal on a desktop, a sheet on a phone, a lid and a base of the same height. See
- * `docs/design/sharing.md` for why the two edges matching matters.
+ * **The share panel's own markup**, class for class — scrim, head, body, foot, the selectable link
+ * beside one button, the destructive action as text under a hairline. The first version invented its
+ * own look and read as a different application: a coloured dot in the head, uppercase mini-labels, a
+ * bulleted list of terms, a boxed input for the link. None of those exist anywhere else here.
  *
- * **Ending reports rather than closing.** Everything it changes is somewhere the owner cannot see —
- * a link in somebody else's hands, a commit in the history — so a panel that simply vanished would
- * be indistinguishable from a button that did nothing. Sharing learned this the same way.
+ * In English, like every other label in this interface.
+ *
+ * Closing it is not ending the session: the note is behind it, and that is where the collaborating
+ * happens.
  */
+
+/** How long the button says `Copied` before going back to `Copy`. */
+const COPIED_MS = 2000
+
 export function LivePanel() {
   const state = livePanel.value
-  const linkRef = useRef<HTMLInputElement>(null)
   const open = state.kind !== 'closed'
 
-  /*
-   * Escape closes it, and closing it is not ending the session.
-   *
-   * The panel is modal — it has to be, it is how the link is read — and the first version had no
-   * way out of the running state but `结束协作`. So the only way to get back to the note you were
-   * collaborating on was to stop collaborating on it.
-   */
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
+    // Layout, not plain effect, for the reason the share panel gives: a plain one runs after paint
+    // and drops the first Escape.
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeLivePanel() }
     window.addEventListener('keydown', onKey)
     return () => { window.removeEventListener('keydown', onKey) }
@@ -42,146 +47,184 @@ export function LivePanel() {
 
   if (state.kind === 'closed') return null
 
+  return (
+    <div class="ink-share-scrim" onClick={closeLivePanel}>
+      <div
+        class={`ink-share${isPhone.value ? ' ink-share--sheet' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Live share"
+        onClick={(e) => { e.stopPropagation() }}
+      >
+        <div class="ink-share-head">
+          <span class="ink-share-title">Live share</span>
+          <button type="button" class="ink-iconbtn" aria-label="Close live share" onClick={closeLivePanel}>✕</button>
+        </div>
+        <Body state={state} />
+      </div>
+    </div>
+  )
+}
+
+function Body({ state }: { state: Exclude<PanelState, { kind: 'closed' }> }) {
+  if (state.kind === 'offer') return <Offer state={state} />
+  if (state.kind === 'starting' || state.kind === 'running') return <Running state={state} />
+  if (state.kind === 'ended') return <Ended state={state} />
+  return (
+    <div class="ink-share-body">
+      <div class="ink-share-error">
+        <b>Could not start</b>
+        {state.detail}
+      </div>
+    </div>
+  )
+}
+
+/** What pressing the button will do, said before it is pressed. */
+function Offer({ state }: { state: PanelState & { kind: 'offer' } }) {
+  return (
+    <div class="ink-share-body">
+      <div class="ink-share-note">
+        <b>Anyone with the link can edit this note with you</b>
+        They do not sign in, and they see nothing else in this vault. While the session runs this
+        note does not save or commit — it is written once, when the session ends — and its markdown
+        syntax stops revealing itself, because those characters would travel to everyone.
+      </div>
+      <div>
+        <button
+          type="button"
+          class="ink-share-btn"
+          onClick={() => { void startLive(state.path, state.title) }}
+        >
+          Start
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function Running({ state }: { state: PanelState & { kind: 'running' | 'starting' } }) {
+  const linkRef = useRef<HTMLSpanElement>(null)
   const session = liveSession.value
-  const url = session === null ? '' : `${location.origin}/live/${session.id}`
+  const waiting = usePendingPlaceholder(state.kind === 'starting')
+  const copied = state.kind === 'running' && state.copied
+  const selectable = state.kind === 'running' && state.selectable === true
+  const url = session === null ? null : `${location.origin}/live/${session.id}`
+
+  useEffect(() => {
+    if (!copied) return
+    const timer = setTimeout(() => {
+      if (livePanel.value.kind === 'running') livePanel.value = { kind: 'running', copied: false }
+    }, COPIED_MS)
+    return () => { clearTimeout(timer) }
+  }, [copied])
+
+  useEffect(() => {
+    if (!selectable) return
+    selectAll(linkRef)
+  }, [selectable])
 
   const copy = () => {
-    if (state.kind !== 'running') return
-    // A press *is* the gesture iOS wants; nothing touches the clipboard before one. See the note in
-    // `docs/design/sharing.md` — the first version of the share panel copied automatically and
-    // failed on every phone.
+    if (url === null) return
+    // Nothing touches the clipboard before a press: a press *is* the gesture iOS wants. The share
+    // panel learned this the hard way — see `docs/design/sharing.md`.
     void navigator.clipboard?.writeText(url).then(
       () => { livePanel.value = { kind: 'running', copied: true } },
-      () => {
-        // A refusal with an obvious manual fix is not worth a sentence: select it and say nothing.
-        linkRef.current?.select()
-      },
+      () => { livePanel.value = { kind: 'running', copied: false, selectable: true } },
     )
-    if (state.copied) return
-    window.setTimeout(() => {
-      if (livePanel.value.kind === 'running') livePanel.value = { kind: 'running', copied: false }
-    }, 2000)
   }
 
+  // Everyone but us. "1 person" with nobody there reads wrong.
+  const others = Math.max(0, livePeers.value.length - 1)
+  const dropped = liveStatus.value === 'retrying' || liveStatus.value === 'connecting'
+
   return (
-    <div class="ink-live-modal" role="dialog" aria-modal="true" aria-label="Live share">
-      <div class="ink-live-card">
-        {state.kind === 'offer' && (
-          <>
-            <div class="ink-live-card-head">
-              <span>一起编辑 · {state.title}</span>
-              <button type="button" class="ink-live-x" aria-label="关闭" onClick={closeLivePanel}>✕</button>
-            </div>
-            <div class="ink-live-card-body">
-              <p class="ink-live-intro">
-                生成一个链接。拿到链接的人<strong>无需登录</strong>即可和你同时编辑这一篇。
-              </p>
-              <ul class="ink-live-terms">
-                <li>会话期间这篇的提交暂停，结束时提交一次</li>
-                <li>会话期间语法不展开（加粗不显示 <code>**</code>）</li>
-                <li>最多 8 人，空闲 30 分钟自动结束</li>
-              </ul>
-            </div>
-            <div class="ink-live-card-foot ink-live-card-foot-pair">
-              <button type="button" class="ink-live-quiet" onClick={closeLivePanel}>取消</button>
-              <button
-                type="button"
-                class="ink-live-go"
-                onClick={() => { void startLive(state.path, state.title) }}
-              >
-                开始协作
-              </button>
-            </div>
-          </>
+    <>
+      <div class="ink-share-body">
+        <div class="ink-share-link">
+          {url === null
+            ? (
+              <span class={`ink-share-url pending${waiting ? ' breathe' : ''}`}>
+                <span class="ink-share-urltext">{waiting ? 'opening a session…' : ''}</span>
+              </span>
+            )
+            : (
+              <span ref={linkRef} class="ink-share-url" onClick={() => { selectAll(linkRef) }}>
+                <span class="ink-share-urltext">{url.replace(/^https?:\/\//, '')}</span>
+              </span>
+            )}
+          <button type="button" class="ink-share-btn" disabled={url === null} onClick={copy}>
+            {copied ? 'Copied' : selectable ? 'Select' : 'Copy'}
+          </button>
+        </div>
+
+        {/* One sentence carrying both facts, as the share panel's does. */}
+        <div class="ink-share-meta">
+          <span>
+            {dropped
+              ? 'Reconnecting. The server holds the note for a few minutes and the others keep editing.'
+              : others === 0
+                ? 'Anyone with the link can edit this while the session is open.'
+                : `Editing with you: ${others} ${others === 1 ? 'person' : 'people'}.`}
+          </span>
+        </div>
+
+        {others > 0 && (
+          <div class="ink-live-who">
+            {livePeers.value.map((one, at) => (
+              <span class="ink-live-one" key={`${one.name}-${at}`}>
+                <span class="ink-live-pip" style={{ background: one.color }} aria-hidden="true" />
+                {one.name === 'me' ? 'You' : one.name}
+              </span>
+            ))}
+          </div>
         )}
+      </div>
 
-        {state.kind === 'starting' && (
+      {session !== null && (
+        <div class="ink-share-foot">
+          <button type="button" class="ink-share-stop" onClick={() => { void stopLive() }}>
+            End session
+          </button>
+        </div>
+      )}
+    </>
+  )
+}
+
+/**
+ * Reports rather than closing.
+ *
+ * Everything ending changes is somewhere the owner cannot see — a link in somebody else's hands, a
+ * commit in the history — so a panel that simply vanished would be indistinguishable from a button
+ * that did nothing.
+ */
+function Ended({ state }: { state: PanelState & { kind: 'ended' } }) {
+  return (
+    <div class="ink-share-body">
+      <div class="ink-share-note">
+        <b>Session ended</b>
+        {state.saved
+          ? 'The note is saved, with one commit for the whole session, and saving works as usual again.'
+          : 'Saving failed — the text is still in the editor. Press Cmd/Ctrl+S to try again.'}
+        {state.guests > 0 && (
           <>
-            <div class="ink-live-card-head"><span>正在开始…</span></div>
-            <div class="ink-live-card-body">
-              <p class="ink-live-intro">先保存这一篇，再开一个房间。</p>
-            </div>
-            <div class="ink-live-card-foot" />
-          </>
-        )}
-
-        {state.kind === 'running' && session !== null && (
-          <>
-            <div class="ink-live-card-head">
-              <span class={liveStatus.value === 'live' ? 'ink-live-dot' : 'ink-live-dot ink-live-dot-warn'} aria-hidden="true" />
-              <span>{liveStatus.value === 'live' ? '协作中' : '连接断了'} · {session.title}</span>
-              {/* Closing the panel leaves the session running: the note is behind it, and that is
-                  where the collaborating happens. */}
-              <button type="button" class="ink-live-x" aria-label="关闭" onClick={closeLivePanel}>✕</button>
-            </div>
-            <div class="ink-live-card-body">
-              <div class="ink-live-linkrow">
-                <label class="ink-live-hidden" for="ink-live-link">协作链接</label>
-                <input id="ink-live-link" ref={linkRef} class="ink-live-link" readOnly value={url} />
-                {/* Never changes width or colour — only the word. Three changes to say one thing
-                    made the share panel twitch on every press. */}
-                <button type="button" class="ink-live-go ink-live-copy" onClick={copy}>
-                  {state.copied ? '已复制' : '复制'}
-                </button>
-              </div>
-
-              {liveStatus.value === 'retrying' && (
-                <p class="ink-live-note">
-                  连接断了，正在重连。服务器替你把文档撑着几分钟，这段时间对方照改；超时会话就结束，
-                  对方页面变只读，你回来时把结果落盘。
-                </p>
-              )}
-
-              <span class="ink-live-label">在线 {livePeers.value.length} 人</span>
-              <div class="ink-live-who">
-                {livePeers.value.map((one, at) => (
-                  <div class="ink-live-one" key={`${one.name}-${at}`}>
-                    <span class="ink-live-pip" style={{ background: one.color }} aria-hidden="true" />
-                    <span>{one.name === 'me' ? '我' : one.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div class="ink-live-card-foot ink-live-card-foot-pair">
-              <span class="ink-live-fine">链接只在会话期间有效</span>
-              <button type="button" class="ink-live-stop" onClick={() => { void stopLive() }}>
-                结束协作
-              </button>
-            </div>
-          </>
-        )}
-
-        {state.kind === 'ended' && (
-          <>
-            <div class="ink-live-card-head"><span>协作已结束</span></div>
-            <div class="ink-live-card-body">
-              <p class="ink-live-line">
-                {state.saved ? '已保存并提交一次。' : '保存失败了 —— 文本还在编辑器里，按 Cmd/Ctrl+S 再试。'}
-              </p>
-              <p class="ink-live-line">这篇的提交恢复正常。</p>
-              <p class="ink-live-line">
-                链接已失效{state.guests > 0 ? `，还开着页面的 ${state.guests} 人看到「协作已结束」，内容变只读` : ''}。
-              </p>
-              <p class="ink-live-note">别人改坏了？历史里这一条可以整条回退。</p>
-            </div>
-            <div class="ink-live-card-foot">
-              <button type="button" class="ink-live-go" onClick={closeLivePanel}>好</button>
-            </div>
-          </>
-        )}
-
-        {state.kind === 'failed' && (
-          <>
-            <div class="ink-live-card-head"><span>没能开始</span></div>
-            <div class="ink-live-card-body">
-              <p class="ink-live-line">{state.detail}</p>
-            </div>
-            <div class="ink-live-card-foot">
-              <button type="button" class="ink-live-go" onClick={closeLivePanel}>好</button>
-            </div>
+            {' '}
+            The link no longer works; {state.guests === 1 ? 'the person' : `the ${state.guests} people`}
+            {' '}still on it {state.guests === 1 ? 'sees' : 'see'} that it ended, and can only read.
           </>
         )}
       </div>
     </div>
   )
+}
+
+function selectAll(ref: RefObject<HTMLSpanElement>): void {
+  const el = ref.current
+  if (el === null) return
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  const selection = getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
 }

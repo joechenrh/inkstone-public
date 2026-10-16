@@ -8,14 +8,24 @@ const SETTLE_MS = 400
  * Keep the shared `Y.Text` in step with the note's markdown.
  *
  * This is the whole of how the server can answer an agent's read without a ProseMirror schema —
- * see `server/live/mirror.ts`, which is the other half. Written by whoever is connected, which is a
- * race nobody loses: the text is replaced with what the document says, and every client's document
- * is the same document.
+ * see `server/live/mirror.ts`, which is the other half.
+ *
+ * **One writer, which the caller guarantees.** The first version attached this in every client,
+ * on the reasoning that they all hold the same document so they would all write the same text.
+ * They do — and two clients each replacing the whole text concurrently is two insertions of it,
+ * which a CRDT merges into the note twice over. Reported as every line appearing doubled while a
+ * guest was in the room. Only the owner's editor writes this now.
  *
  * Debounced, because a keystroke is not worth a CRDT update of the whole note — and written once
  * immediately, because a session nobody is typing in should still be readable.
  */
-export function keepMirror(wire: LiveWire, read: () => string): () => void {
+export interface MirrorWriter {
+  /** Write it now rather than on the timer — before answering an agent, so the answer is current. */
+  flush: () => void
+  stop: () => void
+}
+
+export function keepMirror(wire: LiveWire, read: () => string): MirrorWriter {
   const text = wire.doc.getText(MIRROR)
   let timer = 0
 
@@ -36,8 +46,11 @@ export function keepMirror(wire: LiveWire, read: () => string): () => void {
 
   wire.doc.on('update', schedule)
   write()
-  return () => {
-    window.clearTimeout(timer)
-    wire.doc.off('update', schedule)
+  return {
+    flush: write,
+    stop: () => {
+      window.clearTimeout(timer)
+      wire.doc.off('update', schedule)
+    },
   }
 }

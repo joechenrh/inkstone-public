@@ -4,7 +4,7 @@ import { Slice } from '@milkdown/kit/prose/model'
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import type { Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
-import { INBOX, RESULTS } from '../../shared/live-wire.js'
+import { CLAIMS, INBOX, RESULTS } from '../../shared/live-wire.js'
 import type { LiveBatch, LiveFailure, LiveOp, LiveResult } from '../../shared/live-ops.js'
 import { findHeading, findText, type Hit } from './locate.js'
 import type { LiveWire } from './provider.js'
@@ -25,18 +25,48 @@ import type { LiveWire } from './provider.js'
  * **One transaction for the batch**, so a failure leaves nothing behind: an agent that cannot tell
  * whether half its edit landed has to re-read to find out, and may undo somebody else's work doing
  * it.
+ *
+ * **Exactly one client applies it**, which the first version got wrong and which corrupts notes:
+ * every client in a room sees the same inbox, so every client applied the batch. Deletions looked
+ * right — they delete the same characters — and every insertion happened once per client, so one
+ * session with one guest in it turned two words into `Programmming` and `什么是是`. Reported.
+ *
+ * Two things stop it now. The caller attaches this only in the owner's editor, and a claim in the
+ * document decides between any clients that remain: each claims the batch, waits for the claims to
+ * settle, and applies only if the claim that won is its own.
  */
-export function serveAgent(wire: LiveWire, ctx: Ctx, view: EditorView): () => void {
+
+/** Long enough for a claim from another client to arrive; nothing beside an eight-second wait. */
+const CLAIM_MS = 150
+
+export function serveAgent(
+  wire: LiveWire,
+  ctx: Ctx,
+  view: EditorView,
+  /** Bring the mirror up to date before the result is written. See `mirror.ts`. */
+  flushMirror: () => void,
+): () => void {
   const inbox = wire.doc.getArray<LiveBatch>(INBOX)
   const results = wire.doc.getMap<LiveResult>(RESULTS)
+  const claims = wire.doc.getMap<number>(CLAIMS)
+  const timers = new Set<number>()
 
   const run = () => {
     const batch = inbox.get(0)
     if (batch === undefined) return
-    // Already answered: two clients in the room both see the inbox, and the second one must not
-    // apply the batch again on top of the first one's work.
     if (results.get(batch.id) !== undefined) return
+    if (claims.get(batch.id) === undefined) claims.set(batch.id, wire.doc.clientID)
+    const timer = window.setTimeout(() => {
+      timers.delete(timer)
+      // Whoever's claim survived the merge does the work, and only them.
+      if (claims.get(batch.id) !== wire.doc.clientID) return
+      if (results.get(batch.id) !== undefined) return
+      apply(batch)
+    }, CLAIM_MS)
+    timers.add(timer)
+  }
 
+  const apply = (batch: LiveBatch) => {
     let tr = view.state.tr
     let failure: LiveFailure | undefined
 
@@ -49,13 +79,26 @@ export function serveAgent(wire: LiveWire, ctx: Ctx, view: EditorView): () => vo
     }
 
     if (failure === undefined && tr.docChanged) view.dispatch(tr)
-    results.set(batch.id, { id: batch.id, ...(failure === undefined ? {} : { failure }) })
+    /*
+     * The mirror first, and in the same transaction as the result.
+     *
+     * The server answers the waiting request by reading the mirror the moment the result appears,
+     * and the mirror is otherwise written on a debounce — so the first version answered 200 with
+     * the text and version from *before* the edit. Reported: "200 的响应体里 text 和 version 都是旧的".
+     */
+    wire.doc.transact(() => {
+      flushMirror()
+      results.set(batch.id, { id: batch.id, ...(failure === undefined ? {} : { failure }) })
+    })
   }
 
   inbox.observe(run)
   // And once on attach: a batch may have been parked while this client was connecting.
   run()
-  return () => { inbox.unobserve(run) }
+  return () => {
+    inbox.unobserve(run)
+    for (const timer of timers) window.clearTimeout(timer)
+  }
 }
 
 type Located = { at: Hit } | { failure: LiveFailure }

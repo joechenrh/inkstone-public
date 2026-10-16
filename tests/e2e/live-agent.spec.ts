@@ -70,7 +70,7 @@ test('an agent reads the note, edits it, and the owner keeps the result', async 
   await expect(page.locator('.ink-doc')).toContainText('The agent was here.', { timeout: 15_000 })
 
   // And the agent is in the room, where the owner can see it.
-  await expect(page.locator('.ink-live-mark .ink-live-face')).toHaveCount(1, { timeout: 15_000 })
+  await expect(page.locator('.ink-live-btn')).toHaveAttribute('title', /agent/, { timeout: 15_000 })
 
   // Markdown, parsed the editor's way rather than inserted as characters.
   const appended = await request.post(`/api/live/${id}/edit`, {
@@ -153,4 +153,82 @@ test('every refusal says what to do about it', async ({ page, request }) => {
   await page.getByRole('menuitem', { name: /^Live · / }).click()
   await page.getByRole('button', { name: 'End session' }).click()
   await expect(page.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
+})
+
+/**
+ * One edit, one application, however many people are watching.
+ *
+ * Reported after a real session: with a guest in the room, an agent's four ops came back `200` with
+ * `matched: 1` each and the note ended up holding `Programmming` and `什么是是` — every client had
+ * applied the batch, so each insertion happened once per browser while the deletions, deleting the
+ * same characters, looked fine. The same cause doubled the mirror: two clients replacing the whole
+ * text concurrently is two copies of it.
+ *
+ * So the test needs two browsers. One is not enough to see any of it.
+ */
+test('an edit lands once with a guest in the room, and the answer is already current', async ({ browser, request }) => {
+  const owner = await browser.newContext()
+  const guest = await browser.newContext()
+  const mine = await owner.newPage()
+  const theirs = await guest.newPage()
+
+  try {
+    await signIn(mine, NOTE, 'Before.')
+    const { id, token } = await asAgent(mine)
+    const auth = { authorization: `Bearer ${token}` }
+
+    // A guest, in the room and editing, exactly as when this was reported.
+    await theirs.goto(`/live/${id}`)
+    await theirs.locator('#ink-live-name').fill('Guest 2')
+    await theirs.getByRole('button', { name: 'Join' }).click()
+    await expect(theirs.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
+    await expect(mine.locator('.ink-live-btn')).toHaveAttribute('title', /Guest 2/, { timeout: 15_000 })
+
+    const before = await (await request.get(`/api/live/${id}/text`, { headers: auth })).json() as
+      { version: number; text: string; applying: boolean }
+    expect(before.applying, 'the owner is here, so somebody can apply').toBe(true)
+
+    // An insertion, which is the op that duplicated: a deletion would have hidden the bug.
+    const res = await request.post(`/api/live/${id}/edit`, {
+      headers: auth,
+      data: { version: before.version, ops: [{ find: 'Before.', replace: 'Before. once upon a time.' }] },
+    })
+    expect(res.ok(), await res.text()).toBe(true)
+
+    /*
+     * The answer carries the edit, not the note as it was.
+     *
+     * Reported: "200 的响应体里 text 和 version 都是旧的". The result was written the instant the
+     * transaction dispatched and the mirror followed on a debounce, so the server read the old one.
+     */
+    const answered = await res.json() as { text: string; version: number }
+    expect(answered.text).toContain('once upon a time.')
+    expect(answered.version).toBeGreaterThan(before.version)
+
+    // Once. Not once per browser.
+    expect(answered.text.match(/once upon a time\./g)).toHaveLength(1)
+    await expect(mine.locator('.ink-doc')).toContainText('once upon a time.', { timeout: 15_000 })
+    await expect(theirs.locator('.ink-doc')).toContainText('once upon a time.', { timeout: 15_000 })
+    expect((await mine.locator('.ink-doc').innerText()).match(/once upon a time\./g)).toHaveLength(1)
+
+    // And the note itself is not doubled: the mirror has one writer now.
+    const after = await (await request.get(`/api/live/${id}/text`, { headers: auth })).json() as
+      { text: string }
+    expect(after.text.match(/Before\./g)).toHaveLength(1)
+    expect(after.text.match(/After\./g)).toHaveLength(1)
+
+    await mine.getByRole('button', { name: `Actions for ${NOTE}` }).click()
+    await mine.getByRole('menuitem', { name: /^Live · / }).click()
+    await mine.getByRole('button', { name: 'End session' }).click()
+    await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
+
+    const saved = await mine.evaluate(async () => {
+      const res2 = await fetch(`/api/file?path=${encodeURIComponent('notes/live-agent-crepe.md')}`)
+      return (await res2.json() as { content: string }).content
+    })
+    expect(saved.match(/once upon a time\./g), 'the note kept two copies').toHaveLength(1)
+  } finally {
+    await owner.close()
+    await guest.close()
+  }
 })

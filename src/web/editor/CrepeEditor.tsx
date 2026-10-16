@@ -352,8 +352,20 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
            * open the document holds literal asterisks, and an agent reading those would anchor on
            * text nobody can see.
            */
-          stopMirror = keepMirror(wire, () => closedMarkdown(c, crepe.getMarkdown()))
-          stopAgent = serveAgent(wire, c, c.get(editorViewCtx))
+          /*
+           * Only in the owner's editor.
+           *
+           * Every client in a room sees the same mirror and the same inbox, and the first version
+           * attached both halves everywhere: two clients wrote the whole mirror concurrently and
+           * the CRDT merged both copies — every line of the note appeared twice — and two clients
+           * applied every agent batch, so each insertion happened once per browser. Both reported
+           * from one session with one guest in it.
+           */
+          if (!guest) {
+            const mirror = keepMirror(wire, () => closedMarkdown(c, crepe.getMarkdown()))
+            stopMirror = mirror.stop
+            stopAgent = serveAgent(wire, c, c.get(editorViewCtx), mirror.flush)
+          }
         })
       }
       // The editor's own spelling of what it was built with; see the note in the sync effect.

@@ -292,9 +292,16 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
         .map((state) => (state as { user?: { name?: unknown; color?: unknown } }).user)
         .filter((user): user is { name: string; color: string } =>
           typeof user?.name === 'string' && typeof user.color === 'string'),
-      // Whether anybody is in a position to apply an edit: the one thing an agent cannot find out
-      // for itself, and the difference between "retry" and "give up".
-      applying: here.seats.size > 0,
+      /*
+       * Whether an edit can be applied *right now*.
+       *
+       * The owner's editor specifically, not any socket: a guest's browser deliberately applies
+       * nothing — two clients applying the same batch is how a note gets `Programmming` in it —
+       * so a room full of guests with the owner away is a room with no hands in it. This is the
+       * one thing an agent cannot find out for itself, and the difference between "retry" and
+       * "give up".
+       */
+      applying: [...here.seats.values()].some((seat) => seat.isOwner),
     })
   })
 

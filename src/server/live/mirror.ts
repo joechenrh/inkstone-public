@@ -1,8 +1,8 @@
 import * as Y from 'yjs'
-import { INBOX, MIRROR, RESULTS } from '../../shared/live-wire.js'
+import { CLAIMS, INBOX, MIRROR, RESULTS } from '../../shared/live-wire.js'
 import type { LiveBatch, LiveResult } from '../../shared/live-ops.js'
 
-export { INBOX, MIRROR, RESULTS } from '../../shared/live-wire.js'
+export { CLAIMS, INBOX, MIRROR, RESULTS } from '../../shared/live-wire.js'
 
 /**
  * The server's whole view of a session's text, and the only way it reaches one.
@@ -28,6 +28,7 @@ export function watchMirror(doc: Y.Doc): Mirror {
   const text = doc.getText(MIRROR)
   const results = doc.getMap<LiveResult>(RESULTS)
   const inbox = doc.getArray<LiveBatch>(INBOX)
+  const claims = doc.getMap<number>(CLAIMS)
 
   /*
    * Counted, not derived from the text.
@@ -58,6 +59,7 @@ export function watchMirror(doc: Y.Doc): Mirror {
         results.unobserve(onResult)
         clearTimeout(timer)
         results.delete(batch.id)
+        claims.delete(batch.id)
         /*
          * The batch goes either way.
          *

@@ -196,33 +196,54 @@ test('a running session shows in the top bar and the status bar, and is the way 
   try {
     await signIn(mine, 'live-marks2-crepe.md', 'Before.')
     // Neither mark before there is a session, rather than an empty one.
-    await expect(mine.locator('.ink-live-mark')).toHaveCount(0)
+    await expect(mine.locator('.ink-live-btn')).toHaveCount(0)
     await expect(mine.locator('.ink-live-status')).toHaveCount(0)
 
     const url = await startSession(mine, 'live-marks2-crepe.md')
     await closePanel(mine)
-    await expect(mine.locator('.ink-live-mark')).toContainText('Live')
-    await expect(mine.locator('.ink-live-status')).toContainText('Live ·')
-    // And what the session is doing to the note, said rather than left as an absence.
-    await expect(mine.locator('.ink-live-status')).toContainText('saving when the session ends')
+    // One more icon button in the bar — no pill, no initial disc: see `LiveMarks`.
+    await expect(mine.locator('.ink-live-btn')).toHaveCount(1)
+    await expect(mine.locator('.ink-live-btn .ink-live-led')).toHaveCount(1)
+    // And the words are in the status bar, in the voice of the counters beside them.
+    await expect(mine.locator('.ink-statusbar')).toContainText('Live')
+    await expect(mine.locator('.ink-statusbar')).toContainText('saved when the session ends')
+
+    /*
+     * The same size as the counters it sits beside.
+     *
+     * The strip's own font-size is 14 and `.ink-statusbar-counts` steps down to 12, so anything
+     * that inherits the bar reads a size too big next to the only other text in it. It did, and it
+     * was visible in a screenshot before anybody could name it.
+     */
+    const sizes = await mine.evaluate(() => {
+      const read = (sel: string) => {
+        const el = document.querySelector(sel)
+        return el === null ? null : getComputedStyle(el).fontSize
+      }
+      return { live: read('.ink-live-status'), counts: read('.ink-statusbar-counts') }
+    })
+    expect(sizes.counts).not.toBeNull()
+    expect(sizes.live, 'the live text is a different size from the counters beside it')
+      .toBe(sizes.counts)
 
     // A guest arriving is a face in the bar, with no panel open.
     await theirs.goto(url)
     await theirs.locator('#ink-live-name').fill('Lin')
     await theirs.getByRole('button', { name: 'Join' }).click()
     await expect(theirs.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
-    await expect(mine.locator('.ink-live-mark .ink-live-face')).toHaveCount(1, { timeout: 15_000 })
-    await expect(mine.locator('.ink-live-status')).toContainText('1 person')
+    // Who is here is in the button's title and in the status bar, not drawn as a disc in the bar.
+    await expect(mine.locator('.ink-live-btn')).toHaveAttribute('title', /Lin/, { timeout: 15_000 })
+    await expect(mine.locator('.ink-statusbar')).toContainText('1 person')
 
-    // The mark is the way back in: the state is the control, as sharing's menu item is.
-    await mine.locator('.ink-live-mark').click()
+    // The button is the way back in: the state is the control, as sharing's menu item is.
+    await mine.locator('.ink-live-btn').click()
     await expect(mine.locator('.ink-share')).toContainText('End session')
     await mine.getByRole('button', { name: 'End session' }).click()
     await expect(mine.locator('.ink-share')).toContainText('Session ended', { timeout: 15_000 })
     await closePanel(mine)
 
     // And both go when it ends.
-    await expect(mine.locator('.ink-live-mark')).toHaveCount(0)
+    await expect(mine.locator('.ink-live-btn')).toHaveCount(0)
     await expect(mine.locator('.ink-live-status')).toHaveCount(0)
   } finally {
     await owner.close()
@@ -250,7 +271,7 @@ test('another note opened during a session is that note, not the session', async
     await expect(mine.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
     await expect(mine.locator('.ink-doc')).not.toContainText('Elsewhere.')
     // And it does not claim to be live: the marks belong to the session's note, not to the app.
-    await expect(mine.locator('.ink-live-mark')).toHaveCount(0)
+    await expect(mine.locator('.ink-live-btn')).toHaveCount(0)
     await expect(mine.locator('.ink-live-status')).toHaveCount(0)
 
     // And it is the ordinary editor: the syntax reveals itself, which it never does in a session.

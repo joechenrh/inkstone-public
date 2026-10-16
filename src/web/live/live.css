@@ -252,3 +252,47 @@
     display: none;
   }
 }
+
+/*
+ * The agent token.
+ *
+ * A credential rather than a link, so it is hidden until asked for — this panel is open while
+ * somebody reads the link off their screen to the person beside them. See `LivePanel`.
+ */
+.ink-live-token {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ink-live-token-label {
+  color: var(--ink-fg-muted);
+  white-space: nowrap;
+}
+
+.ink-live-token-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ink-font-mono);
+  color: var(--ink-fg);
+}
+
+.ink-live-token-value.hidden {
+  color: var(--ink-fg-muted);
+  letter-spacing: 0.08em;
+}
+
+.ink-live-token-show {
+  flex: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-link);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}

@@ -34,14 +34,6 @@ export default defineWorkspace([
     },
   },
   {
-    test: {
-      name: 'agent',
-      environment: 'node',
-      globals: true,
-      include: ['tests/agent/**/*.test.ts'],
-    },
-  },
-  {
     define: buildConstants,
     test: {
       name: 'web',

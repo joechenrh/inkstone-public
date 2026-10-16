@@ -3,7 +3,9 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { WebSocket } from 'ws'
 import * as Y from 'yjs'
 import type { LiveConfig } from '../config.js'
+import { watchMirror, type Mirror } from './mirror.js'
 import { forget, greet, makeRoom, receive, relay, type Room, type Wire } from './protocol.js'
+import { parseOps } from '../../shared/live-ops.js'
 import { LiveStore, MAX_GUESTS, type LiveSession } from './store.js'
 
 /**
@@ -46,6 +48,15 @@ interface Seat {
 interface Live {
   room: Room
   ticket: string
+  /**
+   * The agent's own credential.
+   *
+   * Not the session id: that is a capability to edit in a browser and gets pasted into chat
+   * windows, and an API token is scriptable and logged. One per session, dead with it. See
+   * `docs/design/live-agent.md`.
+   */
+  agentToken: string
+  mirror: Mirror
   stopRelay: () => void
   /** Every socket in the room, so an ending can close them with a reason. */
   seats: Map<Wire, Seat>
@@ -68,6 +79,8 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
     const made: Live = {
       room,
       ticket: randomBytes(24).toString('base64url'),
+      agentToken: randomBytes(24).toString('base64url'),
+      mirror: watchMirror(session.doc),
       stopRelay: relay(room),
       seats: new Map(),
     }
@@ -93,6 +106,7 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
       if (why === 'held') found.seats.delete(wire)
     }
     if (why === 'held') return
+    found.mirror.stop()
     found.stopRelay()
     found.room.doc.destroy()
     rooms.delete(id)
@@ -163,6 +177,7 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
       path: session.path,
       title: session.title,
       ticket: live(session).ticket,
+      agentToken: live(session).agentToken,
       // Work that outlived the owner's connection. The browser asks before it replaces what is on
       // screen, because these edits were made while it was not looking.
       reclaim: session.keepUntil !== null,
@@ -185,6 +200,7 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
         path: mine.path,
         title: mine.title,
         ticket: live(mine).ticket,
+        agentToken: live(mine).agentToken,
         reclaim: mine.keepUntil !== null,
         guests: guests(mine),
       },
@@ -223,6 +239,178 @@ export function registerLiveRoutes(app: FastifyInstance, deps: LiveRoutesDeps): 
     store.end(id)
     shut(id, 'owner')
     return await reply.send({ ended: true })
+  })
+
+  /**
+   * Whose session this is, for an agent.
+   *
+   * The same answer for "not a session" and "not your token" where it can be: which one it was is a
+   * fact about somebody else's notes.
+   */
+  function agentOf(req: FastifyRequest, id: string): Live | null {
+    const found = rooms.get(id)
+    if (found === undefined) return null
+    const given = /^Bearer\s+(.+)$/i.exec(req.headers.authorization ?? '')?.[1]
+    return given !== undefined && given === found.agentToken ? found : null
+  }
+
+  const NO_SESSION = {
+    error: 'no such session',
+    hint: 'the session ended, or the id is wrong: ask whoever gave you the link for a new one',
+  }
+  const NOT_YOUR_TOKEN = {
+    error: 'not this session\u2019s token',
+    hint: 'use the agent token from the owner\u2019s Live share panel, not the session id',
+  }
+
+  /** Where both agent routes start: the session, the token, and the refusals for each. */
+  function agentReply(req: FastifyRequest, id: string): { session: LiveSession<Y.Doc>; here: Live } | { code: 404 | 401; body: typeof NO_SESSION } {
+    const session = store.get(id)
+    if (session === null) return { code: 404, body: NO_SESSION }
+    const here = agentOf(req, id)
+    if (here === null) return { code: 401, body: NOT_YOUR_TOKEN }
+    return { session, here }
+  }
+
+  /**
+   * The note, as text.
+   *
+   * Answered off the mirror, so it costs nothing and works when the only client in the session is a
+   * phone with its timers throttled — see `mirror.ts` for why that matters.
+   */
+  app.get('/api/live/:id/text', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const found = agentReply(req, id)
+    if ('code' in found) return await reply.code(found.code).send(found.body)
+    if (tooFast(id)) return await reply.code(429).send(TOO_FAST)
+    const { session, here } = found
+    return await reply.send({
+      note: session.path,
+      version: here.mirror.version(),
+      text: here.mirror.text(),
+      editors: [...here.room.awareness.getStates().values()]
+        .map((state) => (state as { user?: { name?: unknown; color?: unknown } }).user)
+        .filter((user): user is { name: string; color: string } =>
+          typeof user?.name === 'string' && typeof user.color === 'string'),
+      // Whether anybody is in a position to apply an edit: the one thing an agent cannot find out
+      // for itself, and the difference between "retry" and "give up".
+      applying: here.seats.size > 0,
+    })
+  })
+
+  /** The one colour the guest page does not offer, so a purple name is always the agent. */
+  const AGENT_COLOR = '#7a4fa3'
+  /** Eight seconds: long enough for a browser that is awake, short enough to be an answer. */
+  const APPLY_MS = 8 * 1000
+  /** Sixty a minute per session: a program in a loop, and one note's worth of work. */
+  const PER_MINUTE = 60
+  const spent = new Map<string, { from: number; count: number }>()
+
+  /**
+   * Whether this session has had its minute's worth.
+   *
+   * Per session rather than per address: the thing worth protecting is the note and the person
+   * watching it being edited, and an agent on a laptop and one in a data centre cost the same.
+   */
+  function tooFast(id: string): boolean {
+    const at = now()
+    const seen = spent.get(id)
+    if (seen === undefined || at - seen.from >= 60_000) {
+      spent.set(id, { from: at, count: 1 })
+      return false
+    }
+    seen.count += 1
+    return seen.count > PER_MINUTE
+  }
+
+  const TOO_FAST = {
+    error: 'too many requests',
+    hint: 'sixty a minute per session: wait and retry',
+  }
+
+  /**
+   * Edit the note.
+   *
+   * Anchored ops, applied by a browser, atomically. Every refusal carries the current text and a
+   * sentence saying what to do with it, because the caller is a program that can fix its own
+   * request if it is told how. See `docs/design/live-agent.md`.
+   */
+  app.post('/api/live/:id/edit', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const found = agentReply(req, id)
+    if ('code' in found) return await reply.code(found.code).send(found.body)
+    if (tooFast(id)) return await reply.code(429).send(TOO_FAST)
+    const { here } = found
+
+    const body = (req.body ?? {}) as { ops?: unknown; version?: unknown; waitMs?: unknown }
+    // `body.ops ?? body` so a caller that sent a bare array, or a document, is told the same thing.
+    const parsed = parseOps(body.ops ?? body)
+    if ('error' in parsed) {
+      return await reply.code(422).send({
+        error: parsed.error,
+        version: here.mirror.version(),
+        hint: 'anchor on text that is in the note: {"find": "<exact text>", "replace": "<new text>"}',
+      })
+    }
+
+    if (typeof body.version === 'number' && body.version !== here.mirror.version()) {
+      return await reply.code(409).send({
+        error: 'the note moved',
+        version: here.mirror.version(),
+        text: here.mirror.text(),
+        hint: 're-read the note and redo your ops against this text: somebody typed while you were thinking',
+      })
+    }
+
+    /*
+     * The agent, in the room.
+     *
+     * Its edits are applied by somebody else's client and therefore wear that person's name, so
+     * this is the only place it is visible — and the server can do it alone, because it holds the
+     * `Awareness` and does not need a browser to be a participant. Purple is the one colour a guest
+     * cannot pick for themselves, so a purple name in the list is always this.
+     */
+    // `setLocalState`, not `setLocalStateField`: the latter is a no-op while the local state is
+    // null, which is exactly how `makeRoom` leaves it so that an empty room has an empty presence
+    // list. A field setter that silently does nothing is how the agent stayed invisible once.
+    here.room.awareness.setLocalState({ user: { name: 'agent', color: AGENT_COLOR } })
+
+    const batch = { id: randomBytes(8).toString('hex'), ops: parsed.ops }
+    // `waitMs` is for the tests only: a suite that waited the honest eight seconds for the
+    // nobody-is-applying answer is a suite nobody runs. Capped, so it cannot be used to hold a
+    // request open.
+    const waitMs = typeof body.waitMs === 'number' && body.waitMs > 0
+      ? Math.min(body.waitMs, APPLY_MS)
+      : APPLY_MS
+    const answer = await here.mirror.submit(batch, waitMs)
+
+    if (answer === 'timeout') {
+      return await reply.code(503).send({
+        error: 'nobody is applying edits right now',
+        hint: 'the session has no connected editor at the moment — wait a few seconds and retry',
+      })
+    }
+
+    const failed = answer.failure
+    if (failed !== undefined) {
+      return await reply.code(422).send({
+        error: failed.kind === 'missing' ? 'anchor not found' : 'anchor is ambiguous',
+        op: failed.op,
+        needle: failed.needle,
+        matched: failed.kind === 'missing' ? 0 : failed.matched,
+        version: here.mirror.version(),
+        text: here.mirror.text(),
+        hint: failed.kind === 'missing'
+          ? 'that text is not in the note as written: re-read it and anchor on what is there'
+          : 'include more of the surrounding text so the anchor matches exactly once',
+      })
+    }
+
+    return await reply.send({
+      version: here.mirror.version(),
+      text: here.mirror.text(),
+      applied: parsed.ops.map((_op, at) => ({ op: at, matched: 1 })),
+    })
   })
 
   /**

@@ -89,27 +89,6 @@ export const IconOutline = (p: IconProps) =>
     'ink-icon-outline',
   )
 
-/**
- * The agent: a prompt.
- *
- * Was a speech bubble with a caret inside it, and it was the wrong weight for the row it sits in.
- * Rendered beside Outline, History and Commit the difference is obvious — those are wide, open and
- * built from straight lines across the whole box, and the bubble was a small dense shape with
- * detail too fine to read at 20px.
- *
- * A bubble also collides with History's rectangle, which is its immediate neighbour in the phone
- * menu. This is two strokes, spans the box, and says the true thing: you type, it answers.
- */
-export const IconAgent = (p: IconProps) =>
-  svg(
-    <>
-      <path class="ink-agent-caret" d="M4.5 8 8.5 12l-4 4" />
-      <line x1="11.5" y1="16" x2="19.5" y2="16" />
-    </>,
-    p,
-    'ink-icon-agent',
-  )
-
 /** A plain document. Used in labelled menus, where the word "New" carries the action and a
  *  plus on the glyph would only repeat it — and would be the first thing to blur at 15px. */
 export const IconFile = (p: IconProps) =>

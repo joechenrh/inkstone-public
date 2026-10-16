@@ -26,6 +26,8 @@ import { marksEndAtTheirMarker } from './mark-inclusivity.js'
 import { collab, collabServiceCtx } from '@milkdown/plugin-collab'
 import type { LiveWire } from '../live/provider.js'
 import { provideEditorText } from './current.js'
+import { serveAgent } from '../live/apply.js'
+import { keepMirror } from '../live/mirror.js'
 import { copyClosed } from './copy-closed.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
 import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
@@ -174,6 +176,9 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
 
     let disposed = false
     let debounce = 0
+    /** The agent's two halves, started with the session and stopped with the editor. */
+    let stopMirror = (): void => {}
+    let stopAgent = (): void => {}
     // What the editor is actually being built with. `content` can change while `create()` is still
     // resolving — on the GitHub route the repository, the token and the first file all arrive
     // asynchronously — and recording the *later* value as "what the editor shows" makes the sync
@@ -338,6 +343,17 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
           // no vault — and offering that as a template is offering to empty the room.
           if (!guest) service.applyTemplate(mountedWith)
           service.connect()
+          /*
+           * The agent's two halves: the mirror the server reads, and the hands that apply what it
+           * sends. Both belong to the editor's lifetime, because both need the editor — see
+           * `docs/design/live-agent.md`.
+           *
+           * The mirror is written from `closedMarkdown`, not from `getMarkdown`: while a run is
+           * open the document holds literal asterisks, and an agent reading those would anchor on
+           * text nobody can see.
+           */
+          stopMirror = keepMirror(wire, () => closedMarkdown(c, crepe.getMarkdown()))
+          stopAgent = serveAgent(wire, c, c.get(editorViewCtx))
         })
       }
       // The editor's own spelling of what it was built with; see the note in the sync effect.
@@ -531,6 +547,8 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       disposed = true
       readyRef.current = false
       provideEditorText(null)
+      stopMirror()
+      stopAgent()
       stopImages()
       stopPaste()
       window.clearTimeout(debounce)

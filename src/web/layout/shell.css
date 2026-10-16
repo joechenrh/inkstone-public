@@ -36,7 +36,7 @@
 }
 
 /* The right panel floats (taking no layout space) so the editing window's right edge is
-   fixed — opening or closing it never nudges the body. Kept for the agent panel. */
+   fixed — opening or closing it never nudges the body. */
 .ink-right {
   position: absolute;
   top: 0;

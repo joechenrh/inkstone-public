@@ -1,5 +1,4 @@
 import { useLayoutEffect } from 'preact/hooks'
-import { AgentPanel } from '../agent/AgentPanel.js'
 import { byteSize, HistoryPanel, relative } from '../history/HistoryPanel.js'
 import { content, modifiedAt } from '../state/document.js'
 import { OutlinePanel } from '../outline/OutlinePanel.js'
@@ -9,11 +8,9 @@ import './phonesheet.css'
 /**
  * A panel over the document, on a phone.
  *
- * One component, three kinds of content: the outline, the file's history, and the agent. The first
- * two were screens that replaced the note — the outline lived on the list screen, and history had
- * no way back at all except the menu that opened it. The agent is here rather than in a drawer for
- * the same reason, and because the phone is a first-class client of it: it reaches the same agent
- * the desktop does, on a machine the person is not sitting at. Dismissed by the scrim, by its close button, and — for the
+ * One component, two kinds of content: the outline and the file's history. Both were screens that
+ * replaced the note — the outline lived on the list screen, and history had no way back at all
+ * except the menu that opened it. Dismissed by the scrim, by its close button, and — for the
  * outline — by picking a heading, which is the only reason it was opened.
  */
 export function PhoneSheet() {
@@ -32,7 +29,7 @@ export function PhoneSheet() {
 
   if (which === null) return null
 
-  const title = which === 'outline' ? 'Outline' : which === 'agent' ? 'Agent' : 'History'
+  const title = which === 'outline' ? 'Outline' : 'History'
 
   // The note's modified time and size, on the title row rather than as a block above the log.
   // Inside a sheet called History they were a section that was not history — two blocks stacked
@@ -68,9 +65,7 @@ export function PhoneSheet() {
           {which === 'outline'
             // Picking a heading is the whole point of opening this, so it closes on the way.
             ? <OutlinePanel onJump={closePhoneSheet} />
-            : which === 'agent'
-              ? <AgentPanel />
-              : <HistoryPanel />}
+            : <HistoryPanel />}
         </div>
       </div>
     </div>

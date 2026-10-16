@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import type { RefObject } from 'preact'
 import { isPhone } from '../state/ui.js'
 import { usePendingPlaceholder } from '../state/pending.js'
@@ -105,6 +105,15 @@ function Offer({ state }: { state: PanelState & { kind: 'offer' } }) {
 
 function Running({ state }: { state: PanelState & { kind: 'running' | 'starting' } }) {
   const linkRef = useRef<HTMLSpanElement>(null)
+  const tokenRef = useRef<HTMLSpanElement>(null)
+  /*
+   * Hidden until asked for.
+   *
+   * It is a credential, and this panel is open while somebody is reading a link off their screen to
+   * the person next to them. The link is for people and the token is for a program: one of them is
+   * safe to have in the room and the other is not.
+   */
+  const [tokenShown, setTokenShown] = useState(false)
   const session = liveSession.value
   const waiting = usePendingPlaceholder(state.kind === 'starting')
   const copied = state.kind === 'running' && state.copied
@@ -168,6 +177,26 @@ function Running({ state }: { state: PanelState & { kind: 'running' | 'starting'
                 : `Editing with you: ${others} ${others === 1 ? 'person' : 'people'}.`}
           </span>
         </div>
+
+        {session !== null && (
+          <div class="ink-live-token">
+            <span class="ink-live-token-label">Agent token</span>
+            <span
+              ref={tokenRef}
+              class={tokenShown ? 'ink-live-token-value' : 'ink-live-token-value hidden'}
+              onClick={() => { if (tokenShown) selectAll(tokenRef) }}
+            >
+              {tokenShown ? session.agentToken : '••••••••••••••••'}
+            </span>
+            <button
+              type="button"
+              class="ink-live-token-show"
+              onClick={() => { setTokenShown(!tokenShown) }}
+            >
+              {tokenShown ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        )}
 
         {others > 0 && (
           <div class="ink-live-who">

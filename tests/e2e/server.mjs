@@ -135,7 +135,7 @@ fs.writeFileSync(
 
 // The live-collaboration tests open these in two browsers at once and save them, so they are
 // nobody else's notes — and one per test, because the first one writes into its own fixture.
-for (const name of ['live-crepe', 'live-marks-crepe', 'live-ws-crepe', 'live-second-crepe', 'live-marks2-crepe']) {
+for (const name of ['live-crepe', 'live-marks-crepe', 'live-ws-crepe', 'live-second-crepe', 'live-marks2-crepe', 'live-agent-crepe']) {
   fs.writeFileSync(path.join(root, 'notes', `${name}.md`), 'Before.\n\nAfter.\n')
 }
 // Plainly not the one a session is about, so a test can tell which note is on screen.

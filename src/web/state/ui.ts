@@ -8,10 +8,8 @@ export const rightPanelOpen = signal(false)
 /**
  * Which of the drawer's two views is showing.
  *
- * Was `'outline' | 'codex'`, and both halves were wrong: the outline moved to the sidebar phases
- * ago, and the interface never names a backend — see `src/agent/backend.ts`.
+ * Gone, with the drawer's tab strip: the drawer holds one view again. See `RightPanel`.
  */
-export const rightTab = signal<'history' | 'agent'>('history')
 export const settingsOpen = signal(false)
 
 
@@ -58,7 +56,7 @@ export const phoneScreen = signal<'list' | 'document'>('list')
  * close, and the back arrow goes to the list rather than out of history — so the only way back was
  * the menu that opened it. A screen you can only leave through the menu that opened it is a bug.
  */
-export const phoneSheet = signal<'outline' | 'history' | 'agent' | null>(null)
+export const phoneSheet = signal<'outline' | 'history' | null>(null)
 
 /**
  * True while a back-swipe is under way.
@@ -70,7 +68,7 @@ export const phoneSheet = signal<'outline' | 'history' | 'agent' | null>(null)
  */
 export const phoneSwiping = signal(false)
 
-export function togglePhoneSheet(which: 'outline' | 'history' | 'agent'): void {
+export function togglePhoneSheet(which: 'outline' | 'history'): void {
   phoneSheet.value = phoneSheet.value === which ? null : which
 }
 

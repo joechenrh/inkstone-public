@@ -13,6 +13,8 @@ export interface LiveStarted {
   title: string
   /** The owner's own credential for the socket, which cannot carry a header. See `live/routes.ts`. */
   ticket: string
+  /** What an agent is given. A separate credential from the id and from the ticket. */
+  agentToken: string
   /** True when this is work that outlived the owner's connection and is being handed back. */
   reclaim: boolean
 }

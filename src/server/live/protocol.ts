@@ -35,8 +35,14 @@ export interface Room {
 
 export function makeRoom(doc: Y.Doc): Room {
   const awareness = new awarenessProtocol.Awareness(doc)
-  // The server is not a participant: it has no caret and no name, and announcing a local state
-  // would put a ghost in everybody's presence list.
+  /*
+   * No state until there is something to say.
+   *
+   * The server is not a participant while nobody is using it as one: announcing a name here would
+   * put a ghost in an empty room's presence list. It becomes one exactly when an agent edits
+   * through the API, and `live/routes.ts` is where that name is set — the `Awareness` is the
+   * server's, which is why an agent needs no browser to be visible in the room.
+   */
   awareness.setLocalState(null)
   return { doc, awareness, wires: new Set() }
 }

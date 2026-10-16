@@ -2,7 +2,6 @@ import { MenuButton } from '../components/Menu.js'
 import { openCommit } from '../state/commit.js'
 import { gitStatus, pushVault } from '../state/git.js'
 import {
-  IconAgent,
   IconBack,
   IconCommit,
   IconEditMode,
@@ -90,7 +89,6 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
               ? [
                 { label: 'Outline', icon: <IconOutline />, onSelect: () => { togglePhoneSheet('outline') } },
                 { label: 'History', icon: <IconRightPanel />, onSelect: () => { togglePhoneSheet('history') } },
-                { label: 'Agent', icon: <IconAgent />, onSelect: () => { togglePhoneSheet('agent') } },
                 // Only on a phone. A desktop reaches this from the tree row, which is on screen.
                 ...shareMenuItem(path),
                 ...liveMenuItem(path, path.split('/').pop() ?? path),

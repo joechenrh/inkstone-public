@@ -1,15 +1,13 @@
 {
   "name": "inkstone",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev:server": "tsx watch --env-file-if-exists=.env.local src/server/main.ts",
     "dev:web": "vite",
-    "dev:agent": "tsx --env-file-if-exists=.env.local src/agent/main.ts",
     "build": "tsc -p tsconfig.server.json && vite build",
     "start": "node dist/server/main.js",
-    "agent": "tsx src/agent/main.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "pnpm build && playwright test",

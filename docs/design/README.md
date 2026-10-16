@@ -10,7 +10,9 @@ As-built design documentation for Inkstone. These describe how the system works 
 | [layout.md](layout.md) | Shell grid, floating right drawer, content column |
 | [persistence.md](persistence.md) | Manual save, optimistic locking, conflicts, drafts, watcher, git |
 | [editor-engine.md](editor-engine.md) | What Vditor costs, what Crepe and CodeMirror 6 cost, and the measurements behind all three. A decision record, not a decision |
-| [agent.md](agent.md) | Phase 3 — a local binary that runs an agent backend (codex today), reached from the browser over loopback. Working on the desktop; the relay is designed, not built |
+| [agent.md](agent.md) | **Replaced.** Points at what took its place |
+| [live-share.md](live-share.md) | A link other people edit the note through, without signing in: sessions, the wire, the clocks |
+| [live-agent.md](live-agent.md) | An HTTP API onto a live session, so a program outside this application can read the note and edit it. There is no AI in Inkstone |
 | [images.md](images.md) | Pasting a picture: re-encoding with the numbers, where the bytes go in each route, and why the name is the hash of them |
 | [sharing.md](sharing.md) | Read-only share links, the store on disk, and the reader's page — `public-route` only |
 | [TODO.md](TODO.md) | Known limits of what is shipped, with the number that says when each one starts to hurt |
@@ -95,10 +97,10 @@ twice the height it needed by stacking rows that fit side by side.
 | **Phase 2** | **UX and UI polish.** 2.1 theme switching · 2.2 table editing · 2.3 source mode · 2.4 the phone · 2.5 search, committing, and the phone's rough edges — all shipped |
 | **Sharing** | **`0.5.0`.** A read-only link to one note, and a way for a reader to keep a copy — [sharing.md](sharing.md). `public-route` only |
 | **Weight** | **`0.5.1`.** The same product, measured and put on a diet: a cold load went 22.6MB to 4.5MB, a shared Chinese note 2,985KB to 973KB, and the two seconds of blank page at startup went to none |
-| Phase 3 | Agent integration — a per-user local binary **the browser** talks to, over loopback. Designed in [agent.md](agent.md); the binary, the drawer, the Settings row and the proposal flow work end to end. The relay that lets a phone reach a laptop does not exist yet |
+| Phase 3 | **Replaced by the agent API.** The local binary, the pairing, the drawer and the proposal flow are deleted: an agent now works through a live session's HTTP API, from outside this application entirely. See [live-agent.md](live-agent.md) |
 
 The agent moved out of Phase 2 deliberately: the security note in the README and `architecture.md` (never expose this to the public internet) was written for a server that spawns an agent with write access to the vault.
 
-That note has since been **rewritten rather than dropped**. It still binds vault mode, which is the deployment it was written for. github mode — [public-route.md](public-route.md) — is exempt because it has no vault, no shared password and no per-user state on the server, which is a different thing from the rule being relaxed. Phase 3 under that route is an agent that never runs here at all.
+That note has since been **rewritten rather than dropped**. It still binds vault mode, which is the deployment it was written for. github mode — [public-route.md](public-route.md) — is exempt because it has no vault, no shared password and no per-user state on the server, which is a different thing from the rule being relaxed. Phase 3 under that route was an agent that never runs here at all. What shipped instead keeps that property and goes further: nothing of the agent is in this application, and the only thing on the server is an API onto a session somebody already opened.
 
 Phase specs and implementation plans (point-in-time records of *how we got here*) live under `docs/superpowers/specs/` and `docs/superpowers/plans/` and are not maintained after their phase ships.

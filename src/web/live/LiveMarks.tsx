@@ -9,15 +9,19 @@ import './live.css'
  * the status bar says what it is doing to the note. Neither appears unless the open note is the one
  * the session is about.
  *
- * **In the application's own vocabulary**, which the first version was not. That one put a
- * bordered pill in the top bar with a filled disc of somebody's initial beside it, and a green dot
- * with a hairline divider in the status bar — three shapes that exist nowhere else here, and the
- * loudest things on the screen in the two quietest strips of it. Reported, twice. The top bar is
- * icon buttons and text; the status bar is plain muted words with a gap between them. So that is
- * what these are.
+ * **The faces are Overleaf's**, which is what was asked for and is the right reference: a small
+ * solid disc per person in their own colour, one initial in white, overlapped by about a third with
+ * a ring of the page behind each so the stack reads as separate people. Asked for after the first
+ * version was reported — what was wrong there was the *pill* those discs sat in, a bordered,
+ * rounded container that exists nowhere else in this interface, not the discs themselves.
+ *
+ * With nobody else in the room there is nobody to draw, so the button falls back to the icon with
+ * a lit dot: the session still has to be visible when it is only yours.
+ *
+ * The status bar is plain muted words at the counters' own size, separated by the strip's own gap.
  */
 
-/** In the top bar: one more icon button, lit while a session is running. */
+/** In the top bar: who is here, as Overleaf draws it, or the icon when it is only you. */
 export function LiveTopMark() {
   const here = liveHere.value
   if (here === null) return null
@@ -34,9 +38,28 @@ export function LiveTopMark() {
       title={dropped ? 'Live session — reconnecting' : `Live session — ${who}`}
       onClick={() => { openLivePanel(here.path, here.title) }}
     >
-      <IconUsers />
-      {/* The one lit thing, and the same dot the branch uses for unsaved work. */}
-      <span class={dropped ? 'ink-live-led waiting' : 'ink-live-led'} aria-hidden="true" />
+      {others.length === 0
+        ? (
+          <>
+            <IconUsers />
+            {/* The same dot the branch uses for unsaved work, and the only lit thing in the bar. */}
+            <span class={dropped ? 'ink-live-led waiting' : 'ink-live-led'} aria-hidden="true" />
+          </>
+        )
+        : (
+          <span class="ink-live-faces">
+            {others.map((one, at) => (
+              <span
+                key={`${one.name}-${at}`}
+                class="ink-live-face"
+                style={{ background: one.color }}
+                title={one.name}
+              >
+                {[...one.name][0] ?? '·'}
+              </span>
+            ))}
+          </span>
+        )}
     </button>
   )
 }

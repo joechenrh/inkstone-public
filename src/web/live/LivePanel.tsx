@@ -170,11 +170,12 @@ function Running({ state }: { state: PanelState & { kind: 'running' | 'starting'
         {/* One sentence carrying both facts, as the share panel's does. */}
         <div class="ink-share-meta">
           <span>
+            {/* What the link means, not who is here: the row below says who, and a count of
+                other people above a list that includes you reads as a contradiction — "1 person"
+                over "You · Guest 2". */}
             {dropped
               ? 'Reconnecting. The server holds the note for a few minutes and the others keep editing.'
-              : others === 0
-                ? 'Anyone with the link can edit this while the session is open.'
-                : `Editing with you: ${others} ${others === 1 ? 'person' : 'people'}.`}
+              : 'Anyone with the link can edit this while the session is open.'}
           </span>
         </div>
 

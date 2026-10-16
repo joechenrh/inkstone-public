@@ -7,10 +7,21 @@
  * somebody else's caret.
  */
 
-/* Who is here, in the bar: the shared page's own 26px round. */
+/*
+ * Who is here, as Overleaf draws it.
+ *
+ * A solid disc per person in their own colour, one initial in white, each ringed with the page's
+ * own background and overlapped by about a third so the stack reads as separate people rather than
+ * as one shape. Used in two places — the owner's top bar and the guest page's header — from one
+ * definition, because they are the same thing.
+ */
 .ink-live-faces {
   display: flex;
   align-items: center;
+}
+
+/* On the guest page's bar it sits at the end; in a button it is the button's whole content. */
+.ink-shared-bar > .ink-live-faces {
   margin-left: auto;
 }
 
@@ -26,10 +37,13 @@
   color: #ffffff;
   font-size: 11px;
   font-weight: 600;
+  /* The initial, not the name: a disc this size holds one letter and nothing else. */
+  line-height: 1;
+  user-select: none;
 }
 
 .ink-live-face + .ink-live-face {
-  margin-left: -7px;
+  margin-left: -8px;
 }
 
 /* And in the panel, as a row of names rather than a list: there are at most eight. */
@@ -174,12 +188,17 @@
 /*
  * What says a session is running, on the owner's screen.
  *
- * One more icon button in the bar, and plain words in the status bar. The first version invented a
- * bordered pill with a filled initial disc beside it and a dot-and-divider in the status bar: three
- * shapes that exist nowhere else in this interface, in its two quietest strips. See `LiveMarks`.
+ * The bar's own icon button, holding either the faces or the icon — never a bordered pill around
+ * them, which is the shape that was reported. See `LiveMarks`.
  */
 .ink-live-btn {
   position: relative;
+}
+
+/* The faces are wider than a glyph, so the button grows to hold them rather than clipping. */
+.ink-live-btn:has(.ink-live-faces) {
+  width: auto;
+  padding: 0 4px;
 }
 
 /* The one lit thing, and the same dot the branch uses for unsaved work. */
@@ -225,4 +244,54 @@
 
 .ink-live-status:first-of-type {
   margin-right: auto;
+}
+
+/*
+ * The agent token.
+ *
+ * A credential rather than a link, so it is hidden until asked for — this panel is open while
+ * somebody reads the link off their screen to the person beside them. The row is the link row's
+ * shape one size down: a quiet label, the value taking the space that is left, and the control at
+ * the end.
+ */
+.ink-live-token {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.ink-live-token-label {
+  flex: none;
+  color: var(--ink-fg-muted);
+  white-space: nowrap;
+}
+
+.ink-live-token-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ink-font-mono);
+  color: var(--ink-fg);
+}
+
+.ink-live-token-value.hidden {
+  color: var(--ink-fg-muted);
+  letter-spacing: 0.18em;
+}
+
+.ink-live-token-show {
+  flex: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-link);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ink-live-token-show:hover {
+  text-decoration: underline;
 }

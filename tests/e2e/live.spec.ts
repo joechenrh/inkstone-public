@@ -231,8 +231,17 @@ test('a running session shows in the top bar and the status bar, and is the way 
     await theirs.locator('#ink-live-name').fill('Lin')
     await theirs.getByRole('button', { name: 'Join' }).click()
     await expect(theirs.locator('.ink-doc')).toContainText('Before.', { timeout: 15_000 })
-    // Who is here is in the button's title and in the status bar, not drawn as a disc in the bar.
-    await expect(mine.locator('.ink-live-btn')).toHaveAttribute('title', /Lin/, { timeout: 15_000 })
+    /*
+     * Who is here, as Overleaf draws it: one disc per person, their colour, their initial.
+     *
+     * With nobody else in the room the button is the icon and the lit dot — asserted above — and
+     * it becomes the faces the moment somebody arrives.
+     */
+    const face = mine.locator('.ink-live-btn .ink-live-face')
+    await expect(face).toHaveCount(1, { timeout: 15_000 })
+    await expect(face).toContainText('L')
+    await expect(face).toHaveAttribute('title', 'Lin')
+    await expect(mine.locator('.ink-live-btn')).toHaveAttribute('title', /Lin/)
     await expect(mine.locator('.ink-statusbar')).toContainText('1 person')
 
     // The button is the way back in: the state is the control, as sharing's menu item is.

@@ -86,9 +86,11 @@ function Offer({ state }: { state: PanelState & { kind: 'offer' } }) {
     <div class="ink-share-body">
       <div class="ink-share-note">
         <b>Anyone with the link can edit this note with you</b>
-        They do not sign in, and they see nothing else in this vault. While the session runs this
-        note does not save or commit — it is written once, when the session ends — and its markdown
-        syntax stops revealing itself, because those characters would travel to everyone.
+        {/* One fact a sentence. The first version put all three in one, with two em-dashes holding
+            it together, and it filled five lines of a panel whose job is to be read before a
+            decision. */}
+        They do not sign in, and see nothing else in this vault. The note saves once, when you end
+        the session. While it runs, bold and links stop showing their markdown.
       </div>
       <div>
         <button
@@ -235,13 +237,14 @@ function Ended({ state }: { state: PanelState & { kind: 'ended' } }) {
       <div class="ink-share-note">
         <b>Session ended</b>
         {state.saved
-          ? 'The note is saved, with one commit for the whole session, and saving works as usual again.'
-          : 'Saving failed — the text is still in the editor. Press Cmd/Ctrl+S to try again.'}
+          ? 'Saved, in one commit for the whole session.'
+          : 'Saving failed. The text is still in the editor — press Cmd/Ctrl+S to try again.'}
         {state.guests > 0 && (
           <>
             {' '}
-            The link no longer works; {state.guests === 1 ? 'the person' : `the ${state.guests} people`}
-            {' '}still on it {state.guests === 1 ? 'sees' : 'see'} that it ended, and can only read.
+            The link no longer works, and{' '}
+            {state.guests === 1 ? 'the person' : `the ${state.guests} people`} still on it can only
+            read.
           </>
         )}
       </div>

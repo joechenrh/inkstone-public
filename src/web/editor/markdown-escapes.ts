@@ -48,6 +48,36 @@ export function writeWhatWasTyped(ctx: Ctx): void {
         .replace(/\\([[\]()])/g, '$1')
         // The inline emphasis characters.
         .replace(/\\([*~`])/g, '$1')
+        /*
+         * The underscore, between word characters — and only there.
+         *
+         * `snake_case_name` came back as `snake\_case\_name`: a backslash in the middle of every
+         * identifier, in notes that are full of them. Reported after it showed up on the clipboard,
+         * where the same serialiser runs.
+         *
+         * Unlike the escapes above this one costs nothing, which is why it is narrow: CommonMark
+         * does not read an underscore *inside a word* as emphasis, so `snake_case` reparses as
+         * exactly itself. At a word boundary it does — `_x_` is italic — and there the backslash
+         * stays, because in this editor typing `_x_` produces emphasis, so text that still reads
+         * `_x_` is characters somebody meant.
+         *
+         * A run at a time (`a___b`), because the neighbours of the middle one are backslashes.
+         */
+        .replace(/(?:\\_)+/g, (run, at: number, all: string) => {
+          const word = /[\p{L}\p{N}_]/u
+          const before = all[at - 1] ?? ''
+          const after = all[at + run.length] ?? ''
+          return word.test(before) && word.test(after) ? run.replace(/\\_/g, '_') : run
+        })
+        /*
+         * The ampersand, unless it begins a character reference.
+         *
+         * `AT&T` came back as `AT\&T`. An ampersand is only punctuation in markdown when something
+         * entity-shaped follows it, so everywhere else the backslash is noise — and this one is
+         * free too: `AT&T` reparses as itself. Where an entity *does* follow, the escape is what
+         * keeps `&amp;` from turning into `&` on the next open, so it stays.
+         */
+        .replace(/\\&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#[xX][0-9a-fA-F]+);)/g, '&')
         // And the dollar sign, since maths was turned on. `$1$` typed in one go becomes a formula
         // and never reaches here; anything else — a lone `$`, a pair with the second one typed
         // somewhere other than at the end — was written to the file as `\$`, so a note that said

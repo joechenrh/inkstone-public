@@ -141,6 +141,44 @@ for (const name of ['live-crepe', 'live-marks-crepe', 'live-ws-crepe', 'live-sec
 // Plainly not the one a session is about, so a test can tell which note is on screen.
 fs.writeFileSync(path.join(root, 'notes', 'live-other-crepe.md'), 'Elsewhere.\n')
 
+// Punctuation in prose, for the escape sweep. Every line is characters somebody typed and meant
+// literally — none of it is markdown syntax where it stands.
+fs.writeFileSync(
+  path.join(root, 'notes', 'escapes-crepe.md'),
+  [
+    'snake_case_name and a_b_c',
+    '',
+    'AT&T, 100% sure, C# and F#',
+    '',
+    '5 < 6 and 7 > 3',
+    '',
+    'costs $5 or $10',
+    '',
+    'a|b and {braces} and (parens)',
+    '',
+    'path/to/file and 2026-10-17',
+    '',
+    'he said "quoted" and it\'s fine',
+    '',
+    'ask me 1. about this',
+    '',
+    'x + y - z = w',
+    '',
+    'a[b]c and ![d]e',
+    '',
+    'a***b and a___b and a~~~b',
+    '',
+    'C:\\path\\to\\file',
+    '',
+    'a=b and a:b and a--b',
+    '',
+    'use <div> and <b> inline',
+    '',
+    'ping me @here about #123',
+    '',
+  ].join('\n'),
+)
+
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.
 // A wall is a block that fills its own line and has nowhere to stand beside it; the keystrokes
 // these exercise only exist there.

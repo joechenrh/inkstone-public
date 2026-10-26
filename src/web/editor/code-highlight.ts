@@ -2,6 +2,7 @@ import { autocompletion } from '@codemirror/autocomplete'
 import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
 import type { Extension } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
 
 /**
  * The colours a fenced block is highlighted in, so both engines highlight it the same.
@@ -93,3 +94,17 @@ export const codeIndent: Extension[] = [indentUnit.of('    ')]
  * from the one that defines it.
  */
 export const codeCompletion: Extension = autocompletion({ activateOnTyping: false, override: [] })
+
+/**
+ * A long line wraps instead of running off the side.
+ *
+ * CodeMirror scrolls horizontally by default, which is right in an IDE and wrong in a note: a
+ * fence here is something you *read* while reading the prose around it, and a line you can only
+ * see half of is a line you have to drag a scrollbar to finish. Worse, the scroll is per block, so
+ * a note with several long fences in it has several separate places to scroll.
+ *
+ * The cost is that a wrapped line no longer tells you where it ends, which matters when the fence
+ * is real code being counted by column. Nothing here is compiled from these notes, and the
+ * alternative was already losing the right-hand end of the line entirely.
+ */
+export const codeWrap: Extension = EditorView.lineWrapping

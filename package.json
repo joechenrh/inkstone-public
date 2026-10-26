@@ -1,6 +1,6 @@
 {
   "name": "inkstone",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -33,6 +33,7 @@
     "@codemirror/language": "^6.12.4",
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.8",
     "@lezer/highlight": "^1.2.3",
     "@milkdown/crepe": "^7.22.1",
     "@milkdown/kit": "^7.22.1",

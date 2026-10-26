@@ -12,7 +12,7 @@ import type { EditorView } from '@milkdown/kit/prose/view'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { imageSchema, remarkPreserveEmptyLinePlugin } from '@milkdown/kit/preset/commonmark'
 import { replaceAll } from '@milkdown/kit/utils'
-import { codeCompletion, codeHighlighting, codeIndent } from './code-highlight.js'
+import { codeCompletion, codeHighlighting, codeIndent, codeWrap } from './code-highlight.js'
 import { mermaidLanguage, renderMermaid } from './mermaid-preview.js'
 import { languages as codeLanguages } from '@codemirror/language-data'
 import { emojiReveal, loadEmojiNames } from './emoji.js'
@@ -232,7 +232,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         // `code-highlight.ts` — the values are read off Vditor's own highlight.js stylesheet.
         [CrepeFeature.CodeMirror]: {
           theme: codeHighlighting,
-          extensions: [...codeIndent, codeCompletion],
+          extensions: [...codeIndent, codeCompletion, codeWrap],
           // A `mermaid` fence draws its diagram, through the same panel the formula block uses.
           // See `mermaid-preview.ts`; the formula feature wraps this, so what it declines lands
           // here and what this declines lands back on Crepe's own default.

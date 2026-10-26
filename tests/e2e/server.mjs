@@ -179,6 +179,23 @@ fs.writeFileSync(
   ].join('\n'),
 )
 
+// A line far wider than the column, for the wrap test. Code in these notes is read beside the
+// prose, and a line you can only see half of is one you have to drag a scrollbar to finish.
+fs.writeFileSync(
+  path.join(root, 'notes', 'wrap-crepe.md'),
+  [
+    'Before.',
+    '',
+    '```python',
+    'result = compute_everything(first_argument, second_argument, third_argument, fourth_argument, fifth_argument)',
+    'short = 1',
+    '```',
+    '',
+    'After.',
+    '',
+  ].join('\n'),
+)
+
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.
 // A wall is a block that fills its own line and has nowhere to stand beside it; the keystrokes
 // these exercise only exist there.

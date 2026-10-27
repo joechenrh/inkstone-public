@@ -21,7 +21,21 @@ ARG DEBIAN_MIRROR=
 # `dev` — an honest word rather than a plausible sha that is not the one running.
 ARG GIT_SHA=
 
-FROM ${NODE_IMAGE} AS build
+# Which `dist` the runtime stage gets: one built here, or one built somewhere faster.
+#
+# `pnpm build` is the whole cost of a deploy on the target host — fifteen minutes on two cores,
+# shared with the site that is still serving — and what it produces is plain JavaScript with no
+# architecture in it. So it can be built anywhere and carried in. `deploy/push.sh` builds on a
+# laptop, copies `dist` across and passes `BUILD_FROM=prebuilt`; `deploy/update.sh` passes nothing
+# and the host builds it as before.
+#
+# A stage rather than a conditional `COPY --from`, because `COPY --from=${ARG}` does not expand the
+# argument — it reads `${BUILD_FROM}` as an image name and fails on the brace. `FROM ${ARG}` does
+# expand, and a stage may be based on another stage, so the switch lives there. Measured on a
+# ten-line Dockerfile before it went anywhere near this one.
+ARG BUILD_FROM=build-in-docker
+
+FROM ${NODE_IMAGE} AS build-in-docker
 ARG NPM_REGISTRY
 ENV npm_config_registry=${NPM_REGISTRY}
 # corepack fetches the pinned pnpm from npm and ignores npm_config_registry.
@@ -43,6 +57,13 @@ ENV GIT_SHA=${GIT_SHA}
 # that does not need it does not take it, and where the memory is not there, swap carries it.
 ENV NODE_OPTIONS=--max-old-space-size=3072
 RUN pnpm build
+
+# The other half of the switch: a `dist` the build context already holds. Nothing runs here, so a
+# host that is only assembling an image never starts node at all.
+FROM scratch AS prebuilt
+COPY dist /app/dist
+
+FROM ${BUILD_FROM} AS build
 
 FROM ${NODE_IMAGE}
 ARG NPM_REGISTRY
@@ -68,7 +89,10 @@ COPY --from=build /app/dist ./dist
 # The complete CJK faces, server-side only and never served to a browser: each shared note gets a
 # face cut to its own characters, and cutting from the whole face costs nothing on the wire while
 # covering the characters the shipped subset drops. See src/server/share/font.ts.
-COPY --from=build /app/assets ./assets
+#
+# From the context rather than from the build stage: they are repository files, the same in both
+# paths, and the prebuilt stage has no business carrying anything it did not build.
+COPY assets ./assets
 
 # Bound to loopback inside the container's namespace would be unreachable from the host, so
 # the container listens on all of ITS interfaces and the host publishes it to 127.0.0.1 only

@@ -1,5 +1,7 @@
 node_modules
-dist
+# `dist` is not ignored: the prebuilt path copies one that was built elsewhere out of the context.
+# A full build on a machine that happens to have one carries ~10MB it then overwrites, which is
+# the cheaper half of the trade. See the BUILD_FROM note in the Dockerfile.
 public/vditor
 .git
 .superpowers

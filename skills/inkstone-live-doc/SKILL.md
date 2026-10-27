@@ -9,6 +9,9 @@ You have a session link — `https://<host>/live/<id>` — and an agent token. T
 somebody's editor right now** and they are watching: your edits appear on their screen as you make
 them, and they can undo them.
 
+`<host>` is the host of that link, and of this file: the API, the session and these instructions
+are all served from the same origin, so there is nothing else to find.
+
 Two requests, both with `Authorization: Bearer <token>`.
 
 ## The loop

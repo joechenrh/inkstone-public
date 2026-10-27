@@ -116,8 +116,15 @@ says what it last changed.
 
 ## The skill
 
-A file in the repository written for an agent rather than for a person, teaching the loop (read,
-edit, verify), and four things it will otherwise get wrong:
+A file written for an agent rather than for a person, **served from the application's own origin**
+at `/SKILLS.md`. An agent is handed a session link and a token and nothing else, so the one host it
+can always reach is the one those came from: `curl https://<host>/SKILLS.md` is the whole of "how
+do I use this", with no repository to find and no account to have. It is emitted from
+`skills/inkstone-live-doc/SKILL.md` at build time rather than copied into `public/`, because two
+copies of a document in one repository is two documents and the one that drifts is the one nobody
+is reading.
+
+It teaches the loop (read, edit, verify) and four things an agent will otherwise get wrong:
 
 - **somebody else is typing.** Anchors move. Send `version`, expect 409, re-read and redo.
 - **do not rewrite the note.** Anchored ops or nothing; a whole-document replacement is refused.

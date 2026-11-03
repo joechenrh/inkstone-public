@@ -12,6 +12,9 @@ describe('autolink serialization', () => {
     writeWhatWasTyped({ update: (_key: unknown, update: (value: Options) => Options) => { options = update(options) } } as unknown as Ctx)
     const parser = unified().use(remarkParse).use(remarkGfm).freeze()
     options.extensions = parser.data('toMarkdownExtensions') as Options['extensions']
+    expect(toMarkdown({ type: 'root', children: [{ type: 'paragraph', children: [
+      { type: 'text', value: 'See https://www.example.com/book and https://new.example.com/page.' },
+    ] }] }, options)).toBe('See https://www.example.com/book and https://new.example.com/page.\n')
     const original = '<https://www.example.com/book>\n\n<https://www' + '\\'.repeat(4) + '.example.com/book>\n'
       + '\n[label](https://example.com/path)\n\n```text\nC:\\notes\\file.md\n```\n'
     let text = original

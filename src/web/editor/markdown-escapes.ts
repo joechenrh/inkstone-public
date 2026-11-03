@@ -97,6 +97,10 @@ export function writeWhatWasTyped(ctx: Ctx): void {
          * touched — neither of those is escaped in the first place.
          */
         .replace(/\b([a-zA-Z][a-zA-Z0-9+.-]*)\\:(?=\/\/)/g, '$1:')
+        // GFM also protects the dot after www (and other w-ending hostname parts). Once the
+        // scheme is left literal above, those dots must stay literal too. Paired backslashes
+        // represent actual characters and are left alone.
+        .replace(/\bhttps?:\/\/[^\s<>]+/g, (url) => url.replace(/(?<!\\)\\\./g, '.'))
         // And the dollar sign, since maths was turned on. `$1$` typed in one go becomes a formula
         // and never reaches here; anything else — a lone `$`, a pair with the second one typed
         // somewhere other than at the end — was written to the file as `\$`, so a note that said

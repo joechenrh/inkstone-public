@@ -261,3 +261,8 @@ not one destination to attach to whatever is selected. Selected existing links a
 selected ordinary prose can still receive a URL. Inside revealed Markdown a URL is inserted as
 literal text, so editing the destination cannot put another link mark inside its source. Repeated
 copy/replace/save/reopen tests cover both HTML and plain-text clipboards in Chromium and WebKit.
+
+Inside an angle autolink, backslashes are literal: the parser does not consume Markdown escapes
+there. The text serializer therefore emits the parsed value directly in the `autolink` context;
+escaping it again doubles backslashes on every save. Regression tests cover both clean URLs and
+URLs already containing backslashes across repeated parse/save and real editor reopen cycles.

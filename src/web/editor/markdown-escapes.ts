@@ -40,8 +40,13 @@ export function writeWhatWasTyped(ctx: Ctx): void {
     const handlers = options.handlers ?? {}
     // Typed off the option it is going into, because `mdast-util-to-markdown` is a transitive
     // dependency whose types cannot be imported from here.
-    const text: typeof handlers.text = (node, _parent, state, info) =>
-      state.safe(String((node as { value?: unknown }).value ?? ''), info)
+    const text: typeof handlers.text = (node, _parent, state, info) => {
+      const value = String((node as { value?: unknown }).value ?? '')
+      // Backslashes are literal inside <autolinks>: Markdown does not unescape them there.
+      // Running safe() doubles them on every save/reopen. The link handler has already checked
+      // that this URL contains no angle brackets or whitespace before entering this context.
+      if (state.stack.includes('autolink')) return value
+      return state.safe(value, info)
         // The brackets: markdown only treats them specially when a matching `](` or `][` follows,
         // and typing `[a](b)` here makes a link — so a literal that looks exactly like a link is
         // not something this application can produce by accident.
@@ -105,6 +110,7 @@ export function writeWhatWasTyped(ctx: Ctx): void {
         // The space at the end (or start) of a line, which markdown has no way to hold.
         .replace(/^(?:&#x(?:20|9);)+/i, '')
         .replace(/(?:&#x(?:20|9);)+$/i, '')
+    }
     return {
       ...options,
       /*

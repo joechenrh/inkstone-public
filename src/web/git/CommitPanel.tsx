@@ -95,6 +95,7 @@ export function CommitPanel() {
               </div>
 
               {shown && (
+                <div class="ink-commit-diff-frame">
                 <pre class="ink-commit-diff">
                   {shown.diff.split('\n').slice(0, 400).map((line, i) => (
                     <div
@@ -107,6 +108,7 @@ export function CommitPanel() {
                     </div>
                   ))}
                 </pre>
+                </div>
               )}
 
               <div class="ink-commit-foot">

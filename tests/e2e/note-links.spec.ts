@@ -37,7 +37,7 @@ for (const engine of ['crepe'] as const) {
     await follow(page, 'the target')
 
     // `linked/target.md` from `notes/links.md` is `notes/linked/target.md` — GitHub's reading.
-    await expect(page.locator('.ink-topbar')).toContainText('notes/linked/target.md')
+    await expect(page.locator('.ink-breadcrumb')).toHaveAttribute('title', 'notes/linked/target.md')
     await expect(page.locator('.ink-doc')).toContainText('Body of the target note.')
   })
 

@@ -169,18 +169,20 @@
   padding: 3px 8px;
 }
 
-/* Yuque-style inline input: rounded corners + accent-color outline, with a soft glow ring on focus */
+/* Inline editing stays within the row: one thin accent border, without a second ring or halo. */
 .ink-tree-inline-input {
   width: 100%;
+  min-width: 0;
   background: var(--ink-bg);
   border: 1px solid var(--ink-link);
   color: var(--ink-fg);
   font-size: var(--ink-tree-font-size);
   font-family: inherit;
-  padding: 4px 8px;
+  padding: 1px 6px;
+  line-height: 20px;
   outline: none;
-  border-radius: var(--ink-r-md);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-link) 14%, transparent);
+  border-radius: var(--ink-r-sm);
+  box-shadow: none;
 }
 
 /*

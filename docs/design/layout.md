@@ -122,6 +122,9 @@ control on close. Menus flip above their anchors when necessary and scroll withi
 Source mode is an editing surface, so the shell's form-control focus ring excludes it while other
 keyboard controls keep their rings.
 
+Inline file naming stays within the tree row with a single 1px accent border and a small radius.
+It owns its focus treatment, so the shell ring does not stack another outline or halo around it.
+
 Settings sits past the hairline because it configures the app rather than the document, and it is what remains when the document-scoped half is gone.
 
 **A control that acts on the open document is not there when there is none.** With no file open the view group, the right-panel toggle (its drawer holds *this file's* history), the word and character counts, and the hairline all go; the file-tree toggle, Settings and the git state stay, because they describe the app and the vault. Source mode already behaved this way on its own, which is what made the others look wrong beside it.

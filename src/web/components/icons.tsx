@@ -168,6 +168,24 @@ export const IconUsers = (p: IconProps) =>
     p,
   )
 
+/**
+ * A day: the calendar every calendar is.
+ *
+ * Nothing on the page tries to be a date picker, so this carries one meaning — "the day" — and is
+ * drawn as plainly as the set allows: a box, the rule under its header, and the two tabs that stop
+ * a box from being a box. No number inside it; a glyph that says 30 is wrong on the 31st.
+ */
+export const IconCalendar = (p: IconProps) =>
+  svg(
+    <>
+      <rect x="4" y="6" width="16" height="14" rx="2" />
+      <line x1="4" y1="10" x2="20" y2="10" />
+      <line x1="8.5" y1="4" x2="8.5" y2="7.5" />
+      <line x1="15.5" y1="4" x2="15.5" y2="7.5" />
+    </>,
+    p,
+  )
+
 export const IconRename = (p: IconProps) =>
   svg(
     <>

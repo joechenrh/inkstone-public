@@ -78,6 +78,20 @@ export function writeWhatWasTyped(ctx: Ctx): void {
          * keeps `&amp;` from turning into `&` on the next open, so it stays.
          */
         .replace(/\\&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#[xX][0-9a-fA-F]+);)/g, '&')
+        /*
+         * The colon that would make a URL a link, which is the point of writing the URL.
+         *
+         * `https://example.com` written as text comes back as `https\://example.com`: the
+         * serialiser escapes the colon exactly so the line will *not* autolink. That is right when
+         * somebody typed the characters and wrong for the thing this editor does with a URL — see
+         * `bare-url.ts`, where a link whose text is its own address is written without the angle
+         * brackets precisely so the file keeps the URL a reader pasted. Leaving the backslash in
+         * puts it in the middle of the address instead.
+         *
+         * Narrow on purpose: only where a scheme precedes it, so a time of day and a ratio are not
+         * touched — neither of those is escaped in the first place.
+         */
+        .replace(/\b([a-zA-Z][a-zA-Z0-9+.-]*)\\:(?=\/\/)/g, '$1:')
         // And the dollar sign, since maths was turned on. `$1$` typed in one go becomes a formula
         // and never reaches here; anything else — a lone `$`, a pair with the second one typed
         // somewhere other than at the end — was written to the file as `\$`, so a note that said

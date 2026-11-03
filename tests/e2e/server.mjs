@@ -77,6 +77,12 @@ fs.writeFileSync(
     'auto awaiter = GET_AWAITER(expression);',
     '```',
     '',
+    // A language with a long name, for the control that names it: `cpp` fits any box, and the
+    // clipping reported against this control only shows on a word.
+    '```typescript',
+    'const x: number = 1',
+    '```',
+    '',
     'Trailing paragraph.',
     '',
   ].join('\n'),
@@ -194,6 +200,61 @@ fs.writeFileSync(
     'After.',
     '',
   ].join('\n'),
+)
+
+// A note of its own for the upload placeholder: the test holds an upload open and saves while it
+// is on screen, which no other test's note should have to survive.
+fs.writeFileSync(
+  path.join(root, 'notes', 'uploading-crepe.md'),
+  ['Before.', ''].join('\n'),
+)
+
+// A bare URL, as a reader types or pastes one. CommonMark leaves it as text; GFM links it. What
+// matters here is that opening and saving the note does not rewrite the line.
+fs.writeFileSync(
+  path.join(root, 'notes', 'bare-url.md'),
+  [
+    'Before.',
+    '',
+    'https://example.com/a/b?c=1',
+    '',
+    // A named link, which keeps its brackets: this is a link, not a URL that happens to be one.
+    'A paragraph with [a link](https://example.com/docs) in it.',
+    '',
+    // And one that cannot lose them — the tilde is a character the text handler unescapes, so the
+    // bare form could reparse as something else. The bracketed spelling is the correct one here.
+    '<https://example.com/~user>',
+    '',
+    'After.',
+    ''
+  ].join('\n'),
+)
+
+// A fence whose language has a long name, for the language control. `js` fits any box; the
+// control is read with names like `typescript` in it, which is where a fixed width shows.
+fs.writeFileSync(
+  path.join(root, 'notes', 'lang-crepe.md'),
+  ['Before.', '', '```typescript', 'const x: number = 1', '```', '', 'After.', ''].join('\n'),
+)
+
+// Two journals of the same days in opposite orders, for the Today action. The order is read from
+// the file rather than configured, so both have to be here: one note proves nothing about which
+// end the heading goes at. The dates are old enough that today is never one of them.
+fs.writeFileSync(
+  path.join(root, 'notes', 'journal-desc.md'),
+  ['# Journal desc', '', '## 2020-01-05', '- later', '', '## 2020-01-01', '- earlier', ''].join('\n'),
+)
+
+fs.writeFileSync(
+  path.join(root, 'notes', 'journal-asc.md'),
+  ['# Journal asc', '', '## 2020-01-01', '- earlier', '', '## 2020-01-05', '- later', ''].join('\n'),
+)
+
+// A third copy, because these notes get written to: a test that types into today's section leaves
+// it there for the rest of the run, and a shared fixture would make the tests depend on their order.
+fs.writeFileSync(
+  path.join(root, 'notes', 'journal-twice.md'),
+  ['# Journal twice', '', '## 2020-01-05', '- later', '', '## 2020-01-01', '- earlier', ''].join('\n'),
 )
 
 // Every pair of walls, in one note: table–table, table–fence, fence–table, and an empty table.

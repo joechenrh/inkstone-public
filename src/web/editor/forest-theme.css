@@ -307,10 +307,6 @@
     border-bottom: 1px solid;
   }
 
-  .ink-doc.ink-doc.ink-doc span::selection,
-  .ink-doc.ink-doc.ink-doc *::selection {
-    background: var(--selection-text-color);
-  }
 
   .ink-doc.ink-doc.ink-doc blockquote {
     position: relative;

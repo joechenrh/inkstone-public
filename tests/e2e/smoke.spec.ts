@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { expect, test } from '@playwright/test'
+import { DOC_THEMES } from '../../src/web/theme/docThemes.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1124,7 +1125,9 @@ test('settings is grouped, and the theme swatches are folded away', async ({ pag
   await expect(disclosure).toHaveText(/Lapis/)
 
   await disclosure.click()
-  await expect(page.locator('.ink-swatch')).toHaveCount(7)
+  // One per theme, counted from the list rather than written down: this read 7 and adding Drake
+  // broke a test about whether the swatches are folded away, which is not what it is measuring.
+  await expect(page.locator('.ink-swatch')).toHaveCount(DOC_THEMES.length)
 
   // And it is still the way a theme is chosen.
   await page.locator('.ink-swatch[data-doc-theme-preview="plain"]').click()

@@ -16,7 +16,16 @@
  */
 import { readFileSync } from 'node:fs'
 
-const DOC_ROOT = '.vditor-ir .vditor-reset'
+/*
+ * The document surface, and why it is written three times.
+ *
+ * This was `.vditor-ir .vditor-reset` — the engine the themes were first converted for, which is
+ * gone. The themes in `src/web/editor` were re-scoped when it went and the script was not, so
+ * converting Drake produced a stylesheet addressed to a DOM that no longer exists. Every rule here
+ * is a theme's opinion about the document, and it has to outrank the shell's own defaults by one
+ * class without reaching for `!important`; repeating the class is how the shipped themes do it.
+ */
+const DOC_ROOT = '.ink-doc.ink-doc.ink-doc'
 
 /** Typora's application chrome. None of it has an equivalent, and none of it is wanted. */
 const CHROME = [
@@ -35,33 +44,50 @@ const CHROME = [
 const PLUMBING = [/content\s*:\s*attr\(\s*lang/i]
 
 /**
- * Typora's markdown hooks → the Vditor DOM.
+ * Typora's markdown hooks → this editor's DOM.
  *
  * Order matters: longer, more specific names first, so `.md-math-block` is not eaten by `.md-math`.
  * A null target means the concept has no counterpart here and the rule is dropped.
  */
 const HOOKS = [
   ['.md-fences-adv', null],
-  ['.md-fences', `.vditor-ir__node[data-type="code-block"] pre.vditor-ir__preview`],
-  ['.md-math-block', '.vditor-ir__node[data-type="math-block"]'],
-  ['.md-inline-math', '.vditor-ir__node[data-type="inline-math"]'],
+  ['.md-fences', '.milkdown-code-block'],
+  ['.md-math-block', '.milkdown-latex-block'],
+  ['.md-inline-math', '.milkdown-latex-inline'],
   ['.md-rawblock-tooltip', null],
+  ['.md-rawblock-control', null],
   ['.md-rawblock', null],
   ['.md-task-list-item', 'li'],
   ['.task-list-item', 'li'],
   ['.md-image', 'img'],
-  ['.md-lang', null],       // we draw the language label ourselves, from data-lang
-  ['.md-meta', null],       // Typora's syntax markers; Vditor has .vditor-ir__marker
+  ['.md-lang', null],       // we draw the language label ourselves
+  ['.md-meta', null],       // Typora's syntax markers; this editor reveals source its own way
   ['.md-plain', null],
   ['.md-comment', null],
   ['.md-attr', null],
   ['.md-critic', null],
   ['.md-blockmeta', null],
   ['.md-expand', null],
+  ['.md-focus', null],      // Typora's focused-block styling; nothing here marks a focused block
+  ['.md-def-name', null],
+  ['.md-def', null],
+  ['.md-url', null],
+  ['.md-htmlblock-container', null],
+  ['.md-diagram-panel-preview', '.ink-mermaid'],
   ['.md-diagram-panel', null],
   ['.md-footnote', null],
-  ['.md-def', null],
   ['.md-tag', null],
+  /*
+   * Typora's own CodeMirror, which is also where a theme keeps its syntax colours.
+   *
+   * Dropped, and this is the lossy part of every import: the token colours in this editor are a
+   * `HighlightStyle` in `code-highlight.ts`, one palette shared by every document theme, so a
+   * theme's `.cm-s-inner .cm-keyword` has nowhere to go. Thirty-five of Drake's rules are this.
+   * A theme's fenced *block* — its background and its plain text colour — still converts, which is
+   * the half you see first; Tailwind already ships a dark block that way.
+   */
+  ['.cm-s-inner', null],
+  ['.cm-s-typora-default', null],
   ['.CodeMirror', null],    // Typora's source editor; we have none
 ]
 
@@ -104,6 +130,14 @@ function convertSelector(sel) {
     s = s.split(from).join(to)
   }
 
+  // The selection is the shell's, not the theme's.
+  //
+  // Four imported themes brought a `::selection` colour and every one of them landed within 27
+  // units of that same theme's own fenced-block background — a selection you cannot see against
+  // the code beside it, reported as 选中文本的背景色和代码块的背景色是一样的. One colour, chosen
+  // for the one job, lives in `crepe-shell.css` and is held to a floor by the conformance spec.
+  if (s.includes('::selection')) return null
+
   // #write is Typora's document root. Alone it means the page itself.
   if (s === '#write') return DOC_ROOT
   s = s.split('#write').join(DOC_ROOT)
@@ -145,7 +179,15 @@ function main() {
     // Statement at-rules are not blocks, so they end up glued to the front of the next selector:
     // Forest's palette arrived as `@charset "UTF-8"; @import url(...); :root` and stopped being
     // recognised as a palette at all. @import also points at font files we do not vendor.
-    .replace(/@(charset|import)[^;]*;/g, '')
+    //
+    // Any of them, not a list of the ones seen so far: Drake opens with Typora's own
+    // `@include-when-export url('https://fonts.googleapis.com/…')`, which was not in the list, and
+    // the whole theme came through as three rules. Taken by the line rather than up to the first
+    // `;` — that URL carries semicolons inside its quotes, so stopping at one left
+    // `0,700;1,400&display=swap');` glued to the palette and the theme converted to nothing at
+    // all. A statement at-rule is a line that starts with `@` and opens no block, and dropping the
+    // Google Fonts line is wanted anyway on a page that may not fetch from a CDN.
+    .replace(/^[ \t]*@[\w-][^{\n]*$/gm, '')
   const notes = []
   const kept = []
   let dropped = 0, rootVars = null

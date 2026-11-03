@@ -27,6 +27,7 @@ export const DOC_THEMES: DocTheme[] = [
   { id: 'tailwind', name: 'Tailwind', appearances: ['light', 'dark'], note: 'From the Typora theme' },
   { id: 'everforest', name: 'Everforest', appearances: ['light', 'dark'], note: 'From the Typora theme' },
   { id: 'bitclean', name: 'BitClean', appearances: ['light', 'dark'], note: 'From the Typora theme' },
+  { id: 'drake', name: 'Drake', appearances: ['light'], note: 'From the Typora theme' },
 ]
 
 export const DEFAULT_DOC_THEME = 'lapis'

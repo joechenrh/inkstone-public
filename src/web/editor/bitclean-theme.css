@@ -342,11 +342,6 @@
     background: rgba(76, 79, 105, 0.05);
   }
 
-  .ink-doc.ink-doc.ink-doc ::selection,
-  .ink-doc.ink-doc.ink-doc *::selection {
-    background: var(--search-select-bg-color);
-    color: var(--text-primary);
-  }
 
   .ink-doc.ink-doc.ink-doc ::-moz-selection {
     background: var(--search-select-bg-color);
@@ -848,11 +843,6 @@
       background: rgba(137, 180, 250, 0.05);
     }
 
-    .ink-doc.ink-doc.ink-doc ::selection,
-    .ink-doc.ink-doc.ink-doc *::selection {
-      background: var(--search-select-bg-color);
-      color: var(--text-primary);
-    }
 
     .ink-doc.ink-doc.ink-doc ::-moz-selection {
       background: var(--search-select-bg-color);

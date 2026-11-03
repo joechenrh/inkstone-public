@@ -48,6 +48,10 @@
   --crepe-color-inline-code: var(--ink-danger);
   --crepe-color-error: var(--ink-danger);
   --crepe-color-hover: var(--ink-sidebar-hover);
+  /* Crepe's "selected" is the highlight on a *node* — a picture or a list item that has been
+     clicked as a whole — and the sidebar's row fill is the right colour for that. It is not the
+     right colour for selected text, which Crepe's reset paints with the same token; see the rule
+     under "the text selection" below. */
   --crepe-color-selected: var(--ink-sidebar-active);
   --crepe-color-inline-area: var(--ink-rule);
 
@@ -344,6 +348,16 @@
   background: transparent;
 }
 
+/* Why these selectors carry `.ink-doc` twice.
+ *
+ * Everything from here to the end of the picker is the editor's own chrome, which happens to live
+ * inside the document surface — and a converted theme may reset anything in there. Tailwind brings
+ * Preflight's form reset with it, `.ink-doc.ink-doc.ink-doc button { font-size: 100%; padding: 0 }`,
+ * which outranked one `.ink-doc` by its element selector: the language label came out at 14.4px
+ * against 11px everywhere else, with its padding gone, and `typescript` needed 112px in a 109px
+ * button — the clipped label reported as 语言选择展示不全. A theme owns the document's typography;
+ * it does not own the controls. `code-language-fits` in `theme-conformance.spec.ts` holds this. */
+
 /* The language picker and the copy button, out of the flow — and not on top of the code.
  *
  * Crepe lays them out as a row above the code, which added 30px to the height of every fenced block
@@ -360,7 +374,7 @@
   position: relative;
 }
 
-.milkdown .ink-doc .milkdown-code-block > .tools {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools {
   position: absolute;
   top: 6px;
   right: 6px;
@@ -386,18 +400,18 @@
    freshly created fence and after the copy button was clicked — and with nothing in it to show, an
    empty white card sat in the corner of the block. The other engine's copy button is hover-only for
    the same reason. */
-.milkdown .ink-doc .milkdown-code-block:hover > .tools {
+.milkdown .ink-doc.ink-doc .milkdown-code-block:hover > .tools {
   opacity: 1;
 }
 
 /* And never a card with nothing in it: in read mode the language control is gone, and if the copy
    button is gone too there is nothing left to draw a surface around. */
-.milkdown .ink-doc .milkdown-code-block > .tools:not(:has(.copy-button)) {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools:not(:has(.copy-button)) {
   display: none;
 }
 
 /* Both controls on one centre, and no margin of their own to shift it. */
-.milkdown .ink-doc .milkdown-code-block > .tools > * {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools > * {
   align-self: center;
   margin: 0;
 }
@@ -407,7 +421,7 @@
    The preview toggle — the Edit/Hide on a diagram or a formula — is in here because it was not:
    Crepe gives it 24px and a grey fill of its own, so beside two 20px transparent buttons it stood
    a head taller and painted over the card's rounded corner. */
-.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button, .preview-toggle-button) {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button, .preview-toggle-button) {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -422,19 +436,19 @@
   line-height: 1;
 }
 
-.milkdown .ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button, .preview-toggle-button):hover {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools :is(.language-button, .copy-button, .preview-toggle-button):hover {
   background: var(--ink-sidebar-hover);
   color: var(--ink-fg);
 }
 
-.milkdown .ink-doc .milkdown-code-block > .tools svg {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools svg {
   width: 13px;
   height: 13px;
 }
 
 /* The picker hangs off a control in the corner, so it opens downward from it and to the left —
    anchored to the button's right edge, which is the one that is always on screen. */
-.milkdown .ink-doc .milkdown-code-block > .tools .language-picker {
+.milkdown .ink-doc.ink-doc .milkdown-code-block > .tools .language-picker {
   position: absolute;
   top: 100%;
   /* `left: auto` and it has to be `!important`: Crepe positions the picker by writing an inline
@@ -489,7 +503,7 @@
  * the field and the list read as one menu rather than two things that happen to overlap. Everything
  * inside it is then transparent. This is the shape every other menu in this application has.
  */
-.milkdown .ink-doc .milkdown-code-block .language-picker .list-wrapper {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .list-wrapper {
   background: var(--ink-bg);
   border: 1px solid var(--ink-rule);
   border-radius: 6px;
@@ -499,7 +513,7 @@
   font-family: var(--ink-font-body);
 }
 
-.milkdown .ink-doc .milkdown-code-block .language-picker .language-list {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .language-list {
   background: transparent;
   padding: 4px 0 0;
   /* Shorter than Crepe's 410px: this opens inside a document, not over a full-height panel. */
@@ -507,7 +521,7 @@
   max-height: 200px;
 }
 
-.milkdown .ink-doc .milkdown-code-block .language-picker .language-list-item {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .language-list-item {
   /* Crepe indents the list by 20px for a leading icon this application does not show. */
   padding: 4px 10px;
   border-radius: 4px;
@@ -516,13 +530,13 @@
   line-height: 20px;
 }
 
-.milkdown .ink-doc .milkdown-code-block .language-picker .language-list {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .language-list {
   padding-left: 0;
 }
 
 /* The field is part of the menu, so it takes the shell's field shape rather than floating on its
    own white card inside a white card. */
-.milkdown .ink-doc .milkdown-code-block .language-picker .search-box {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .search-box {
   background: var(--ink-sidebar-hover);
   border: 1px solid transparent;
   border-radius: 4px;
@@ -531,7 +545,7 @@
 
 /* A field inside a menu, not a call to action: the ring stays a hairline and only the fill moves,
    which is what the rest of the shell's fields do. */
-.milkdown .ink-doc .milkdown-code-block .language-picker .search-box:focus-within {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .search-box:focus-within {
   border-color: var(--ink-rule);
   background: var(--ink-bg);
 }
@@ -541,7 +555,7 @@
  * Crepe's search box keeps its own white surface and the browser's focus ring, which against a
  * white menu read as a blue double border floating on nothing. The wrapper is the field; the input
  * inside it is just text. */
-.milkdown .ink-doc .milkdown-code-block .language-picker .search-box input {
+.milkdown .ink-doc.ink-doc .milkdown-code-block .language-picker .search-box input {
   background: transparent;
   border: none;
   outline: none;
@@ -698,4 +712,68 @@
  * to draw it for, and this stops it being drawn. See `state/settings.ts`. */
 :root[data-ink-toolbar="off"] .milkdown-toolbar {
   display: none !important;
+}
+
+/* The text selection.
+ *
+ * Reported as 选中文本的背景色…有些时候和代码块的背景色是一样的, and that is exactly what it was.
+ * Crepe's reset paints `.ProseMirror *::selection` with `--crepe-color-selected`, which this file
+ * maps to `--ink-sidebar-active` — the grey a sidebar row takes when it is the open note. One
+ * token doing two jobs, and the second one it is not suited to: measured against each theme's own
+ * fenced-block background, the painted selection came out 8 units away in Aspartate, 15 in Plain
+ * dark, 19 in Plain light and 21 in Lapis light. At that distance a selection inside or beside a
+ * code block is not visible at all.
+ *
+ * Four themes brought a selection colour of their own and those were no better — 22 to 27 from
+ * their own code blocks — so the colour is the shell's now, and the conversion script drops a
+ * theme's `::selection` on the way in. `--ink-selection` is chosen for this one job and nothing
+ * else uses it; `theme-conformance.spec.ts` holds the floor at 40 in every theme and appearance.
+ *
+ * `*::selection` as well as `::selection`, because that is how the reset is written and a bare
+ * `::selection` does not reach the text inside a `strong` or an `a`. */
+.milkdown .ink-doc.ink-doc ::selection,
+.milkdown .ink-doc.ink-doc *::selection {
+  background: var(--ink-selection);
+}
+
+/* A picture on its way up.
+ *
+ * The local bytes, dimmed, with one word over the middle — Typora's shape, and the reason for it
+ * is the same: between the paste and the host's answer there is nothing on the page at all, and a
+ * document that looks like the paste failed gets pasted into twice.
+ *
+ * Sized like the picture it is standing in for rather than capped, so nothing jumps when the real
+ * one replaces it. See `upload-placeholder.ts` for why this is a decoration and not a node. */
+.ink-uploading {
+  position: relative;
+  /* Block, because that is where the picture is going: inline at the caret, the preview sat in
+     the middle of the paragraph's own line and drew over the words. */
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 8px 0;
+  line-height: 0;
+}
+
+.ink-uploading img {
+  max-width: 100%;
+  /* Enough to read as "not yet", not so much that you cannot tell which picture it is. */
+  filter: blur(2px);
+  opacity: 0.55;
+}
+
+.ink-uploading-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--ink-bg);
+  color: var(--ink-fg-muted);
+  font-family: var(--ink-font-body);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(30 40 60 / 10%);
 }

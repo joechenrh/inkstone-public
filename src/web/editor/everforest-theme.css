@@ -140,10 +140,6 @@
     padding: 0 var(--gap-3);
   }
 
-  .ink-doc.ink-doc.ink-doc ::selection {
-    background: var(--select-text-bg-color);
-    color: var(--select-text-font-color);
-  }
 
   .ink-doc.ink-doc.ink-doc pre,
 
@@ -794,10 +790,6 @@
       padding: 0 var(--gap-3);
     }
 
-    .ink-doc.ink-doc.ink-doc ::selection {
-      background: var(--select-text-bg-color);
-      color: var(--select-text-font-color);
-    }
 
     .ink-doc.ink-doc.ink-doc pre,
 

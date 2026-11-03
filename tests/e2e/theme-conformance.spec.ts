@@ -31,6 +31,10 @@ import { DOC_THEMES } from '../../src/web/theme/docThemes.js'
  *   container-inset-symmetry BitClean's quote had 16px above its content and 35px below, a list's
  *                           bottom margin stacking onto the quote's own padding.
  *   code-block-size         A block whose code is far off the body size reads as a screenshot.
+ *   selection-contrast      Crepe paints selected text with the sidebar's row fill, 8 units from
+ *                           Aspartate's own code background: a selection you cannot see.
+ *   code-language-fits      Tailwind's form reset took the padding off the language control and
+ *                           pushed its font to 14.4px, clipping `typescript` in a 109px button.
  *   table-alignment-honoured BitClean overrode `align` on every cell and Everforest and Lapis on
  *                           the header, so the toolbar's alignment buttons appeared to do nothing.
  *   table-rows-separated    A table whose rows have no border, rule or zebra fill is a wall.
@@ -323,6 +327,76 @@ function measure(): Violation[] {
       bf / body >= 0.78 && bf / body <= 1.0)
   }
 
+  /*
+   * The selection a reader sees, against the paper and against a code block.
+   *
+   * Reported as 选中文本的背景色…和代码块的背景色是一样的. The cause was one token doing two jobs —
+   * see "the text selection" in `crepe-shell.css` — and the measurement is the fix's floor: the
+   * selection fill, composited over whatever it is painted on, has to be at least this far from the
+   * paper it sits on and from the fenced block beside it. 40 is crude (plain RGB distance, not a
+   * perceptual one) and deliberately below the 49 the worst theme now measures, so a change that
+   * drops under it is a change somebody made on purpose.
+   */
+  const rgb = (c: string) => {
+    const m = /rgba?\(([^)]+)\)/.exec(c)
+    if (m === null) return null
+    const n = m[1]!.split(',').map((v) => parseFloat(v.trim()))
+    if (n.length < 3 || n.some((v) => Number.isNaN(v))) return null
+    return { r: n[0]!, g: n[1]!, b: n[2]!, a: n[3] ?? 1 }
+  }
+  /** The first ancestor that actually paints, which is what a translucent fill composites over. */
+  const paperUnder = (el: Element) => {
+    for (let at: Element | null = el; at !== null; at = at.parentElement) {
+      const c = rgb(getComputedStyle(at).backgroundColor)
+      if (c !== null && c.a > 0) return c
+    }
+    return { r: 255, g: 255, b: 255, a: 1 }
+  }
+  const over = (top: string, under: { r: number, g: number, b: number }) => {
+    const t = rgb(top)
+    if (t === null) return null
+    return { r: t.r * t.a + under.r * (1 - t.a), g: t.g * t.a + under.g * (1 - t.a),
+      b: t.b * t.a + under.b * (1 - t.a) }
+  }
+  const apart = (a: { r: number, g: number, b: number }, b: { r: number, g: number, b: number }) =>
+    Math.round(Math.sqrt((a.r - b.r) ** 2 + (a.g - b.g) ** 2 + (a.b - b.b) ** 2))
+
+  const SELECTION_FLOOR = 40
+  const fence = root.querySelector('.milkdown-code-block')
+  const paper = paperUnder(para)
+  const painted = over(getComputedStyle(para, '::selection').backgroundColor, paper)
+  if (painted !== null) {
+    check('selection-contrast', 'vs paper', `${apart(painted, paper)} from the page`,
+      apart(painted, paper) >= SELECTION_FLOOR)
+    if (fence) {
+      const code = paperUnder(fence)
+      check('selection-contrast', 'vs code', `${apart(painted, code)} from a fenced block`,
+        apart(painted, code) >= SELECTION_FLOOR)
+    }
+  }
+
+  /*
+   * The language control reads as what it says.
+   *
+   * Reported as 代码块的语言选择展示不全. Tailwind's Preflight reset reached the editor's own chrome
+   * and took the padding off the control while pushing its font to 14.4px, so `typescript` wanted
+   * 112px in a 109px button. Both halves are checked: a label must not be clipped, and it must not
+   * touch the edge of the control it is in.
+   */
+  for (const btn of Array.from(root.querySelectorAll('.milkdown-code-block .language-button'))) {
+    const cs = getComputedStyle(btn)
+    const label = (btn.textContent ?? '').trim()
+    check('code-language-fits', label || 'language',
+      `needs ${btn.scrollWidth}px in ${btn.clientWidth}px`, btn.scrollWidth <= btn.clientWidth + 1)
+    check('code-language-fits', label || 'language',
+      `padding ${cs.paddingLeft} / ${cs.paddingRight}`,
+      num(cs.paddingLeft) >= 3 && num(cs.paddingRight) >= 3)
+    // This control is chrome, not prose: the shell sets it at 11px to sit quietly in the corner of
+    // a block. Tailwind's reset pushed it to 14.4px, which is bigger than the code it labels.
+    check('code-language-fits', label || 'language', `font-size ${cs.fontSize}`,
+      num(cs.fontSize) <= 12)
+  }
+
   return out
 }
 
@@ -361,6 +435,13 @@ for (const theme of DOC_THEMES) {
         document.documentElement.setAttribute('data-theme', mode)
       }, { id: theme.id, mode: appearance as string })
       // The swap suppresses transitions for a frame; measure after it has settled.
+      await page.waitForTimeout(150)
+
+      // The code block's controls are built when the pointer arrives, so without this there is
+      // nothing for `code-language-fits` to measure and the rule passes on an empty list — which
+      // is how it first shipped, silently measuring nothing. The row is absolutely positioned, so
+      // hovering moves no other box.
+      await page.locator('.milkdown-code-block').last().hover()
       await page.waitForTimeout(150)
 
       const violations = await page.evaluate(measure)

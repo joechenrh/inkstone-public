@@ -26,6 +26,7 @@ import {
   toggleRightPanel,
 } from '../state/ui.js'
 import { shareMenuItem } from '../share/menuItem.js'
+import { todayMenuItem } from '../editor/todayItem.js'
 import { liveMenuItem } from '../live/menuItem.js'
 import { LiveTopMark } from '../live/LiveMarks.js'
 import { currentPath } from '../state/vault.js'
@@ -90,6 +91,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
                 { label: 'Outline', icon: <IconOutline />, onSelect: () => { togglePhoneSheet('outline') } },
                 { label: 'History', icon: <IconRightPanel />, onSelect: () => { togglePhoneSheet('history') } },
                 // Only on a phone. A desktop reaches this from the tree row, which is on screen.
+                ...todayMenuItem(path),
                 ...shareMenuItem(path),
                 ...liveMenuItem(path, path.split('/').pop() ?? path),
               ]

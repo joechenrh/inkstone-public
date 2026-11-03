@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const DOC_ROOT = '.ink-doc'
+// The same spelling the converter emits — an exact string compare below, so a different
+// number of `.ink-doc`s here silently finds no page colours at all.
+const DOC_ROOT = '.ink-doc.ink-doc.ink-doc'
 
 function convert(file, id) {
   const out = execFileSync('node', [path.join(here, 'convert-typora-theme.mjs'), file, id], {

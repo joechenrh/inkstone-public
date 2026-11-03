@@ -52,7 +52,11 @@ async function open(page: Page, engine: 'crepe', toHost = false) {
 async function pasteImage(page: Page, colour: string) {
   // Counted by what is on screen with an address, not by `data-ink-asset`: that attribute is the
   // vault observer's mark, and a picture the host took never gets one.
-  const shown = () => page.evaluate(() => document.querySelectorAll('.ink-doc img[src]:not([src=""])').length)
+  // Not the upload placeholder, which is an `img` too but is a decoration rather than a picture in
+  // the note — see `upload-placeholder.ts`. Counting it made this helper return as soon as the
+  // paste was *seen*, so the test below read the address of the picture before this one.
+  const shown = () => page.evaluate(() => document.querySelectorAll(
+    '.ink-doc img[src]:not([src=""]):not(.ink-uploading img)').length)
   const before = await shown()
   await page.locator('.ink-doc').click()
   await page.keyboard.press('ControlOrMeta+End')
@@ -98,7 +102,8 @@ async function savedContent(page: Page, note: string): Promise<string> {
  * it has just pasted, at the end.
  */
 const shownSrc = (page: Page) => page.evaluate(() => {
-  const img = Array.from(document.querySelectorAll<HTMLImageElement>('.ink-doc img'))
+  const img = Array.from(document.querySelectorAll<HTMLImageElement>(
+    '.ink-doc img:not(.ink-uploading img)'))
     .reverse()
     .find((e) => (e.getAttribute('src') ?? '').includes('assets'))
   return img?.getAttribute('src') ?? null

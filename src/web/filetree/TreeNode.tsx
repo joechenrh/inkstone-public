@@ -5,6 +5,7 @@ import { dirty } from '../state/document.js'
 import { IconFile, IconFolder, IconMore, IconMove, IconRename, IconTrash, IconUnsavedDot } from '../components/icons.js'
 import { MenuButton, type MenuItem } from '../components/Menu.js'
 import { shareMenuItem } from '../share/menuItem.js'
+import { todayMenuItem } from '../editor/todayItem.js'
 import { liveMenuItem } from '../live/menuItem.js'
 import { isAssetPath } from '../assets/paths.js'
 import { followLink } from '../editor/note-links.js'
@@ -164,6 +165,7 @@ export function TreeNode({ entry, depth, onOpenFile }: TreeNodeProps) {
     },
     // A folder is not a document, so there is nothing to publish; this is also the only entry
     // point a desktop has, since its top bar carries no menu at all.
+    ...(entry.type === 'file' ? todayMenuItem(entry.path) : []),
     ...(entry.type === 'file' ? shareMenuItem(entry.path) : []),
     ...(entry.type === 'file' ? liveMenuItem(entry.path, entry.name) : []),
     {

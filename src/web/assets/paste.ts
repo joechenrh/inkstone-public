@@ -61,6 +61,15 @@ export interface PasteTarget {
   insert: (markdown: string, src: string) => void
   /** Every change of the line under the picture, ending in a settled state. */
   report: (status: PasteStatus) => void
+  /**
+   * This one is on its way: show something where it will land.
+   *
+   * Called before the bytes are touched and answered with a function that takes the placeholder
+   * away again, which runs whether the picture landed or was refused — a note left with a dimmed
+   * picture that never resolves is worse than one that never showed it. Optional, because a target
+   * with nowhere to draw (the phone's inbox, a test) is a target that simply does not.
+   */
+  waiting?: (file: File) => () => void
 }
 
 /**
@@ -106,6 +115,7 @@ export async function storeImages(files: File[], target: PasteTarget): Promise<v
 
   for (const [index, file] of files.entries()) {
     target.report({ kind: 'working', done: index, total: files.length })
+    const landed = target.waiting?.(file)
     try {
       const image = await encodeForNote(file)
 
@@ -136,6 +146,7 @@ export async function storeImages(files: File[], target: PasteTarget): Promise<v
         // The same picture, already here. Worth saying: something visible happened to the note and
         // nothing at all happened to the repository, and those look identical from the outside.
         if (existed && files.length === 1 && fellBack === '') {
+          landed?.()
           target.report({ kind: 'linked', name })
           return
         }
@@ -148,6 +159,8 @@ export async function storeImages(files: File[], target: PasteTarget): Promise<v
     } catch (err) {
       target.report(refusal(err))
       return
+    } finally {
+      landed?.()
     }
   }
 

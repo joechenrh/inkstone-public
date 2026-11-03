@@ -3,6 +3,7 @@ import { toggleReadOnly, toggleSourceMode } from './settings.js'
 import { refreshGitStatus } from './git.js'
 import { setSidebarView, toggleLeftPanel, toggleRightPanel } from './ui.js'
 import { beginCreate } from './vault.js'
+import { startToday } from '../editor/today.js'
 
 /**
  * All global keyboard shortcuts, in one testable function.
@@ -28,6 +29,12 @@ export function handleShortcut(e: KeyboardEvent): boolean {
       // churning a key that works to match another app is the wrong trade.
       case 'KeyM':
         toggleSourceMode()
+        break
+      // D for the day, and on Alt with the other two because starting today's section is the same
+      // kind of act as making a file. Cmd+D alone belongs to the browser's bookmark bar, and a
+      // note application that takes it is one that has decided its own convenience comes first.
+      case 'KeyD':
+        startToday()
         break
       // Everything else on Ctrl/Cmd+Alt belongs to Vditor — digits 1-6 set the heading level
       // and 7-9 switch edit mode — so it has to pass through untouched.

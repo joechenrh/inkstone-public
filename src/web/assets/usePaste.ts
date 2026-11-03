@@ -65,11 +65,15 @@ const LINGER_MS = 6000
 export function useImagePaste(
   stackRef: RefObject<HTMLElement | null>,
   insert: (markdown: string, path: string) => void,
+  /** See `PasteTarget.waiting` — the editor draws the picture while it is still going up. */
+  waiting?: (file: File) => () => void,
 ): { line: PasteLine | null; paste: (files: File[]) => void } {
   const [line, setLine] = useState<PasteLine | null>(null)
   const pathRef = useRef<string | null>(null)
   const insertRef = useRef(insert)
   insertRef.current = insert
+  const waitingRef = useRef(waiting)
+  waitingRef.current = waiting
   /**
    * Where the reader pressed, when the line is about a gesture rather than about a picture.
    *
@@ -110,8 +114,14 @@ export function useImagePaste(
     // again, so the same path can appear twice — and anchoring to the first put the line about what
     // just happened under a picture from further up the document.
     const matches = src === null || path === null
-      ? []
-      : stack.querySelectorAll<HTMLImageElement>(
+      /*
+       * While the picture is still going up it has no address to be found by — and it does not
+       * need one, because the placeholder standing where it will land is already on screen. See
+       * `upload-placeholder.ts`. Without this the line falls back to the caret, which is above the
+       * preview, and is drawn on top of the thing it is describing.
+       */
+      ? stack.querySelectorAll<HTMLElement>('.ink-uploading')
+      : stack.querySelectorAll<HTMLElement>(
         `img[data-ink-asset="${CSS.escape(path)}"], img[src="${CSS.escape(src)}"]`,
       )
     const img = matches.length === 0 ? null : matches[matches.length - 1]
@@ -191,6 +201,7 @@ export function useImagePaste(
         insertRef.current(markdown, path)
       },
       report: place,
+      waiting: (file) => waitingRef.current?.(file) ?? (() => {}),
     })
   }, [place])
 

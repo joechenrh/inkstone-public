@@ -23,12 +23,15 @@ import { fenceInput } from './fence-input.js'
 import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall, unwrapBlockOnBackspace } from './block-escape.js'
 import { setHeadingLevel, unwrapHeadingOnBackspace } from './headings.js'
 import { marksEndAtTheirMarker } from './mark-inclusivity.js'
+import { bareUrlsStayBare } from './bare-url.js'
 import { collab, collabServiceCtx } from '@milkdown/plugin-collab'
 import type { LiveWire } from '../live/provider.js'
 import { provideEditorText } from './current.js'
+import { applyToday, provideToday } from './today.js'
 import { serveAgent } from '../live/apply.js'
 import { keepMirror } from '../live/mirror.js'
 import { copyClosed } from './copy-closed.js'
+import { showUploading, uploadPlaceholder } from './upload-placeholder.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
 import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
 import { writeTablesAsTyped, writeWhatWasTyped } from './markdown-escapes.js'
@@ -152,6 +155,12 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       const image = imageSchema.type(c).create({ src })
       view.dispatch(view.state.tr.replaceSelectionWith(image).scrollIntoView())
     })
+  }, (file) => {
+    // The picture, dimmed, where it is about to land — see `upload-placeholder.ts`. Nothing is
+    // drawn when the editor is not up yet, which is also when there is no caret to draw it at.
+    const crepe = crepeRef.current
+    if (!crepe) return () => {}
+    return showUploading(crepe.editor.ctx.get(editorViewCtx), file)
   })
   const pasteRef = useRef(paste)
   pasteRef.current = paste
@@ -273,6 +282,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     }
     // A run of emphasis ends where its closing `*` is; see `mark-inclusivity.ts`.
     for (const schema of marksEndAtTheirMarker) crepe.editor.use(schema)
+    crepe.editor.use(bareUrlsStayBare).use(uploadPlaceholder)
     // Crepe has an upload button and no paste handler; see `image-paste.ts`.
     // A note refers to `/assets/…`, which is not a URL a browser can resolve in either route.
     const stopImages = showAssetImages(host)
@@ -373,6 +383,9 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       // What this editor holds, for anything that cannot wait for the debounce below. See
       // `current.ts` — ending a live session is the case that proved this necessary.
       provideEditorText(() => closedMarkdown(crepe.editor.ctx, crepe.getMarkdown()))
+      // The Today action, which needs a transaction rather than new markdown: its whole point is
+      // where the caret ends up, and rebuilding the document from text would throw that away.
+      provideToday((today) => applyToday(crepe.editor.ctx.get(editorViewCtx), today))
       const surface = host.querySelector<HTMLElement>('.ProseMirror')
       surface?.classList.add(DOC_SURFACE)
       crepe.setReadonly(readOnly.value)
@@ -559,6 +572,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       disposed = true
       readyRef.current = false
       provideEditorText(null)
+      provideToday(null)
       stopMirror()
       stopAgent()
       stopImages()

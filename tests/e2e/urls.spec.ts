@@ -82,52 +82,6 @@ test('a url pasted at the caret reaches the file without brackets', async ({ pag
   expect(saved).not.toContain('<https://example.com/pasted/here>')
 })
 
-for (const html of [false, true]) {
-  test(`a pasted url stays bare when the caret enters it (${html ? 'HTML link' : 'plain text'})`, async ({ page }) => {
-    await open(page)
-    await page.locator('.ink-doc p').filter({ hasText: 'After.' }).first().evaluate((p) => {
-      const range = document.createRange()
-      range.selectNodeContents(p)
-      range.collapse(false)
-      const selection = window.getSelection()!
-      selection.removeAllRanges()
-      selection.addRange(range)
-      ;(p.closest('.ProseMirror') as HTMLElement).focus()
-    })
-    await page.keyboard.press('Enter')
-    const url = 'https://notes.example.com/'
-    await page.evaluate(({ url, html }) => {
-      const data = new DataTransfer()
-      data.setData('text/plain', url)
-      if (html) data.setData('text/html', `<a href="${url}">${url}</a>`)
-      document.querySelector('.ProseMirror')!.dispatchEvent(
-        new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }),
-      )
-    }, { url, html })
-    // The old test only saved. The duplication appears when the caret moves back into the link.
-    await page.keyboard.press('ArrowLeft')
-    const paragraph = page.locator('.ink-doc p').filter({ hasText: url }).last()
-    await expect(paragraph).toHaveText(url)
-    await page.keyboard.press('ControlOrMeta+s')
-    await expect.poll(() => read(page)).toContain(`\n${url}\n`)
-    await expect(paragraph).toHaveText(url)
-  })
-}
-
-test('entering a bare url leaves it bare while a named link still reveals its syntax', async ({ page }) => {
-  await open(page)
-  const bare = page.locator('.ink-doc p').filter({ hasText: /^https:\/\/example\.com\/a\/b\?c=1$/ })
-  await bare.locator('a').click()
-  await page.keyboard.press('ArrowLeft')
-  await expect(bare).toHaveText('https://example.com/a/b?c=1')
-  const punctuation = page.locator('.ink-doc p').filter({ hasText: /^https:\/\/example\.com\/~user$/ })
-  await punctuation.locator('a').click()
-  await expect(punctuation).toHaveText('https://example.com/~user')
-  const named = page.locator('.ink-doc p').filter({ hasText: 'A paragraph with' })
-  await named.locator('a').click()
-  await expect(named).toContainText('[a link](https://example.com/docs)')
-})
-
 /**
  * Where the brackets stay.
  *

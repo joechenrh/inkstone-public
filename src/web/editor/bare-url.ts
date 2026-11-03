@@ -54,7 +54,7 @@ export function keepsItsBareForm(url: string): boolean {
 export function isBareUrl(text: string | null | undefined, href: unknown, title: unknown): boolean {
   if (typeof href !== 'string' || text !== href) return false
   if (title !== null && title !== undefined && title !== '') return false
-  return /^https?:\/\/\S+$/i.test(href)
+  return keepsItsBareForm(href)
 }
 
 export const bareUrlsStayBare = linkSchema.extendSchema((prev) => (ctx: Ctx): MarkSchema => {
@@ -66,7 +66,7 @@ export const bareUrlsStayBare = linkSchema.extendSchema((prev) => (ctx: Ctx): Ma
       match: upstream.match,
       runner: (state, mark, node) => {
         const text = (node as { text?: string | null }).text
-        if (isBareUrl(text, mark.attrs.href, mark.attrs.title) && keepsItsBareForm(mark.attrs.href as string)) return
+        if (isBareUrl(text, mark.attrs.href, mark.attrs.title)) return
         upstream.runner(state, mark, node)
       },
     },

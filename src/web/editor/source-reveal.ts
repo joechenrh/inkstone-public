@@ -7,7 +7,6 @@ import type { EditorView } from '@milkdown/kit/prose/view'
 import { readOnly } from '../state/settings.js'
 import { currentPath } from '../state/vault.js'
 import { followLink, resolveLink } from './note-links.js'
-import { isBareUrl } from './bare-url.js'
 
 /**
  * A link or a picture becomes its own markdown while the caret is in it, and goes back to being a
@@ -79,7 +78,7 @@ function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof link
   // appears is the other half of that, and it is settled in `openSourceIn`.
   const run = runs.find((r) => $from.pos >= r.from && $from.pos <= r.to)
   if (!run) return null
-  return { ...run, href: String(mark.attrs.href ?? ''), title: mark.attrs.title }
+  return { ...run, href: String(mark.attrs.href ?? '') }
 }
 
 /**
@@ -178,11 +177,6 @@ function openSourceIn(
   const link = linkAt(tr.selection, ctx)
   if (link === null || overlaps(link)) return null
   const text = tr.doc.textBetween(link.from, link.to, '', '')
-  // A pasted/autolinked URL already shows its address. Revealing it as [url](url) duplicates
-  // what the reader pasted merely by moving the caret. Keep the link mark for modifier-click;
-  // named links still reveal their separate label and destination below. This is independent of
-  // whether the serialiser needs angle brackets to preserve punctuation in the URL on disk.
-  if (isBareUrl(text, link.href, link.title)) return null
   const source = `[${text}](${link.href})`
   /*
    * Where the caret goes when the brackets appear under it.

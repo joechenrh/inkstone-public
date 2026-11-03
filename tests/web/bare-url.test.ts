@@ -79,14 +79,6 @@ describe('isBareUrl', () => {
     expect(isBareUrl(url, url, undefined)).toBe(true)
   })
 
-  it('recognises an address even when its punctuation needs brackets on disk', () => {
-    for (const href of ['https://example.com/~user', 'https://en.wikipedia.org/wiki/Foo_(bar)']) {
-      expect(isBareUrl(href, href, null)).toBe(true)
-      expect(keepsItsBareForm(href)).toBe(false)
-    }
-    expect(isBareUrl('mailto:someone@example.com', 'mailto:someone@example.com', null)).toBe(false)
-  })
-
   it('is not a link with words for its text', () => {
     expect(isBareUrl('a link', url, null)).toBe(false)
     // Nor one whose text merely contains the address.

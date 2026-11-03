@@ -68,7 +68,7 @@ export function PhoneBar() {
     <div class="ink-phonebar">
       {/* Positioned against this bar, which is the only fixed thing at the bottom of a phone. */}
       <GitNotice />
-      <div class="ink-viewgroup" role="group" aria-label="View">
+      <div class="ink-viewgroup" data-view={view} role="group" aria-label="View">
         {VIEWS.map(({ mode, label, Icon }) => (
           <button
             key={mode}

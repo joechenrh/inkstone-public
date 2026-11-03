@@ -103,6 +103,11 @@ Left: the file-tree toggle and the breadcrumb. Right, in order: the **view group
 
 The group is a tray with the selected view lifted onto the page colour, which is the claim being made — one control, one answer. `Cmd/Ctrl+E` selects read (and leaves source, since the key asks for reading); `Cmd/Ctrl+Alt+M` selects source and returns to edit.
 
+The selected background is one shared thumb, moved with a 220ms decelerating transform beneath
+stationary icons. Buttons, shortcuts and the phone's press handlers all update the same view
+state, so they share the motion without measuring layout or adding a dependency. Repeated presses
+retarget the transition from its current position. Reduced motion switches the thumb immediately.
+
 Settings sits past the hairline because it configures the app rather than the document, and it is what remains when the document-scoped half is gone.
 
 **A control that acts on the open document is not there when there is none.** With no file open the view group, the right-panel toggle (its drawer holds *this file's* history), the word and character counts, and the hairline all go; the file-tree toggle, Settings and the git state stay, because they describe the app and the vault. Source mode already behaved this way on its own, which is what made the others look wrong beside it.

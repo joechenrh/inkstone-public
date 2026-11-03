@@ -143,7 +143,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
           followed on its own. */}
       {path !== null && (
         <>
-          <div class="ink-viewgroup" role="group" aria-label="View">
+          <div class="ink-viewgroup" data-view={view} role="group" aria-label="View">
             {VIEWS.map(({ mode, label, Icon }) => (
               <button
                 key={mode}

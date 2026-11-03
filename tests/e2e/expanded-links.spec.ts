@@ -11,14 +11,51 @@ const test = base.extend({
   },
 })
 
-async function open(page: Page) {
+async function open(page: Page, name = 'expanded-links.md') {
   await page.goto('/')
   await page.getByPlaceholder('Password').fill('e2e-password')
   await page.getByRole('button', { name: 'Enter' }).click()
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
-  await page.locator('.ink-tree-name').filter({ hasText: /^expanded-links\.md$/ }).click()
+  await page.locator('.ink-tree-name').filter({ hasText: name }).click()
   await expect(page.locator('.ink-doc')).toContainText('After.')
   await expect(page.locator('.ProseMirror')).toHaveAttribute('contenteditable', 'true')
+}
+
+async function selectParagraph(page: Page, paragraph: Locator) {
+  await paragraph.evaluate((p) => {
+    ;(p.closest('.ProseMirror') as HTMLElement).focus()
+    const range = document.createRange()
+    range.selectNodeContents(p)
+    const selection = getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+  })
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+}
+
+async function copyParagraph(page: Page, paragraph: Locator): Promise<{ text: string; html: string }> {
+  await selectParagraph(page, paragraph)
+  await page.evaluate(() => {
+    const next = new Promise<{ text: string; html: string }>((resolve) => {
+      document.addEventListener('copy', (event) => resolve({
+        text: event.clipboardData!.getData('text/plain'), html: event.clipboardData!.getData('text/html'),
+      }), { once: true })
+    })
+    ;(window as unknown as { copiedParagraph: typeof next }).copiedParagraph = next
+  })
+  await page.keyboard.press('ControlOrMeta+c')
+  return page.evaluate(() => (window as unknown as { copiedParagraph: Promise<{ text: string; html: string }> }).copiedParagraph)
+}
+
+async function pastePayload(page: Page, payload: { text: string; html?: string }) {
+  await page.evaluate((given) => {
+    const data = new DataTransfer()
+    data.setData('text/plain', given.text)
+    if (given.html) data.setData('text/html', given.html)
+    document.querySelector('.ProseMirror')!.dispatchEvent(new ClipboardEvent('paste', {
+      clipboardData: data, bubbles: true, cancelable: true,
+    }))
+  }, payload)
 }
 
 async function pointOnText(locator: Locator) {
@@ -32,6 +69,73 @@ async function pointOnText(locator: Locator) {
 
 for (const browserName of ['chromium', 'webkit'] as const) {
   test.describe(browserName, () => {
+    for (const format of ['html', 'text']) {
+      test(`replacing copied links repeatedly does not nest or escape their targets (${format})`, async ({ page }) => {
+        const name = `repeated-links-${browserName}-${format}.md`
+        await open(page, name)
+        const url = 'https://notes.example.com/'
+        const markdown = `[11111://notes.example.com/](${url})`
+        const original = `Before.\n\n${markdown}\n\nAfter.\n`
+        const paragraph = page.locator('.ink-doc p').filter({ hasText: '11111://' })
+        const read = () => page.evaluate(async (path) => (await (await fetch(`/api/file?path=${encodeURIComponent(path)}`)).json()).content as string, `notes/${name}`)
+        for (let round = 0; round < 5; round++) {
+          if (round % 2 === 1) {
+            await paragraph.locator('a').click()
+            await expect(page.locator('.ink-link-source-label')).toHaveText('11111://notes.example.com/')
+          }
+          const payload = await copyParagraph(page, paragraph)
+          expect(payload.text).toBe(markdown)
+          await pastePayload(page, format === 'html' ? payload : { text: payload.text })
+          await page.keyboard.press('ControlOrMeta+s')
+          await expect.poll(read).toBe(original)
+          await page.reload()
+          await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
+          await page.locator('.ink-tree-name').filter({ hasText: name }).click()
+          await expect(paragraph.locator('a')).toHaveAttribute('href', url)
+        }
+
+        // Inside revealed Markdown, pasting into the destination edits that field as text.
+        await paragraph.locator('a').click()
+        const destination = page.locator('.ink-link-source-target')
+        await expect(destination).toHaveText(url)
+        await selectParagraph(page, destination)
+        await pastePayload(page, { text: 'https://example.com/inside' })
+        await expect(destination).toHaveText('https://example.com/inside')
+        await page.keyboard.press('ControlOrMeta+s')
+        await expect.poll(read).toBe('Before.\n\n[11111://notes.example.com/](https://example.com/inside)\n\nAfter.\n')
+
+        // The reported input starts with a URL but also contains Markdown. It must not be
+        // attached as one href to the selected old link, even when the clipboard has no HTML.
+        await selectParagraph(page, paragraph)
+        await pastePayload(page, {
+          text: `${url}${markdown}`,
+          ...(format === 'html' ? { html: `${url}<a href="${url}">11111://notes.example.com/</a>` } : {}),
+        })
+        await page.keyboard.press('ControlOrMeta+s')
+        const links = await paragraph.locator('a').evaluateAll((nodes) => nodes.map((a) => a.getAttribute('href')!))
+        expect(links.length).toBeGreaterThan(0)
+        for (const href of links) {
+          expect(href).not.toContain('](')
+          expect(href).not.toContain('\\')
+        }
+
+        // Pasting an actual URL over an existing link replaces its label too, rather than
+        // making the old label (or revealed Markdown) point at a new address.
+        await selectParagraph(page, paragraph)
+        await pastePayload(page, { text: 'https://example.com/replacement' })
+        await expect(page.locator('.ink-doc a[href="https://example.com/replacement"]')).toHaveText('https://example.com/replacement')
+        await page.keyboard.press('ControlOrMeta+s')
+        await expect.poll(read).toBe('Before.\n\nhttps://example.com/replacement\n\nAfter.\n')
+
+        // Plain selected prose still supports assigning a URL without replacing its label.
+        await selectParagraph(page, page.locator('.ink-doc p').filter({ hasText: /^Before\.$/ }))
+        await pastePayload(page, { text: 'https://example.com/attach' })
+        await expect(page.locator('.ink-doc a[href="https://example.com/attach"]')).toHaveText('Before.')
+        await page.keyboard.press('ControlOrMeta+s')
+        await expect.poll(read).toContain('[Before.](https://example.com/attach)')
+      })
+    }
+
     test('Command-click opens expanded labels and destinations, including URLs with parentheses', async ({ page }) => {
       await page.context().route('https://example.com/**', (route) => route.fulfill({ body: 'Destination' }))
       await open(page)

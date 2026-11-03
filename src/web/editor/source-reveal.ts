@@ -272,6 +272,12 @@ export function sourceIsOpen(state: EditorState): boolean {
   return KEY.getState(state) != null
 }
 
+/** Pasting inside revealed Markdown edits text, rather than inserting another link into it. */
+export function sourceRange(state: EditorState): { from: number; to: number } | null {
+  const open = KEY.getState(state)
+  return open ? { from: open.from, to: open.to } : null
+}
+
 /**
  * Enter, while something is showing its own markdown: close it, and leave the key alone.
  *

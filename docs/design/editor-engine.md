@@ -254,3 +254,10 @@ to the HTML clipboard. Milkdown's single-text-node shortcut ignores marks and us
 closed in a temporary document before either format is produced, so pasting HTML back does not
 duplicate brackets. Bare URLs keep their plain spelling; other clipboard selections retain the
 existing serializer.
+
+Paste distinguishes a single URL from a Markdown fragment using the editor's parser, not just a
+scheme prefix and lack of spaces. `https://example.com/[label](target)` is several parsed nodes,
+not one destination to attach to whatever is selected. Selected existing links are replaced;
+selected ordinary prose can still receive a URL. Inside revealed Markdown a URL is inserted as
+literal text, so editing the destination cannot put another link mark inside its source. Repeated
+copy/replace/save/reopen tests cover both HTML and plain-text clipboards in Chromium and WebKit.

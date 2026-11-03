@@ -243,6 +243,13 @@ fs.writeFileSync(
     + 'After.\n',
 )
 
+for (const engine of ['chromium', 'webkit']) {
+  for (const format of ['html', 'text']) {
+    fs.writeFileSync(path.join(root, 'notes', `repeated-links-${engine}-${format}.md`),
+      'Before.\n\n[11111://notes.example.com/](https://notes.example.com/)\n\nAfter.\n')
+  }
+}
+
 // A fence whose language has a long name, for the language control. `js` fits any box; the
 // control is read with names like `typescript` in it, which is where a fixed width shows.
 fs.writeFileSync(

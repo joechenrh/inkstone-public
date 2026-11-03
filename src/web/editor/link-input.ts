@@ -2,6 +2,9 @@ import { $inputRule, $prose } from '@milkdown/kit/utils'
 import { InputRule } from '@milkdown/kit/prose/inputrules'
 import { Plugin, PluginKey } from '@milkdown/kit/prose/state'
 import { linkSchema } from '@milkdown/kit/preset/commonmark'
+import { parserCtx } from '@milkdown/kit/core'
+import type { Ctx } from '@milkdown/kit/ctx'
+import { sourceRange } from './source-reveal.js'
 
 /**
  * Typing a link, and pasting one.
@@ -10,9 +13,8 @@ import { linkSchema } from '@milkdown/kit/preset/commonmark'
  * because it is plain text the serialiser has to protect it — so the note on disk gets `\[1\](2)`
  * and the link cannot be written at all without dropping into source mode and fixing it by hand.
  *
- * Both rules below are how every markdown editor behaves and how the other engine behaved: the
- * bracket form becomes a link as the closing paren is typed, and a URL pasted over a selection
- * wraps the selection rather than replacing it.
+ * The bracket form becomes a link as the closing paren is typed. Pasting a URL assigns a link to
+ * selected prose, replaces a selected existing link, or edits a field of revealed Markdown.
  */
 
 /** `[text](url)` and `[text](url "title")`, completed by the closing paren. */
@@ -34,14 +36,31 @@ export const linkInputRule = $inputRule((ctx) =>
 )
 
 /**
- * A URL pasted over selected text links the text, rather than replacing it.
+ * A URL pasted over selected prose links the text; a selected existing link is replaced.
  *
  * A plain ProseMirror plugin rather than `$pasteRule`, which matches a regex against the pasted
  * text and rewrites it — this needs the *selection*, which only `handlePaste` sees. It declines
- * when the clipboard is not a single URL. At an empty caret it inserts a bare URL, ignoring a
- * browser's accompanying HTML anchor; over selected text it creates an explicit link.
+ * when the clipboard is not a single URL according to the editor's parser. At an empty caret it
+ * inserts a bare URL, ignoring a browser's accompanying HTML anchor. A Markdown fragment beginning
+ * with a URL still belongs to the normal paste parser, not to this URL-assignment gesture.
  */
 const URL_ONLY = /^(https?:\/\/\S+|mailto:\S+)$/
+
+function singleUrl(ctx: Ctx, text: string): boolean {
+  if (!URL_ONLY.test(text)) return false
+  if (text.startsWith('mailto:')) return !/[\[\]()<>\\]/.test(text)
+  // A string beginning with https:// can still contain several Markdown nodes. In particular,
+  // URL[label](target) must go through the normal paste parser, never become one enormous href.
+  try {
+    const doc = ctx.get(parserCtx)(text)
+    const paragraph = doc.firstChild
+    const node = paragraph?.firstChild
+    return doc.childCount === 1 && paragraph?.type.name === 'paragraph'
+      && paragraph.childCount === 1 && node?.isText === true && node.text === text
+      && node.marks.some((mark) => mark.type === linkSchema.type(ctx)
+        && mark.attrs.syntax === 'bare' && mark.attrs.href === text)
+  } catch { return false }
+}
 
 export const linkPasteRule = $prose((ctx) =>
   new Plugin({
@@ -52,12 +71,23 @@ export const linkPasteRule = $prose((ctx) =>
       handleDOMEvents: { paste: (view, event) => {
         if (!view.editable) return false
         const text = event.clipboardData?.getData('text/plain')?.trim()
-        if (!text || !URL_ONLY.test(text)) return false
+        if (!text || !singleUrl(ctx, text)) return false
         const { state } = view
-        if (state.selection.empty) {
-          if (state.selection.$from.parent.type.spec.code
-            || state.selection.$from.marks().some((mark) => mark.type.spec.code)) return false
-          const type = linkSchema.type(ctx)
+        if (state.selection.$from.parent.type.spec.code
+          || state.selection.$from.marks().some((mark) => mark.type.spec.code)) return false
+        const type = linkSchema.type(ctx)
+        const source = sourceRange(state)
+        if (source && state.selection.from >= source.from && state.selection.to <= source.to
+          && (state.selection.from > source.from || state.selection.to < source.to)) {
+          event.preventDefault()
+          view.dispatch(state.tr.insertText(text).removeStoredMark(type))
+          return true
+        }
+        let replacesLink = source !== null
+        state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
+          if (node.marks.some((mark) => mark.type === type)) replacesLink = true
+        })
+        if (state.selection.empty || replacesLink) {
           if (!state.selection.$from.parent.type.allowsMarkType(type)) return false
           const mark = type.create({ href: text, title: '', syntax: 'bare' })
           event.preventDefault()

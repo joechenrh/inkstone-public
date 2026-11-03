@@ -91,11 +91,10 @@ function Offer({ state }: { state: PanelState & { kind: 'offer' } }) {
     <div class="ink-share-body">
       <div class="ink-share-note">
         <b>Anyone with the link can edit this note with you</b>
-        {/* One fact a sentence. The first version put all three in one, with two em-dashes holding
-            it together, and it filled five lines of a panel whose job is to be read before a
-            decision. */}
-        They do not sign in, and see nothing else in this vault. The note saves once, when you end
-        the session. While it runs, bold and links stop showing their markdown.
+        Guests can access only this note, without signing in. Changes are saved when you end the session.
+      </div>
+      <div class="ink-share-note">
+        Markdown markers for bold text and links are hidden during the session.
       </div>
       <div>
         <button

@@ -38,7 +38,8 @@ export const linkInputRule = $inputRule((ctx) =>
  *
  * A plain ProseMirror plugin rather than `$pasteRule`, which matches a regex against the pasted
  * text and rewrites it — this needs the *selection*, which only `handlePaste` sees. It declines
- * unless something is selected, because pasting a URL at a bare caret should paste a URL.
+ * when the clipboard is not a single URL. At an empty caret it inserts a bare URL, ignoring a
+ * browser's accompanying HTML anchor; over selected text it creates an explicit link.
  */
 const URL_ONLY = /^(https?:\/\/\S+|mailto:\S+)$/
 
@@ -46,15 +47,28 @@ export const linkPasteRule = $prose((ctx) =>
   new Plugin({
     key: new PluginKey('inkstoneLinkPaste'),
     props: {
-      handlePaste: (view, event) => {
+      // DOM events run before Milkdown's built-in handlePaste, which otherwise consumes HTML
+      // anchors first and discards the fact that the clipboard contained just a URL.
+      handleDOMEvents: { paste: (view, event) => {
+        if (!view.editable) return false
         const text = event.clipboardData?.getData('text/plain')?.trim()
         if (!text || !URL_ONLY.test(text)) return false
         const { state } = view
-        if (state.selection.empty) return false
+        if (state.selection.empty) {
+          if (state.selection.$from.parent.type.spec.code
+            || state.selection.$from.marks().some((mark) => mark.type.spec.code)) return false
+          const type = linkSchema.type(ctx)
+          if (!state.selection.$from.parent.type.allowsMarkType(type)) return false
+          const mark = type.create({ href: text, title: '', syntax: 'bare' })
+          event.preventDefault()
+          view.dispatch(state.tr.replaceSelectionWith(state.schema.text(text, [mark]), false).removeStoredMark(type))
+          return true
+        }
         const mark = linkSchema.type(ctx).create({ href: text, title: '' })
+        event.preventDefault()
         view.dispatch(state.tr.addMark(state.selection.from, state.selection.to, mark))
         return true
-      },
+      } },
     },
   }),
 )

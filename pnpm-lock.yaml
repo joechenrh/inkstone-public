@@ -96,6 +96,9 @@ importers:
       jsdom:
         specifier: ^26.0.0
         version: 26.1.0
+      mdast-util-to-markdown:
+        specifier: ^2.1.2
+        version: 2.1.2
       mermaid:
         specifier: ^11.17.2
         version: 11.17.2

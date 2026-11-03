@@ -223,3 +223,21 @@ Both had been there all along and were invisible while the default engine was th
 - **Saving in source mode wrote the editor's serialisation**, not the bytes in the textarea. The
   mode exists so that what is typed reaches the file as typed; its save handler now stands down
   while it is open.
+
+## URL syntax is part of the document
+
+`https://example.com/`, `<https://example.com/>` and
+`[https://example.com/](https://example.com/)` have the same destination and visible text, but
+different source syntax. The link mark records `bare`, `autolink` or `markdown`, determined from
+the parser's source positions. Label equality cannot make that decision.
+
+A bare URL is coloured without an underline and remains directly editable, without revealing
+invented brackets. Explicit links retain their theme's treatment and source reveal, including a
+destination different from the label. Saving preserves the distinction; an explicit `[url](url)`
+must not silently turn into an autolink. A single URL pasted at an empty caret is bare even when
+the clipboard also carries HTML. Code spans and fenced blocks keep their own paste handling.
+
+Following a link requires hitting the anchor itself, or the actual text rectangles of an expanded
+link. `posAtCoords` gives the nearest document position even for empty space beside the text; it
+is a caret-placement tool, not proof that the pointer hit a link. Reading follows a plain click;
+editing follows a modifier-click. Both must leave empty space alone.

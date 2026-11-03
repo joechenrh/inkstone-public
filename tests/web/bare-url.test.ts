@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { isBareUrl, keepsItsBareForm } from '../../src/web/editor/bare-url.js'
+import { isBareUrl, keepsItsBareForm, linkSyntax } from '../../src/web/editor/bare-url.js'
+import { unified } from 'unified'
+import remarkParse from 'remark-parse'
+import remarkGfm from 'remark-gfm'
+
+describe('link source syntax', () => {
+  it('uses source positions, even when the label and target are identical', () => {
+    const source = 'https://example.com/\n\n<https://example.com/>\n\n'
+      + '[https://example.com/](https://example.com/)\n\n[https://example.com/](1)\n'
+    const tree = unified().use(remarkParse).use(remarkGfm).parse(source)
+    const links = tree.children.flatMap((node) => node.type === 'paragraph' ? node.children : [])
+      .filter((node) => node.type === 'link')
+    expect(links.map(linkSyntax)).toEqual(['bare', 'autolink', 'markdown', 'markdown'])
+  })
+
+  it('does not guess when a synthetic node has no source positions', () => {
+    expect(linkSyntax({ children: [{ type: 'text' }] })).toBe('markdown')
+  })
+})
 
 /**
  * Which URLs may lose their angle brackets.

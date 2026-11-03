@@ -39,6 +39,8 @@ interface Open {
   to: number
   /** What has to be rebuilt when it closes. A picture is a node; a link is a mark on text. */
   kind: 'link' | 'image'
+  /** Keep the original spelling when merely visiting an angle autolink. */
+  syntax?: string
 }
 
 const KEY = new PluginKey<Open | null>('inkstoneSourceReveal')
@@ -78,7 +80,7 @@ function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof link
   // appears is the other half of that, and it is settled in `openSourceIn`.
   const run = runs.find((r) => $from.pos >= r.from && $from.pos <= r.to)
   if (!run) return null
-  return { ...run, href: String(mark.attrs.href ?? '') }
+  return { ...run, href: String(mark.attrs.href ?? ''), syntax: mark.attrs.syntax }
 }
 
 /**
@@ -176,6 +178,7 @@ function openSourceIn(
 
   const link = linkAt(tr.selection, ctx)
   if (link === null || overlaps(link)) return null
+  if (link.syntax === 'bare') return null
   const text = tr.doc.textBetween(link.from, link.to, '', '')
   const source = `[${text}](${link.href})`
   /*
@@ -197,7 +200,7 @@ function openSourceIn(
   tr.replaceWith(link.from, link.to, tr.doc.type.schema.text(source))
   return tr
     .setSelection(TextSelection.create(tr.doc, caret))
-    .setMeta(KEY, { from: link.from, to: link.from + source.length, kind: 'link' })
+    .setMeta(KEY, { from: link.from, to: link.from + source.length, kind: 'link', syntax: link.syntax })
     .setMeta('addToHistory', false)
 }
 
@@ -226,7 +229,9 @@ function collapse(tr: Transaction, open: Open, ctx: Parameters<typeof linkSchema
   const m = SOURCE.exec(text)
   if (m && m[1]) {
     const type = linkSchema.type(ctx)
-    tr.replaceWith(open.from, open.to, tr.doc.type.schema.text(m[1], [type.create({ href: m[2], title: '' })]))
+    tr.replaceWith(open.from, open.to, tr.doc.type.schema.text(m[1], [type.create({
+      href: m[2], title: '', syntax: open.syntax ?? 'markdown',
+    })]))
   }
   return tr.setMeta(KEY, null).setMeta('addToHistory', false)
 }
@@ -335,6 +340,28 @@ function hrefAt(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0], po
   return mark ? String(mark.attrs.href ?? '') : null
 }
 
+/** Hit-test the painted link, not the nearest text position in the paragraph. */
+function clickedHref(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0], event: MouseEvent): string | null {
+  const target = event.target instanceof Element ? event.target : null
+  const anchor = target?.closest('a[href]')
+  if (anchor && view.dom.contains(anchor)) return anchor.getAttribute('href')
+
+  // An expanded explicit link is real text, so it has no anchor. Its actual text rectangles
+  // still bound the hit area; posAtCoords alone snaps a click anywhere on the row to its end.
+  const open = KEY.getState(view.state)
+  if (!open || open.kind !== 'link') return null
+  const from = view.domAtPos(open.from)
+  const to = view.domAtPos(open.to)
+  const range = document.createRange()
+  range.setStart(from.node, from.offset)
+  range.setEnd(to.node, to.offset)
+  const hit = Array.from(range.getClientRects()).some((r) =>
+    event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom)
+  if (!hit) return null
+  const at = view.posAtCoords({ left: event.clientX, top: event.clientY })
+  return at ? hrefAt(view, ctx, at.pos) : null
+}
+
 export const sourceReveal = $prose((ctx) =>
   new Plugin<Open | null>({
     key: KEY,
@@ -357,7 +384,7 @@ export const sourceReveal = $prose((ctx) =>
          */
         const from = tr.mapping.map(value.from, 1)
         const to = tr.mapping.map(value.to, -1)
-        return to > from ? { from, to, kind: value.kind } : null
+        return to > from ? { ...value, from, to } : null
       },
     },
     appendTransaction(trs, _old, state) {
@@ -457,8 +484,7 @@ export const sourceReveal = $prose((ctx) =>
         mousedown: (view, event) => {
           const e = event as MouseEvent
           if (!follows(e)) return false
-          const at = view.posAtCoords({ left: e.clientX, top: e.clientY })
-          const href = at ? hrefAt(view, ctx, at.pos) : null
+          const href = clickedHref(view, ctx, e)
           if (href === null || !leadsSomewhere(href)) return false
           e.preventDefault()
           return true
@@ -481,9 +507,7 @@ export const sourceReveal = $prose((ctx) =>
         click: (view, event) => {
           const e = event as MouseEvent
           if (!follows(e)) return false
-          const at = view.posAtCoords({ left: e.clientX, top: e.clientY })
-          if (!at) return false
-          const href = hrefAt(view, ctx, at.pos)
+          const href = clickedHref(view, ctx, e)
           if (href === null || href === '') return false
           if (!followLink(href, currentPath.value, { x: e.clientX, y: e.clientY })) return false
           // Read mode renders a real `<a href>`, and returning true only stops *ProseMirror* —

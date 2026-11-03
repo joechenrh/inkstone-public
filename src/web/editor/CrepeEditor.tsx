@@ -23,7 +23,7 @@ import { fenceInput } from './fence-input.js'
 import { deleteEmptyTable, deleteLineBesideWall, openLineBesideWall, unwrapBlockOnBackspace } from './block-escape.js'
 import { setHeadingLevel, unwrapHeadingOnBackspace } from './headings.js'
 import { marksEndAtTheirMarker } from './mark-inclusivity.js'
-import { bareUrlsStayBare } from './bare-url.js'
+import { bareUrlsStayBare, preserveLinkSyntax, syncBareUrls } from './bare-url.js'
 import { collab, collabServiceCtx } from '@milkdown/plugin-collab'
 import type { LiveWire } from '../live/provider.js'
 import { provideEditorText } from './current.js'
@@ -282,7 +282,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     }
     // A run of emphasis ends where its closing `*` is; see `mark-inclusivity.ts`.
     for (const schema of marksEndAtTheirMarker) crepe.editor.use(schema)
-    crepe.editor.use(bareUrlsStayBare).use(uploadPlaceholder)
+    crepe.editor.use(bareUrlsStayBare).use(syncBareUrls).use(uploadPlaceholder)
     // Crepe has an upload button and no paste handler; see `image-paste.ts`.
     // A note refers to `/assets/…`, which is not a URL a browser can resolve in either route.
     const stopImages = showAssetImages(host)
@@ -302,6 +302,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     // background. See `emoji.ts`.
     loadEmojiNames()
     crepe.editor.config(writeWhatWasTyped)
+    crepe.editor.config(preserveLinkSyntax)
     // …and its tables the way they were typed; see `markdown-escapes.ts`.
     crepe.editor.config(writeTablesAsTyped)
     // Milkdown keeps a blank line across a round trip by writing `<br />` into the markdown for

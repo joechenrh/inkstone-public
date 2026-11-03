@@ -22,3 +22,11 @@
 @import "./everforest-theme.css";
 @import "./bitclean-theme.css";
 @import "./drake-theme.css";
+
+/* Bare GFM URLs are coloured addresses. Explicit Markdown links retain the theme's underline. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc a[data-link-syntax="bare"] {
+  text-decoration: none;
+  border-bottom: 0;
+  box-shadow: none;
+  background-image: none;
+}

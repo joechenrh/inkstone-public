@@ -1,6 +1,11 @@
 import { linkSchema } from '@milkdown/kit/preset/commonmark'
 import type { Ctx } from '@milkdown/kit/ctx'
 import type { MarkSchema } from '@milkdown/kit/transformer'
+import { remarkStringifyOptionsCtx } from '@milkdown/kit/core'
+import { defaultHandlers } from 'mdast-util-to-markdown'
+import { $prose } from '@milkdown/kit/utils'
+import { Plugin } from '@milkdown/kit/prose/state'
+import type { Mark, TagParseRule } from '@milkdown/kit/prose/model'
 
 /**
  * A URL written as a URL, not wrapped in link syntax.
@@ -16,10 +21,10 @@ import type { MarkSchema } from '@milkdown/kit/transformer'
  * notes are read on github.com and in other editors, where a bare URL is already a link, and a
  * vault kept in git should not show a diff on a line nobody edited.
  *
- * So the mark is skipped on the way out when the text and the address are the same string — the
- * text node then carries the URL and is written as it stands. The mark stays in the *document*,
- * so the URL is still clickable while you are in the note, and GFM links it again on the next
- * open. Round trip: the same bytes.
+ * Source positions distinguish a bare URL, an angle autolink, and an explicit Markdown link.
+ * That distinction lives in the mark, through collaboration and HTML copy/paste as well as saves.
+ * Only a bare URL may omit its mark on the way out; [url](url) is still an explicit link. Bare
+ * addresses have no underline or source reveal, and editing one updates its destination too.
  */
 
 /**
@@ -57,18 +62,108 @@ export function isBareUrl(text: string | null | undefined, href: unknown, title:
   return keepsItsBareForm(href)
 }
 
+/** GFM's bare link has the same source range as its text. Brackets add characters outside it. */
+export function linkSyntax(node: {
+  position?: { start: { offset?: number }; end: { offset?: number } }
+  children?: { type: string; position?: { start: { offset?: number }; end: { offset?: number } } }[]
+}): 'bare' | 'autolink' | 'markdown' {
+  const child = node.children?.length === 1 ? node.children[0] : undefined
+  const start = node.position?.start.offset
+  const end = node.position?.end.offset
+  if (child?.type !== 'text' || start === undefined || end === undefined) return 'markdown'
+  if (child.position?.start.offset === start && child.position?.end.offset === end) return 'bare'
+  if (child.position?.start.offset === start + 1 && child.position?.end.offset === end - 1) return 'autolink'
+  return 'markdown'
+}
+
+/** Explicit [url](url) must not be shortened to <url> just because its label is its address. */
+export function preserveLinkSyntax(ctx: Ctx): void {
+  ctx.update(remarkStringifyOptionsCtx, (options) => ({
+    ...options,
+    handlers: {
+      ...options.handlers,
+      link(node, parent, state, info) {
+        const resourceLink = state.options.resourceLink
+        if (node.data?.inkstoneSyntax === 'markdown') state.options.resourceLink = true
+        try { return defaultHandlers.link(node, parent, state, info) }
+        finally { state.options.resourceLink = resourceLink }
+      },
+    },
+  }))
+}
+
 export const bareUrlsStayBare = linkSchema.extendSchema((prev) => (ctx: Ctx): MarkSchema => {
   const schema = prev(ctx)
   const upstream = schema.toMarkdown
   return {
     ...schema,
+    attrs: { ...schema.attrs, syntax: { default: 'markdown' } },
+    inclusive: false,
+    parseMarkdown: {
+      match: schema.parseMarkdown.match,
+      runner(state, node, type) {
+        state.openMark(type, { href: node.url, title: node.title, syntax: linkSyntax(node) })
+        state.next(node.children)
+        state.closeMark(type)
+      },
+    },
+    toDOM(mark, inline) {
+      const dom = schema.toDOM!(mark, inline) as [string, Record<string, unknown>, number]
+      const { syntax: _syntax, ...attrs } = dom[1]
+      return [dom[0], { ...attrs, 'data-link-syntax': mark.attrs.syntax }, 0]
+    },
+    parseDOM: schema.parseDOM?.map((rule) => {
+      if (!rule.tag) return rule
+      const tagRule = rule as TagParseRule
+      return { ...tagRule, getAttrs(dom: HTMLElement) {
+        const attrs = typeof tagRule.getAttrs === 'function' ? tagRule.getAttrs(dom) : tagRule.attrs
+        if (attrs === false) return false
+        return { ...attrs, syntax: dom.getAttribute('data-link-syntax') ?? 'markdown' }
+      } }
+    }),
     toMarkdown: {
       match: upstream.match,
       runner: (state, mark, node) => {
         const text = (node as { text?: string | null }).text
-        if (isBareUrl(text, mark.attrs.href, mark.attrs.title)) return
-        upstream.runner(state, mark, node)
+        if (mark.attrs.syntax === 'bare' && isBareUrl(text, mark.attrs.href, mark.attrs.title)) return
+        state.withMark(mark, 'link', undefined, {
+          title: mark.attrs.title,
+          url: mark.attrs.href,
+          data: { inkstoneSyntax: mark.attrs.syntax },
+        })
       },
     },
   }
 })
+
+/** Editing a bare URL edits its destination too; named links keep their independent target. */
+export const syncBareUrls = $prose((ctx) => new Plugin({
+  appendTransaction(trs, _old, state) {
+    if (!trs.some((tr) => tr.docChanged)) return null
+    const type = linkSchema.type(ctx)
+    const tr = state.tr
+    state.doc.descendants((block, pos) => {
+      if (!block.isTextblock) return
+      const runs: { from: number; to: number; text: string; mark: Mark }[] = []
+      block.forEach((node, offset) => {
+        const mark = node.marks.find((m) => m.type === type && m.attrs.syntax === 'bare')
+        if (!node.isText || !mark) return
+        const from = pos + 1 + offset
+        const last = runs[runs.length - 1]
+        if (last && last.to === from && last.mark.eq(mark)) {
+          last.to += node.nodeSize
+          last.text += node.text
+        } else runs.push({ from, to: from + node.nodeSize, text: node.text!, mark })
+      })
+      for (const { from, to, text, mark } of runs) {
+        if (text === mark.attrs.href) continue
+        tr.removeMark(from, to, mark)
+        if (/^https?:\/\/\S+$/i.test(text)) {
+          tr.addMark(from, to, type.create({ ...mark.attrs, href: text }))
+        }
+      }
+      return false
+    })
+    return tr.docChanged ? tr.setMeta('addToHistory', false) : null
+  },
+}))

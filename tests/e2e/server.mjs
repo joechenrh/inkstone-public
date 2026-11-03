@@ -218,6 +218,10 @@ fs.writeFileSync(
     '',
     'https://example.com/a/b?c=1',
     '',
+    '[https://example.com/a/b?c=1](1)',
+    '',
+    '[https://example.com/same](https://example.com/same)',
+    '',
     // A named link, which keeps its brackets: this is a link, not a URL that happens to be one.
     'A paragraph with [a link](https://example.com/docs) in it.',
     '',

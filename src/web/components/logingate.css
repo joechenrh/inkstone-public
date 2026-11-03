@@ -2,24 +2,26 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: 240px;
-  margin: 20vh auto 0;
+  width: 100%;
+  margin: 16px 0 0;
 }
+
+.ink-login-label { font-size: 14px; color: var(--ink-fg); }
 
 .ink-login input {
   font: inherit;
-  padding: 8px;
+  padding: 10px 12px;
+  min-height: 44px;
   color: var(--ink-fg);
-  background: var(--ink-code-bg);
-  border: none;
+  background: var(--ink-bg);
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--ink-r-sm);
   outline: none;
 }
 
-.ink-login button {
-  padding: 8px;
-  background: var(--ink-code-bg);
-  color: var(--ink-link);
-}
+.ink-login input:focus { border-color: var(--ink-link); }
+.ink-login .ink-auth-go { margin-top: 0; }
+.ink-login .ink-auth-go:disabled { opacity: 0.5; cursor: default; }
 
 .ink-login-error {
   margin: 0;

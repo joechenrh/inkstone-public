@@ -1,5 +1,5 @@
 import { useRef } from 'preact/hooks'
-import { IconSearch } from '../components/icons.js'
+import { IconClose, IconSearch } from '../components/icons.js'
 import { clearSearch, searchQuery, setSearchQuery } from '../state/search.js'
 import './search.css'
 
@@ -41,7 +41,7 @@ export function SearchField() {
           aria-label="Clear search"
           onClick={() => { clearSearch(); inputRef.current?.focus() }}
         >
-          ✕
+          <IconClose size={12} />
         </button>
       )}
     </div>

@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { closeCommit, commitChanges, commitError, commitOpen, runCommit } from '../state/commit.js'
 import { isPhone } from '../state/ui.js'
 import './commit.css'
+import { IconClose } from '../components/icons.js'
+import { useModalFocus } from '../components/useModalFocus.js'
 
 /**
  * What is about to be committed, before committing it.
@@ -20,6 +22,8 @@ export function CommitPanel() {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const messageRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalFocus(dialogRef, open, 'input')
 
   useLayoutEffect(() => {
     if (!open) return
@@ -51,6 +55,7 @@ export function CommitPanel() {
   return (
     <div class="ink-commit-scrim" onClick={closeCommit}>
       <div
+        ref={dialogRef}
         class={`ink-commit${isPhone.value ? ' ink-commit--sheet' : ''}`}
         role="dialog"
         aria-modal="true"
@@ -59,7 +64,7 @@ export function CommitPanel() {
       >
         <div class="ink-commit-head">
           <span class="ink-commit-title">Commit</span>
-          <button type="button" class="ink-iconbtn" aria-label="Close commit" onClick={closeCommit}>✕</button>
+          <button type="button" class="ink-iconbtn" aria-label="Close commit" onClick={closeCommit}><IconClose /></button>
         </div>
 
         {changes.length === 0

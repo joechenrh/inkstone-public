@@ -15,9 +15,7 @@ beforeEach(() => { settingsOpen.value = true; localStorage.clear()
 describe('SettingsModal', () => {
   it('renders the appearance/font-size/vault rows when open', async () => {
     render(<SettingsModal />)
-    // The row, not the section heading above it — both say Appearance now, which is the point of
-    // the heading: the row is the one with a control beside it.
-    expect(screen.getByText('Appearance', { selector: '.ink-settings-label' })).toBeTruthy()
+    expect(screen.getByText('Color scheme', { selector: '.ink-settings-label' })).toBeTruthy()
     expect(screen.getByText('Appearance', { selector: '.ink-settings-section' })).toBeTruthy()
     expect(screen.getByText('Editor font size')).toBeTruthy()
     await waitFor(() => expect(screen.getByText('/vault')).toBeTruthy())

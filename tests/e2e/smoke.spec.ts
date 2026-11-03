@@ -345,7 +345,8 @@ test('the right panel groups history into sessions and can restore a version', a
   await page.keyboard.press('ControlOrMeta+/')
   const panel = page.locator('.ink-hist')
   await expect(panel).toBeVisible()
-  await expect(panel.locator('.ink-hist-facts dt').first()).toHaveText('Modified')
+  await expect(panel.locator('.ink-hist-header h2')).toHaveText('History')
+  await expect(panel.locator('.ink-hist-header p')).toContainText(/Edited|Current version/)
 
   // The fixture vault has one commit, so there is exactly one entry and it is the creation.
   const entries = panel.locator('.ink-hist-entry')
@@ -464,7 +465,7 @@ test('switching the document theme repaints the document and the shell, and it s
   expect(plain.h2Bg).toBe('rgba(0, 0, 0, 0)')
 
   // Dark: the shell must land on the same colour as the page, not near it.
-  await page.locator('.ink-settings-row').filter({ hasText: 'Appearance' })
+  await page.locator('.ink-settings-row').filter({ hasText: 'Color scheme' })
     .getByRole('button', { name: 'Dark', exact: true }).click()
   const dark = await state()
   expect(dark.docBg).toBe(dark.shellBg)
@@ -1117,7 +1118,7 @@ test('settings is grouped, and the theme swatches are folded away', async ({ pag
   await page.getByTitle('Settings').click()
 
   await expect(page.locator('.ink-settings-section')).toHaveText(
-    ['Appearance', 'Editing', 'Pictures', 'Storage', 'This device'])
+    ['Appearance', 'Editing', 'Pictures', 'Storage'])
 
   // The swatches are behind the name of the one in use, not in front of everything else.
   await expect(page.locator('.ink-swatch')).toHaveCount(0)

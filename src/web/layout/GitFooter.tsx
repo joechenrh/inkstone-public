@@ -32,10 +32,15 @@ export function GitFooter() {
         <button
           class="ink-iconbtn ink-commit-btn"
           disabled={!status.dirty || isBusy || commitLoading.value}
-          onClick={handleCommit}
+          onClick={(event) => {
+            event.currentTarget.focus({ preventScroll: true })
+            handleCommit()
+          }}
           title="Commit"
+          aria-label={busy === 'committing' ? 'Committing…' : 'Commit'}
         >
-          <IconCommit size={14} title={busy === 'committing' ? 'Committing…' : 'Commit'} />
+          <IconCommit size={14} />
+          <span>Commit</span>
         </button>
       </div>
       {/* The button is the confirmation.

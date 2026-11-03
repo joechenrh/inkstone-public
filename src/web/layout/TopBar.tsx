@@ -3,6 +3,7 @@ import { openCommit } from '../state/commit.js'
 import { gitStatus, pushVault } from '../state/git.js'
 import {
   IconBack,
+  IconChevron,
   IconCommit,
   IconEditMode,
   IconMore,
@@ -30,6 +31,7 @@ import { todayMenuItem } from '../editor/todayItem.js'
 import { liveMenuItem } from '../live/menuItem.js'
 import { LiveTopMark } from '../live/LiveMarks.js'
 import { currentPath } from '../state/vault.js'
+import { chosenRepo } from '../auth/identity.js'
 
 export interface TopBarProps {
   onOpenSettings: () => void
@@ -47,14 +49,18 @@ export interface TopBarProps {
  * markup underneath. Each icon names the view it selects rather than the one a click leaves.
  */
 const VIEWS = [
-  { mode: 'edit' as const, label: 'Edit (Cmd/Ctrl+E)', Icon: IconEditMode },
-  { mode: 'read' as const, label: 'Read (Cmd/Ctrl+E)', Icon: IconReadMode },
-  { mode: 'source' as const, label: 'Markdown source (Cmd/Ctrl+Alt+M)', Icon: IconSource },
+  { mode: 'edit' as const, text: 'Edit', label: 'Edit (Cmd/Ctrl+E)', Icon: IconEditMode },
+  { mode: 'read' as const, text: 'Read', label: 'Read (Cmd/Ctrl+E)', Icon: IconReadMode },
+  { mode: 'source' as const, text: 'Source', label: 'Markdown source (Cmd/Ctrl+Alt+M)', Icon: IconSource },
 ]
 
 export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
   const path = currentPath.value
   const view = viewMode.value
+  const scope = chosenRepo.value?.name ?? 'Notes'
+  const slash = path?.lastIndexOf('/') ?? -1
+  const folder = path && slash >= 0 ? path.slice(0, slash) : ''
+  const filename = path?.slice(slash + 1)
 
   /*
    * The phone's bar carries navigation, not controls: back, what you are looking at, and a menu
@@ -68,7 +74,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
     return (
       <>
         {onList
-          ? <span class="ink-breadcrumb ink-breadcrumb--title">Notes</span>
+          ? <span class="ink-breadcrumb ink-breadcrumb--title">{scope}</span>
           : (
             <>
               <button type="button" class="ink-iconbtn" onClick={showPhoneList} title="Back to the list">
@@ -128,13 +134,20 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
           so the words restated what was in plain sight, and the one place they were not visible
           was the phone's list, which says "Notes" and is not empty at all. A breadcrumb names the
           thing you are looking at; with nothing open there is nothing to name. */}
-      <span class="ink-breadcrumb">
-        {path && dirty.value ? <IconUnsavedDot /> : null}
-        {path}
+      <span class="ink-breadcrumb ink-document-location" title={path ?? undefined}>
+        {path && <>
+          <span class="ink-location-scope">{scope}</span>
+          <IconChevron class="ink-location-divider" size={12} />
+          {folder && <><span class="ink-location-folder">{folder}</span><IconChevron class="ink-location-divider" size={12} /></>}
+          {dirty.value ? <IconUnsavedDot /> : null}
+          <span class="ink-location-file">{filename}</span>
+        </>}
       </span>
       {/* Beside the note's name, because that is what the session is about. */}
       <LiveTopMark />
       <span style={{ marginLeft: 'auto' }} />
+
+      <div class={`ink-topbar-tools${path !== null ? ' ink-topbar-tools--document' : ''}`}>
 
       {/* Edit, read and source are three answers to one question, so they are one control with
           exactly one lit — not three switches that could disagree. Everything in this group acts
@@ -144,16 +157,18 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
       {path !== null && (
         <>
           <div class="ink-viewgroup" data-view={view} role="group" aria-label="View">
-            {VIEWS.map(({ mode, label, Icon }) => (
+            {VIEWS.map(({ mode, text, label, Icon }) => (
               <button
                 key={mode}
                 type="button"
                 class={`ink-iconbtn ink-viewbtn${view === mode ? ' on' : ''}`}
                 onClick={() => { setViewMode(mode) }}
                 aria-pressed={view === mode}
+                aria-label={label}
                 title={label}
               >
                 <Icon />
+                <span class="ink-view-label" aria-hidden="true">{text}</span>
               </button>
             ))}
           </div>
@@ -167,9 +182,13 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
           when everything else in this half has gone. The hairline goes with them: a divider with
           nothing on one side of it is just a mark. */}
       {path !== null && <span class="ink-topbar-sep" aria-hidden="true" />}
-      <button type="button" class="ink-iconbtn" onClick={onOpenSettings} title="Settings">
+      <button type="button" class="ink-iconbtn" onClick={(event) => {
+        event.currentTarget.focus({ preventScroll: true })
+        onOpenSettings()
+      }} title="Settings">
         <IconSettings />
       </button>
+      </div>
     </>
   )
 }

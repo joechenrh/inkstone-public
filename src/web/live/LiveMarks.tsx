@@ -36,7 +36,10 @@ export function LiveTopMark() {
       type="button"
       class="ink-iconbtn ink-live-btn"
       title={dropped ? 'Live session — reconnecting' : `Live session — ${who}`}
-      onClick={() => { openLivePanel(here.path, here.title) }}
+      onClick={(event) => {
+        event.currentTarget.focus({ preventScroll: true })
+        openLivePanel(here.path, here.title)
+      }}
     >
       {others.length === 0
         ? (

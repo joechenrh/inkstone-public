@@ -95,7 +95,7 @@ export function PhoneBar() {
         disabled={!dirty.value}
         {...press(() => { void flushSave().then(() => refreshGitStatus()) })}
       >
-        {dirty.value ? 'Save' : 'Saved'}
+        {dirty.value ? 'Save' : view === 'read' ? 'Read only' : 'Saved'}
       </button>
     </div>
   )

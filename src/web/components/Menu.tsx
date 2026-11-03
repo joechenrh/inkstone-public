@@ -84,7 +84,18 @@ export function MenuButton({ items, label, triggerClass, children }: MenuButtonP
   useLayoutEffect(() => {
     if (!open) return
 
-    menuRef.current?.querySelector<HTMLButtonElement>('.ink-menu-item')?.focus()
+    const menu = menuRef.current
+    const trigger = triggerRef.current
+    if (menu && trigger) {
+      const anchor = trigger.getBoundingClientRect()
+      const bounds = menu.getBoundingClientRect()
+      const below = anchor.bottom + 4
+      const top = below + bounds.height <= window.innerHeight - 8
+        ? below : Math.max(8, anchor.top - bounds.height - 4)
+      const right = Math.min(Math.max(8, window.innerWidth - anchor.right), Math.max(8, window.innerWidth - bounds.width - 8))
+      setPos({ top, right })
+      menu.querySelector<HTMLButtonElement>('.ink-menu-item')?.focus({ preventScroll: true })
+    }
 
     const onPointerDown = (ev: MouseEvent) => {
       const t = ev.target as Node | null
@@ -94,7 +105,10 @@ export function MenuButton({ items, label, triggerClass, children }: MenuButtonP
 
     const onKey = handleKey
 
-    const close = () => { setOpen(false) }
+    const close = (event: Event) => {
+      if (event.target instanceof Node && menuRef.current?.contains(event.target)) return
+      setOpen(false)
+    }
 
     document.addEventListener('mousedown', onPointerDown)
     document.addEventListener('keydown', onKey)
@@ -142,6 +156,7 @@ export function MenuButton({ items, label, triggerClass, children }: MenuButtonP
               onClick={(e) => {
                 e.stopPropagation()
                 setOpen(false)
+                triggerRef.current?.focus({ preventScroll: true })
                 item.onSelect()
               }}
             >

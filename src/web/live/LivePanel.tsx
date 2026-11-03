@@ -14,6 +14,8 @@ import {
 } from '../state/live.js'
 import '../share/share.css'
 import './live.css'
+import { IconClose } from '../components/icons.js'
+import { useModalFocus } from '../components/useModalFocus.js'
 
 /**
  * The panel a session is started and ended from.
@@ -35,6 +37,8 @@ const COPIED_MS = 2000
 export function LivePanel() {
   const state = livePanel.value
   const open = state.kind !== 'closed'
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalFocus(dialogRef, open)
 
   useLayoutEffect(() => {
     if (!open) return
@@ -50,6 +54,7 @@ export function LivePanel() {
   return (
     <div class="ink-share-scrim" onClick={closeLivePanel}>
       <div
+        ref={dialogRef}
         class={`ink-share${isPhone.value ? ' ink-share--sheet' : ''}`}
         role="dialog"
         aria-modal="true"
@@ -58,7 +63,7 @@ export function LivePanel() {
       >
         <div class="ink-share-head">
           <span class="ink-share-title">Live share</span>
-          <button type="button" class="ink-iconbtn" aria-label="Close live share" onClick={closeLivePanel}>✕</button>
+          <button type="button" class="ink-iconbtn" aria-label="Close live share" onClick={closeLivePanel}><IconClose /></button>
         </div>
         <Body state={state} />
       </div>

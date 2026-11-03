@@ -14,6 +14,8 @@ import {
   type SharePanelState,
 } from '../state/share.js'
 import './share.css'
+import { IconClose } from '../components/icons.js'
+import { useModalFocus } from '../components/useModalFocus.js'
 
 /** How long the button says `Copied` before going back to `Copy`. */
 const COPIED_MS = 2000
@@ -32,6 +34,8 @@ const NEARLY_GONE_DAYS = 3
 export function SharePanel() {
   const path = sharePanelPath.value
   const state = sharePanel.value
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalFocus(dialogRef, path !== null)
 
   useLayoutEffect(() => {
     if (path === null) return
@@ -47,6 +51,7 @@ export function SharePanel() {
   return (
     <div class="ink-share-scrim" onClick={closeSharePanel}>
       <div
+        ref={dialogRef}
         class={`ink-share${isPhone.value ? ' ink-share--sheet' : ''}`}
         role="dialog"
         aria-modal="true"
@@ -55,7 +60,7 @@ export function SharePanel() {
       >
         <div class="ink-share-head">
           <span class="ink-share-title">Share</span>
-          <button type="button" class="ink-iconbtn" aria-label="Close share" onClick={closeSharePanel}>✕</button>
+          <button type="button" class="ink-iconbtn" aria-label="Close share" onClick={closeSharePanel}><IconClose /></button>
         </div>
 
         {state.kind === 'failed'

@@ -47,15 +47,16 @@
   color: var(--ink-fg);
 }
 
-/* flex-start, not center: a value that wraps to two lines should hang off the top of the row
-   rather than centring itself against its label. */
+/* Align single-line controls with their labels; long metadata values still hang from the top. */
 .ink-settings-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 10px 0;
 }
+
+.ink-settings-row:has(> .ink-settings-value) { align-items: flex-start; }
 
 .ink-settings-label {
   font-size: 14px;
@@ -87,6 +88,7 @@
   border-radius: var(--ink-r-sm);
   font-size: 13px;
   color: var(--ink-fg-muted);
+  min-height: 30px;
 }
 
 .ink-theme-btn[aria-pressed="true"] {
@@ -102,13 +104,22 @@
   border-radius: var(--ink-r-sm);
   padding: 4px 8px;
   cursor: pointer;
+  min-height: 30px;
 }
 
 .ink-settings-footer {
-  margin-top: 24px;
+  flex: none;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ink-rule);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
+
+.ink-settings-footer .ink-settings-build { color: var(--ink-fg-muted); font-size: 11.5px; }
+.ink-settings-meta { display: inline-flex; align-items: baseline; gap: 6px; color: var(--ink-fg-muted); font-size: 12px; }
 
 .ink-logout-btn {
   background: none;
@@ -149,13 +160,15 @@
 }
 
 .ink-swatches {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
   gap: 9px;
 }
 
 .ink-swatch {
-  width: 92px;
+  width: 100%;
+  min-width: 0;
   padding: 0;
   border: 1px solid var(--ink-rule);
   border-radius: var(--ink-r-md);
@@ -202,8 +215,8 @@
   height: 26px;
   padding: 0 8px;
   border-top: 1px solid var(--ink-rule);
-  font-size: 11px;
-  color: var(--ink-fg-muted);
+  font-size: 12px;
+  color: var(--ink-fg);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -267,11 +280,15 @@
     max-height: 100dvh;
     height: 100dvh;
     border-radius: 0;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding: max(12px, env(safe-area-inset-top, 0px)) 20px max(12px, env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     overscroll-behavior: contain;
   }
+
+  .ink-settings-body { margin: 0 -20px; padding: 0 20px; }
+  .ink-settings .ink-settings-header { align-items: center; }
+  .ink-settings .ink-settings-close { margin-top: 0; }
+  .ink-swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .ink-settings-header {
@@ -332,6 +349,7 @@
 @media (max-width: 719px) {
   .ink-theme-btn,
   .ink-settings-select,
+  .ink-settings .ink-settings-disclosure,
   .ink-logout-btn {
     min-height: 44px;
   }
@@ -389,6 +407,7 @@
   font-size: 13px;
   color: var(--ink-fg);
   cursor: pointer;
+  min-height: 30px;
 }
 
 .ink-settings-disclosure:hover,
@@ -399,5 +418,8 @@
 
 .ink-settings-chevron {
   color: var(--ink-fg-muted);
-  font-size: 11px;
+  transition: transform 140ms ease;
 }
+
+.ink-settings-disclosure[aria-expanded="true"] .ink-settings-chevron { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .ink-settings-chevron { transition: none; } }

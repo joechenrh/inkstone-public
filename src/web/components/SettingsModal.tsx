@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact'
-import { useEffect, useState } from 'preact/hooks'
-import { IconClose } from './icons.js'
+import { useEffect, useRef, useState } from 'preact/hooks'
+import { IconChevron, IconClose } from './icons.js'
+import { useModalFocus } from './useModalFocus.js'
 import { auth, backend } from '../api/index.js'
 import { buildLabel } from '../version.js'
 import {
@@ -30,6 +31,8 @@ export function SettingsModal() {
   const repositories = session.value?.repositories ?? []
 
   const isOpen = settingsOpen.value
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalFocus(dialogRef, isOpen)
 
   // Shut again whenever the panel is closed. It is not unmounted — `settingsOpen` only hides it —
   // so without this the swatches stayed open from one visit to the next, which is exactly the third
@@ -85,6 +88,7 @@ export function SettingsModal() {
   return (
     <div class="ink-settings-backdrop" onClick={closeSettings}>
       <div
+        ref={dialogRef}
         class="ink-settings"
         role="dialog"
         aria-modal="true"
@@ -118,7 +122,7 @@ export function SettingsModal() {
             other, so the control follows the theme rather than accepting a click that does
             nothing. */}
         <div class="ink-settings-row">
-          <span class="ink-settings-label">Appearance</span>
+          <span class="ink-settings-label">Color scheme</span>
           <div class="ink-theme-control">
             <button
               type="button"
@@ -169,7 +173,7 @@ export function SettingsModal() {
             onClick={() => { setThemesOpen(!themesOpen) }}
           >
             {findDocTheme(docTheme.value)?.name ?? docTheme.value}
-            <span class="ink-settings-chevron" aria-hidden="true">{themesOpen ? '⌄' : '›'}</span>
+            <IconChevron class="ink-settings-chevron" size={12} />
           </button>
         </div>
 
@@ -339,19 +343,13 @@ export function SettingsModal() {
           </div>
         )}
 
-        <h3 class="ink-settings-section">This device</h3>
-
-        {/* A fact beside the other facts, not a screen. The commit is what makes a bug report
-            answerable — a version number names a fortnight of builds and this names one. No link:
-            the source repository is private. */}
-        <div class="ink-settings-row">
-          <span class="ink-settings-label">Version</span>
-          <span class="ink-settings-value ink-settings-build">{buildLabel}</span>
-        </div>
-
         </div>
 
         <div class="ink-settings-footer">
+          {/* Build identity stays visible without taking a whole section from the settings list. */}
+          <span class="ink-settings-meta" title="Application version and build">
+            Inkstone <span class="ink-settings-build">{buildLabel}</span>
+          </span>
           <button type="button" class="ink-logout-btn" onClick={() => void handleLogout()}>
             Log out
           </button>

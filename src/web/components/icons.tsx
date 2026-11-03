@@ -302,6 +302,9 @@ export const IconRendered = (p: IconProps) =>
 export const IconBack = (p: IconProps) =>
   svg(<polyline points="14.5,5.5 8,12 14.5,18.5" />, p, 'ink-icon-back')
 
+export const IconChevron = (p: IconProps) =>
+  svg(<polyline points="9.5,5.5 16,12 9.5,18.5" />, p, 'ink-icon-chevron')
+
 /* Close. A cross rather than a chevron: this dismisses a dialog rather than going back a screen. */
 export const IconClose = (p: IconProps) =>
   svg(<><path d="M6.5 6.5l11 11" /><path d="M17.5 6.5l-11 11" /></>, p, 'ink-icon-close')

@@ -11,6 +11,9 @@
   border: 1px solid var(--ink-rule);
   border-radius: var(--ink-r-md);
   box-shadow: var(--ink-shadow-menu);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .ink-menu-item {

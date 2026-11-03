@@ -26,7 +26,7 @@ async function makeAChange(page: Page, marker: string) {
   await page.keyboard.press('ControlOrMeta+ArrowDown')
   await page.keyboard.type(`\n${marker}`)
   await page.keyboard.press('ControlOrMeta+s')
-  await expect(page.locator('.ink-breadcrumb svg')).toHaveCount(0, { timeout: 10_000 })
+  await expect(page.locator('.ink-breadcrumb .ink-unsaved-dot')).toHaveCount(0, { timeout: 10_000 })
 }
 
 // The panel used to open at 111px saying "Reading the changes…" and jump to 323px of content — a

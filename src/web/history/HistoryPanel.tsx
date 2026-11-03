@@ -5,6 +5,7 @@ import { gitStatus } from '../state/git.js'
 import { currentPath } from '../state/vault.js'
 import { groupSessions, type Session } from './sessions.js'
 import './history.css'
+import { isPhone } from '../state/ui.js'
 
 /** Bytes, not characters: a CJK note is three times the size its character count suggests. */
 export function byteSize(text: string): string {
@@ -163,13 +164,12 @@ export function HistoryPanel() {
 
   return (
     <div class="ink-hist">
-      <dl class="ink-hist-facts">
-        <dt>Modified</dt><dd>{modifiedAt.value ? relative(modifiedAt.value) : '—'}</dd>
-        <dt>Size</dt><dd>{byteSize(content.value)}</dd>
-      </dl>
+      {!isPhone.value && <div class="ink-hist-header">
+        <h2>History</h2>
+        <p>{modifiedAt.value ? `Edited ${relative(modifiedAt.value)}` : 'Current version'} · {byteSize(content.value)}</p>
+      </div>}
 
       <div class="ink-hist-log">
-        <span class="ink-hist-eyebrow">History</span>
 
         {dirty.value && (
           <div class="ink-hist-entry pending">

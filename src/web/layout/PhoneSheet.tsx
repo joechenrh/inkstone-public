@@ -1,4 +1,6 @@
-import { useLayoutEffect } from 'preact/hooks'
+import { useLayoutEffect, useRef } from 'preact/hooks'
+import { IconClose } from '../components/icons.js'
+import { useModalFocus } from '../components/useModalFocus.js'
 import { byteSize, HistoryPanel, relative } from '../history/HistoryPanel.js'
 import { content, modifiedAt } from '../state/document.js'
 import { OutlinePanel } from '../outline/OutlinePanel.js'
@@ -15,6 +17,8 @@ import './phonesheet.css'
  */
 export function PhoneSheet() {
   const which = phoneSheet.value
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useModalFocus(dialogRef, which !== null)
 
   useLayoutEffect(() => {
     if (which === null) return
@@ -41,6 +45,7 @@ export function PhoneSheet() {
   return (
     <div class="ink-sheet-scrim" onClick={closePhoneSheet}>
       <div
+        ref={dialogRef}
         // The outline is read from the document as it renders, so its height is known at once
         // and the box can fit it. History fetches, and keeps the fixed detent.
         class={`ink-sheet${which === 'outline' ? ' ink-sheet--fits' : ''}`}
@@ -58,7 +63,7 @@ export function PhoneSheet() {
             aria-label={`Close ${title.toLowerCase()}`}
             onClick={closePhoneSheet}
           >
-            ✕
+            <IconClose />
           </button>
         </div>
         <div class="ink-sheet-body">

@@ -91,7 +91,7 @@ test('the bottom bar carries Save, and reports whether there is anything to save
 
   // There is no Ctrl+S on a phone, so the button is the only route to disk.
   const save = page.locator('.ink-phonebar-save')
-  await expect(save).toHaveText('Saved')
+  await expect(save).toHaveText('Read only')
   await expect(save).toBeDisabled()
 
   await page.locator('.ink-phonebar').getByTitle('Source', { exact: true }).tap()

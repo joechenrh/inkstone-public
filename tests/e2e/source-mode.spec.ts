@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { DOC_THEMES } from '../../src/web/theme/docThemes.js'
 
 /**
  * Source mode: the raw markdown, for the edits the renderer is in the way of.
@@ -21,6 +22,30 @@ async function openTight(page: Page) {
 }
 
 const source = (page: Page) => page.locator('.ink-source-area')
+
+test('source focus keeps the caret without a pane-sized form ring in any theme', async ({ page }) => {
+  await openTight(page)
+  await page.keyboard.press('ControlOrMeta+Alt+KeyM')
+  await expect(source(page)).toBeVisible()
+  for (const theme of DOC_THEMES) {
+    for (const appearance of theme.appearances) {
+      await page.evaluate(({ id, appearance }) => {
+        document.documentElement.setAttribute('data-doc-theme', id)
+        document.documentElement.setAttribute('data-theme', appearance)
+      }, { id: theme.id, appearance })
+      await source(page).focus()
+      await expect(source(page)).toHaveCSS('outline-style', 'none')
+      await expect(source(page)).toHaveCSS('box-shadow', 'none')
+    }
+  }
+  // Keep keyboard focus feedback on real controls; only the source editor is excluded.
+  const settings = page.getByRole('button', { name: 'Settings', exact: true })
+  await settings.focus()
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Shift+Tab')
+  await expect(settings).toBeFocused()
+  await expect(settings).toHaveCSS('outline-style', 'solid')
+})
 
 test('Cmd+Alt+M shows the markdown exactly as it is on disk', async ({ page }) => {
   await openTight(page)

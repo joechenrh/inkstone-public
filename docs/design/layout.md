@@ -32,10 +32,10 @@ Panes are separated by a hairline, not by a fill. Every shell surface — sideba
 
 `.ink-right` is `position: absolute` inside `.ink-center` with `top/right/bottom: 0`, `z-index: 10`, and a left rule, so it takes no layout space and opening it never reflows the text.
 
-It currently holds nothing. The outline moved to the sidebar, and it now holds two tabs, History and Agent ([agent.md](agent.md)). The tab strip is the whole
-control — a feature that size earns one Settings row and a drawer that already exists, not a button
-in the top bar. Both tabs stay mounted and are hidden with `hidden`, because the history panel
-refetches on mount and switching tabs to read an answer should not cost a round trip. Do not convert it back into a flex child — that would make every toggle reflow the document.
+It holds the current note's history. A small History heading and a single edited-time/size summary
+replace the separate metadata rows. There is no tab strip: the agent runs outside this application
+([agent.md](agent.md)). Do not convert the drawer back into a flex child — that would make every
+toggle reflow the document.
 
 Motion is asymmetric, matching Yuque: `animation: ink-panel-slide-in 0.18s ease` plays once on mount, and closing unmounts the element outright so it disappears instantly. Waiting on an exit animation to dismiss a panel reads as lag.
 
@@ -107,6 +107,20 @@ The selected background is one shared thumb, moved with a 220ms decelerating tra
 stationary icons. Buttons, shortcuts and the phone's press handlers all update the same view
 state, so they share the motion without measuring layout or adding a dependency. Repeated presses
 retarget the transition from its current position. Reduced motion switches the thumb immediately.
+
+Desktop segments carry short Edit / Read / Source labels in three equal 72px targets. The group
+is 222px wide, and its left edge shares the history drawer's boundary; the controls beside it use
+the remaining width rather than moving the document or widening the drawer. The breadcrumb names
+the repository (or Notes), its folder and the file, with the filename kept at regular 14px. The
+file tree retains its Cantarell face and selected-row accent. On a phone the existing icon group
+stays compact; a clean note in read mode reports Read only where Save would otherwise be disabled.
+
+Settings keeps four sections, aligned value controls, and a responsive theme grid. The build
+identity lives in the footer beside Log out, without a separate device section. Settings, Commit,
+Share, Live share and phone sheets share keyboard focus containment and restore the opening
+control on close. Menus flip above their anchors when necessary and scroll within the viewport.
+Source mode is an editing surface, so the shell's form-control focus ring excludes it while other
+keyboard controls keep their rings.
 
 Settings sits past the hairline because it configures the app rather than the document, and it is what remains when the document-scoped half is gone.
 

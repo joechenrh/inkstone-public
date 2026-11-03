@@ -573,25 +573,38 @@ async function copyOf(page: Page, shown: string) {
   const found = await page.evaluate((text) => {
     const walk = document.createTreeWalker(document.querySelector('.ink-doc')!, NodeFilter.SHOW_TEXT)
     let node: Node | null
+    const nodes: { node: Node; start: number; end: number }[] = []
+    let content = ''
     while ((node = walk.nextNode()) !== null) {
-      const at = (node.textContent ?? '').indexOf(text)
-      if (at < 0) continue
-      const range = document.createRange()
-      range.setStart(node, at)
-      range.setEnd(node, at + text.length)
-      const selection = getSelection()!
-      selection.removeAllRanges()
-      selection.addRange(range)
-      document.addEventListener('copy', (e) => {
-        const data = (e as ClipboardEvent).clipboardData!
-        ;(globalThis as Record<string, unknown>).__copied =
-          { text: data.getData('text/plain'), html: data.getData('text/html') }
-      }, { once: true })
-      return true
+      const start = content.length
+      content += node.textContent ?? ''
+      nodes.push({ node, start, end: content.length })
     }
-    return false
+    // Syntax colours may split one editable link across several DOM text nodes.
+    const at = content.indexOf(text)
+    if (at < 0) return false
+    const from = nodes.find((n) => at >= n.start && at < n.end)!
+    const to = nodes.find((n) => at + text.length > n.start && at + text.length <= n.end)!
+    const range = document.createRange()
+    range.setStart(from.node, at - from.start)
+    range.setEnd(to.node, at + text.length - to.start)
+    const selection = getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+    document.addEventListener('copy', (e) => {
+      const data = (e as ClipboardEvent).clipboardData!
+      ;(globalThis as Record<string, unknown>).__copied =
+        { text: data.getData('text/plain'), html: data.getData('text/html') }
+    }, { once: true })
+    return true
   }, shown)
   expect(found, `${shown} is not on screen`).toBe(true)
+  // Let selectionchange update ProseMirror's selection before its copy handler reads it. A copy
+  // sent in the same turn can still see the old, empty caret selection and produce no payload.
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+  await expect.poll(() => page.evaluate(() => getSelection()?.toString())).toBe(shown)
   await page.keyboard.press('ControlOrMeta+c')
   const copied = await page.evaluate(() =>
     (globalThis as Record<string, unknown>).__copied as { text: string; html: string })

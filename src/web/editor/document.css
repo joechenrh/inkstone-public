@@ -30,3 +30,16 @@
   box-shadow: none;
   background-image: none;
 }
+
+/* The editable text stays in the document; only its presentation distinguishes the parts. */
+.ink-doc .ink-link-source-marker { color: var(--ink-fg-muted); }
+.ink-doc .ink-link-source-label {
+  color: var(--ink-link);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ink-doc .ink-link-source-target {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ink-crepe.ink-crepe-open-links .ink-doc [data-link-source] { cursor: pointer; }

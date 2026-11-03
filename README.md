@@ -43,6 +43,8 @@ pnpm test          # unit tests
 pnpm test:e2e      # end to end
 ```
 
+Install the browsers used by the end-to-end suite with `pnpm exec playwright install chromium webkit`.
+
 ## Deployment
 
 ```bash

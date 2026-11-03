@@ -46,7 +46,9 @@ interface Open {
 const KEY = new PluginKey<Open | null>('inkstoneSourceReveal')
 
 /** `[text](url)`, which is the only shape this ever writes and so the only one it reads back. */
-const SOURCE = /^\[([^\]]*)\]\(([^)\s]*)\)$/
+// The final paren closes the Markdown link; parentheses inside a URL belong to the URL.
+// Stopping at the first ')' made expanded links such as /wiki/Foo_(bar) impossible to follow.
+const SOURCE = /^\[([^\]]*)\]\((\S*)\)$/
 
 /** And the same with the `!` in front of it. */
 const IMAGE_SOURCE = /^!\[([^\]]*)\]\(([^)\s]*)\)$/
@@ -342,7 +344,8 @@ function hrefAt(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0], po
 
 /** Hit-test the painted link, not the nearest text position in the paragraph. */
 function clickedHref(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0], event: MouseEvent): string | null {
-  const target = event.target instanceof Element ? event.target : null
+  const target = event.target instanceof Element ? event.target
+    : event.target instanceof Node ? event.target.parentElement : null
   const anchor = target?.closest('a[href]')
   if (anchor && view.dom.contains(anchor)) return anchor.getAttribute('href')
 
@@ -350,6 +353,9 @@ function clickedHref(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0
   // still bound the hit area; posAtCoords alone snaps a click anywhere on the row to its end.
   const open = KEY.getState(view.state)
   if (!open || open.kind !== 'link') return null
+  // The label and destination are decorated text, not anchors. Their event target is already
+  // an exact hit; do not remap it to the nearest caret position (which can be outside the link).
+  if (target?.closest('[data-link-source]')) return hrefAt(view, ctx, open.from)
   const from = view.domAtPos(open.from)
   const to = view.domAtPos(open.to)
   const range = document.createRange()
@@ -358,8 +364,7 @@ function clickedHref(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0
   const hit = Array.from(range.getClientRects()).some((r) =>
     event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom)
   if (!hit) return null
-  const at = view.posAtCoords({ left: event.clientX, top: event.clientY })
-  return at ? hrefAt(view, ctx, at.pos) : null
+  return hrefAt(view, ctx, open.from)
 }
 
 export const sourceReveal = $prose((ctx) =>
@@ -453,7 +458,26 @@ export const sourceReveal = $prose((ctx) =>
     props: {
       decorations(state) {
         const open = KEY.getState(state)
-        if (!open || open.kind !== 'image') return null
+        if (!open) return null
+        if (open.kind === 'link') {
+          const match = SOURCE.exec(state.doc.textBetween(open.from, open.to, '', ''))
+          if (!match) return null
+          const labelFrom = open.from + 1
+          const labelTo = labelFrom + match[1]!.length
+          const targetFrom = labelTo + 2
+          const targetTo = targetFrom + match[2]!.length
+          const span = (from: number, to: number, kind: string) => Decoration.inline(from, to, {
+            class: `ink-link-source-${kind}`,
+            ...(kind === 'marker' ? {} : { 'data-link-source': kind }),
+          })
+          return DecorationSet.create(state.doc, [
+            span(open.from, labelFrom, 'marker'),
+            span(labelFrom, labelTo, 'label'),
+            span(labelTo, targetFrom, 'marker'),
+            span(targetFrom, targetTo, 'target'),
+            span(targetTo, open.to, 'marker'),
+          ].filter((decoration) => decoration.from < decoration.to))
+        }
         const m = IMAGE_SOURCE.exec(state.doc.textBetween(open.from, open.to, '', ''))
         if (!m?.[2]) return null
         // Keyed by the address, so typing in the alt text does not reload the picture and typing

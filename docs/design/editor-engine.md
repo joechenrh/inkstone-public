@@ -241,3 +241,9 @@ Following a link requires hitting the anchor itself, or the actual text rectangl
 link. `posAtCoords` gives the nearest document position even for empty space beside the text; it
 is a caret-placement tool, not proof that the pointer hit a link. Reading follows a plain click;
 editing follows a modifier-click. Both must leave empty space alone.
+
+An expanded link is decorated text: its label keeps the link colour and underline, its brackets
+are muted, and its destination is underlined but remains editable. Command-click must work on
+both text spans, including a wrapped destination or a URL containing parentheses. The span that
+received the pointer is the hit; mapping it back to the nearest caret can lose that information.
+Browser tests open real tabs in Chromium and WebKit, rather than only replacing `window.open`.

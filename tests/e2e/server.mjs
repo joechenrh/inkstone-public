@@ -234,6 +234,15 @@ fs.writeFileSync(
   ].join('\n'),
 )
 
+fs.writeFileSync(
+  path.join(root, 'notes', 'expanded-links.md'),
+  'Before.\n\n[the docs](https://example.com/docs)\n\n'
+    + '[https://example.com/same](https://example.com/same)\n\n'
+    + '[parentheses](https://example.com/wiki/Foo_(bar))\n\n'
+    + `[a long label that wraps with its destination](https://example.com/${'part/'.repeat(18)})\n\n`
+    + 'After.\n',
+)
+
 // A fence whose language has a long name, for the language control. `js` fits any box; the
 // control is read with names like `typescript` in it, which is where a fixed width shows.
 fs.writeFileSync(

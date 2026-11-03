@@ -30,7 +30,7 @@ import { provideEditorText } from './current.js'
 import { applyToday, provideToday } from './today.js'
 import { serveAgent } from '../live/apply.js'
 import { keepMirror } from '../live/mirror.js'
-import { copyClosed } from './copy-closed.js'
+import { copyClosed, copyLinksAsMarkdown } from './copy-closed.js'
 import { showUploading, uploadPlaceholder } from './upload-placeholder.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
 import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
@@ -303,6 +303,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     loadEmojiNames()
     crepe.editor.config(writeWhatWasTyped)
     crepe.editor.config(preserveLinkSyntax)
+    crepe.editor.config(copyLinksAsMarkdown)
     // …and its tables the way they were typed; see `markdown-escapes.ts`.
     crepe.editor.config(writeTablesAsTyped)
     // Milkdown keeps a blank line across a round trip by writing `<br />` into the markdown for

@@ -80,5 +80,51 @@ for (const browserName of ['chromium', 'webkit'] as const) {
       await page.keyboard.up('Meta')
       expect(await page.locator('html').getAttribute('data-opened')).toBeNull()
     })
+
+    test('copying explicit links keeps Markdown in plain text and a link in HTML', async ({ page }) => {
+      await open(page)
+      for (const mode of ['Read', 'Edit', 'Expanded', 'Bare']) {
+        if (mode === 'Read' || mode === 'Edit') {
+          await page.getByRole('button', { name: new RegExp(`^${mode} \\(`) }).click()
+          await expect(page.locator('.ProseMirror')).toHaveAttribute('contenteditable', mode === 'Edit' ? 'true' : 'false')
+        } else if (mode === 'Expanded') {
+          await page.locator('.ink-doc a[href="2"]').evaluate((a) => {
+            ;(a.closest('.ProseMirror') as HTMLElement).focus()
+            const range = document.createRange()
+            range.selectNodeContents(a)
+            range.collapse(false)
+            window.getSelection()!.removeAllRanges()
+            window.getSelection()!.addRange(range)
+          })
+          await expect(page.locator('.ink-link-source-label')).toHaveText('1')
+        } else {
+          await page.locator('.ink-doc a[href="https://notes.example.com/"]').click()
+        }
+        const shown = mode === 'Expanded' ? /^\[1\]\(2\)$/
+          : mode === 'Bare' ? /^https:\/\/notes\.example\.com\/$/ : /^1$/
+        await page.locator('.ink-doc p').filter({ hasText: shown }).evaluate((p) => {
+          const range = document.createRange()
+          range.selectNodeContents(p)
+          const selection = window.getSelection()!
+          selection.removeAllRanges()
+          selection.addRange(range)
+          const next = new Promise<{ text: string; html: string }>((resolve) => {
+            document.addEventListener('copy', (event) => resolve({
+              text: event.clipboardData!.getData('text/plain'), html: event.clipboardData!.getData('text/html'),
+            }), { once: true })
+          })
+          ;(window as unknown as { copiedLink: typeof next }).copiedLink = next
+        })
+        // Selection must reach the editor before its copy handler runs.
+        await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+        await page.keyboard.press('ControlOrMeta+c')
+        const payload = await page.evaluate(() => (window as unknown as {
+          copiedLink: Promise<{ text: string; html: string }>
+        }).copiedLink)
+        expect(payload.text, mode).toBe(mode === 'Bare' ? 'https://notes.example.com/' : '[1](2)')
+        expect(payload.html, mode).toContain(mode === 'Bare' ? 'href="https://notes.example.com/"' : 'href="2"')
+        expect(payload.html, mode).not.toContain('[1](2)')
+      }
+    })
   })
 }

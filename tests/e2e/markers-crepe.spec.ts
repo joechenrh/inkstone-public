@@ -648,7 +648,7 @@ for (const probe of [
   { shown: '*italic text*', word: 'italic text', text: 'italic text', html: '>italic text</em>' },
   { shown: '~~struck out~~', word: 'struck out', text: 'struck out', html: '>struck out</del>' },
   { shown: '`inline code`', word: 'inline code', text: 'inline code', html: '>inline code</code>' },
-  { shown: '[a link](linked/target.md)', word: 'a link', text: 'a link', html: 'href="linked/target.md"' },
+  { shown: '[a link](linked/target.md)', word: 'a link', text: '[a link](linked/target.md)', html: 'href="linked/target.md"' },
 ]) {
   test(`crepe: copying ${probe.shown} carries what it renders as`, async ({ page }) => {
     await open(page, 'copy-crepe.md')

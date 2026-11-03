@@ -80,6 +80,11 @@ test('copying carries the characters, not their escapes', async ({ page }) => {
   })
   // A real keypress: `execCommand('copy')` fires the event with nothing in it, which this suite
   // has now been bitten by twice.
+  // Also let the DOM selectionchange reach ProseMirror before its copy handler reads the range.
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  }))
+  await expect.poll(() => page.evaluate(() => getSelection()?.toString())).toContain('snake_case_name')
   await page.keyboard.press('ControlOrMeta+c')
   const copied = await page.evaluate(() => (globalThis as Record<string, unknown>).__copied as string)
 

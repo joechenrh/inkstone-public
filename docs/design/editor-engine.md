@@ -247,3 +247,10 @@ are muted, and its destination is underlined but remains editable. Command-click
 both text spans, including a wrapped destination or a URL containing parentheses. The span that
 received the pointer is the hit; mapping it back to the nearest caret can lose that information.
 Browser tests open real tabs in Chromium and WebKit, rather than only replacing `window.open`.
+
+Copying an explicit link writes Markdown to the plain-text clipboard (`[1](2)`) and a real link
+to the HTML clipboard. Milkdown's single-text-node shortcut ignores marks and used to return only
+`1`; the view's text serializer handles explicit links before that shortcut. Revealed syntax is
+closed in a temporary document before either format is produced, so pasting HTML back does not
+duplicate brackets. Bare URLs keep their plain spelling; other clipboard selections retain the
+existing serializer.

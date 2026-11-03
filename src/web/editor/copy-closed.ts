@@ -2,6 +2,43 @@ import { $prose } from '@milkdown/kit/utils'
 import { Plugin } from '@milkdown/kit/prose/state'
 import { closeMarksOn, marksAreOpen } from './mark-reveal.js'
 import { closeSourceOn, sourceIsOpen } from './source-reveal.js'
+import { editorViewOptionsCtx, serializerCtx } from '@milkdown/kit/core'
+import type { Ctx } from '@milkdown/kit/ctx'
+
+/**
+ * A link's plain clipboard representation is Markdown; its HTML representation stays rich text.
+ * Milkdown's single-text-node shortcut ignores marks, so copying [1](2) returned only "1".
+ * Direct view props take precedence over that built-in plugin. Other selections still use its
+ * existing serializer, and transformCopied below still closes any revealed syntax first.
+ */
+export function copyLinksAsMarkdown(ctx: Ctx): void {
+  ctx.update(editorViewOptionsCtx, (options) => ({
+    ...options,
+    clipboardTextSerializer(slice, view) {
+      let explicitLink = false
+      slice.content.descendants((node) => {
+        if (node.marks.some((mark) => mark.type.name === 'link' && mark.attrs.syntax !== 'bare')) explicitLink = true
+      })
+      if (explicitLink) {
+        // Closing revealed syntax can produce an inline-only slice. A document needs a block
+        // around it; otherwise createAndFill fails and we'd fall back to the label-only shortcut.
+        const schema = view.state.schema
+        const paragraph = schema.nodes.paragraph
+        const content = slice.content.firstChild?.isInline && paragraph
+          ? paragraph.create(undefined, slice.content) : slice.content
+        const doc = schema.topNodeType.createAndFill(undefined, content)
+        // The serializer terminates a document with a newline; a clipboard selection is not a file.
+        if (doc) return ctx.get(serializerCtx)(doc).replace(/\n$/, '')
+      }
+      if (options.clipboardTextSerializer) return options.clipboardTextSerializer(slice, view)
+      for (const plugin of view.state.plugins) {
+        const serialize = plugin.props.clipboardTextSerializer
+        if (serialize) return serialize.call(plugin, slice, view)
+      }
+      return slice.content.textBetween(0, slice.content.size, '\n\n')
+    },
+  }))
+}
 
 /**
  * What leaves on the clipboard is the closed form.

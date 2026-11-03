@@ -84,9 +84,19 @@ export function preserveLinkSyntax(ctx: Ctx): void {
       ...options.handlers,
       link(node, parent, state, info) {
         const resourceLink = state.options.resourceLink
+        const safe = state.safe
+        state.safe = (value, config) => {
+          const written = safe.call(state, value, config)
+          // These characters do not need escaping in URL destinations. Keep entity-shaped
+          // ampersands protected and preserve paired backslashes representing real characters.
+          return state.stack.includes('destinationRaw') || state.stack.includes('destinationLiteral')
+            ? written.replace(/(?<!\\)\\&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#[xX][0-9a-fA-F]+);)/g, '&')
+              .replace(/(?<!\\)\\\./g, '.')
+            : written
+        }
         if (node.data?.inkstoneSyntax === 'markdown') state.options.resourceLink = true
         try { return defaultHandlers.link(node, parent, state, info) }
-        finally { state.options.resourceLink = resourceLink }
+        finally { state.options.resourceLink = resourceLink; state.safe = safe }
       },
     },
   }))

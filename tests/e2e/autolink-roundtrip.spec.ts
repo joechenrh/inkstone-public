@@ -7,7 +7,7 @@ test('literal URL backslashes do not grow after saving and reopening repeatedly'
   await page.getByRole('button', { name: 'Enter' }).click()
   await expect(page.locator('.ink-tree-name').first()).toBeVisible()
   const path = 'notes/autolink-roundtrip.md'
-  const url = 'See https://www.example.com/book for details.\n\n<https://www.example.com/book>\n\n<https://www' + '\\'.repeat(4) + '.example.com/book>'
+  const url = 'See https://www.example.com/book for details.\n\n[label](https://www.example.com/path?one=1&two=2)\n\n<https://www.example.com/book>\n\n<https://www' + '\\'.repeat(4) + '.example.com/book>'
   await request.post('/api/file', { data: { path, kind: 'file' } })
   await request.put('/api/file', { data: { path, content: `${url}\n\nAfter.\n` } })
   try {

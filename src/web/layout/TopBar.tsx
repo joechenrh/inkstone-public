@@ -59,7 +59,6 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
   const view = viewMode.value
   const scope = chosenRepo.value?.name ?? 'Notes'
   const slash = path?.lastIndexOf('/') ?? -1
-  const folder = path && slash >= 0 ? path.slice(0, slash) : ''
   const filename = path?.slice(slash + 1)
 
   /*
@@ -136,9 +135,8 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
           thing you are looking at; with nothing open there is nothing to name. */}
       <span class="ink-breadcrumb ink-document-location" title={path ?? undefined}>
         {path && <>
-          <span class="ink-location-scope">{scope}</span>
+          <span class="ink-location-scope">Notes</span>
           <IconChevron class="ink-location-divider" size={12} />
-          {folder && <><span class="ink-location-folder">{folder}</span><IconChevron class="ink-location-divider" size={12} /></>}
           {dirty.value ? <IconUnsavedDot /> : null}
           <span class="ink-location-file">{filename}</span>
         </>}

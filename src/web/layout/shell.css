@@ -352,9 +352,8 @@
 }
 
 .ink-document-location { direction: ltr; gap: 8px; }
-.ink-location-scope { flex: none; max-width: 150px; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.ink-location-scope { flex: none; font-size: 12px; }
 .ink-location-divider { flex: none; color: var(--ink-fg-muted); opacity: 0.6; }
-.ink-location-folder { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
 .ink-location-file { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: inherit; font-size: 14px; font-weight: 400; }
 
 .ink-statusbar-counts {

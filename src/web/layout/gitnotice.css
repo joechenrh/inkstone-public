@@ -37,3 +37,15 @@
   min-width: 32px;
   min-height: 32px;
 }
+
+.ink-gitnotice-retry {
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  min-height: 32px;
+}
+
+.ink-gitnotice-close .ink-icon { color: inherit; }
+.ink-gitnotice-close:hover,
+.ink-gitnotice-retry:hover { color: inherit; }

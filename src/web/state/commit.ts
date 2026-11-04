@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals'
 import type { PendingChange } from '../../shared/types.js'
 import { backend } from '../api/index.js'
-import { refreshGitStatus, sayGitNotice } from './git.js'
+import { dismissGitNotice, refreshGitStatus, sayGitNotice } from './git.js'
 
 /**
  * The commit panel's state.
@@ -17,6 +17,8 @@ export const commitChanges = signal<PendingChange[]>([])
 export const commitError = signal<string | null>(null)
 
 export async function openCommit(): Promise<void> {
+  if (commitLoading.value) return
+  dismissGitNotice()
   commitLoading.value = true
   commitError.value = null
   try {
@@ -27,6 +29,7 @@ export async function openCommit(): Promise<void> {
     // A failure that never opens a panel needs somewhere to be said; the footer's error line
     // already exists for exactly this.
     commitError.value = err instanceof Error ? err.message : 'Could not read the changes'
+    sayGitNotice('error', commitError.value, openCommit)
   } finally {
     commitLoading.value = false
   }

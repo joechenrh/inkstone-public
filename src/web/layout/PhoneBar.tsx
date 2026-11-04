@@ -1,7 +1,7 @@
 import { useRef } from 'preact/hooks'
 import { PictureButton } from '../assets/PictureButton.js'
 import { IconEditMode, IconReadMode, IconSource } from '../components/icons.js'
-import { dirty, flushSave } from '../state/document.js'
+import { flushSave, saveState } from '../state/document.js'
 import { refreshGitStatus } from '../state/git.js'
 import { setViewMode, viewMode } from '../state/settings.js'
 import { phoneScreen } from '../state/ui.js'
@@ -92,10 +92,14 @@ export function PhoneBar() {
         class="ink-phonebar-save"
         // Disabled when there is nothing to write, so the button reports the document's state
         // as well as acting on it — the unsaved dot in the top bar says the same thing.
-        disabled={!dirty.value}
+        disabled={!['unsaved', 'failed'].includes(saveState.value)}
+        aria-busy={saveState.value === 'saving'}
         {...press(() => { void flushSave().then(() => refreshGitStatus()) })}
       >
-        {dirty.value ? 'Save' : view === 'read' ? 'Read only' : 'Saved'}
+        {saveState.value === 'saving' ? 'Saving…' : saveState.value === 'loading' ? 'Loading…'
+          : saveState.value === 'live' ? 'Live session' : saveState.value === 'conflict' ? 'Conflict'
+            : saveState.value === 'failed' ? 'Retry save' : saveState.value === 'unsaved' ? 'Save'
+              : view === 'read' ? 'Read only' : 'Saved'}
       </button>
     </div>
   )

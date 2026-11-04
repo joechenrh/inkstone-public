@@ -4,8 +4,7 @@ export interface StatusBarProps {
 }
 
 /**
- * Document-level counters. Vault-level git state lives in the sidebar's GitFooter, so each
- * sits next to the thing it describes.
+ * Counts for the open note. Commit and Push describe the vault separately.
  */
 export function StatusBar(props: StatusBarProps) {
   return (

@@ -32,5 +32,6 @@
 }
 
 .ink-phonebar-save:disabled {
+  color: var(--ink-fg-muted);
   cursor: default;
 }

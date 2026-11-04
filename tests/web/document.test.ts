@@ -17,6 +17,11 @@ import {
   resolveConflictTakeDisk,
   fileError,
   saveError,
+  saveState,
+  savingPath,
+  drafts,
+  saveAll,
+  saveAllError,
 } from '../../src/web/state/document.js'
 import { currentPath } from '../../src/web/state/vault.js'
 
@@ -26,6 +31,7 @@ const writeFile = vi.spyOn(apiModule.backend, 'writeFile')
 beforeEach(() => {
   vi.useFakeTimers()
   localStorage.clear()
+  drafts.value = new Map()
   readFile.mockReset()
   writeFile.mockReset()
   currentPath.value = null
@@ -34,6 +40,8 @@ beforeEach(() => {
   conflict.value = null
   fileError.value = null
   dirty.value = false
+  loadingPath.value = null
+  savingPath.value = null
   forgetOurWrites()
 })
 
@@ -201,6 +209,125 @@ describe('openFile', () => {
 })
 
 describe('manual save', () => {
+  it('Save all saves drafts of notes that have been switched away from', async () => {
+    readFile.mockResolvedValueOnce({ path: 'a.md', content: 'a', rev: 'a1', modifiedAt: 1 })
+    await openFile('a.md')
+    editContent('draft a')
+    readFile.mockResolvedValueOnce({ path: 'b.md', content: 'b', rev: 'b1', modifiedAt: 2 })
+    await openFile('b.md')
+    editContent('draft b')
+    readFile.mockImplementation(async (path) => ({ path, content: path === 'a.md' ? 'a' : 'b', rev: path === 'a.md' ? 'a1' : 'b1', modifiedAt: 1 }))
+    writeFile.mockImplementation(async (path) => ({ rev: `${path}-saved`, modifiedAt: 3 }))
+    vi.spyOn(apiModule.backend, 'gitStatus').mockResolvedValue({ dirty: true, branch: 'main', hasRemote: false, ahead: 0 })
+    await saveAll()
+    expect(writeFile).toHaveBeenCalledWith('a.md', 'draft a', 'a1')
+    expect(writeFile).toHaveBeenCalledWith('b.md', 'draft b', 'b1')
+    expect(currentPath.value).toBe('b.md')
+    expect(content.value).toBe('draft b')
+    expect(dirty.value).toBe(false)
+    expect(drafts.value.size).toBe(0)
+  })
+
+  it('Save all preserves a conflicting draft and continues saving the other notes', async () => {
+    readFile.mockResolvedValueOnce({ path: 'a.md', content: 'a', rev: 'a1', modifiedAt: 1 })
+    await openFile('a.md')
+    editContent('draft a')
+    readFile.mockResolvedValueOnce({ path: 'b.md', content: 'b', rev: 'b1', modifiedAt: 2 })
+    await openFile('b.md')
+    editContent('draft b')
+    readFile.mockImplementation(async (path) => ({ path, content: path === 'a.md' ? 'a' : 'b', rev: path === 'a.md' ? 'a1' : 'b1', modifiedAt: 1 }))
+    writeFile.mockImplementation(async (path) => {
+      if (path === 'a.md') throw new ConflictError('changed externally', { path, content: 'theirs', rev: 'a2', modifiedAt: 2 })
+      return { rev: 'b2', modifiedAt: 3 }
+    })
+    vi.spyOn(apiModule.backend, 'gitStatus').mockResolvedValue({ dirty: true, branch: 'main', hasRemote: false, ahead: 0 })
+    await saveAll()
+    expect(saveAllError.value).toContain('a.md')
+    expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}a.md`)).toBe('draft a')
+    expect([...drafts.value.values()].map((draft) => draft.path)).toEqual(['a.md'])
+    expect(dirty.value).toBe(false)
+  })
+
+  it('a queued save for one note cannot start saving a different note', async () => {
+    readFile.mockResolvedValueOnce({ path: 'a.md', content: 'a', rev: 'a1', modifiedAt: 1 })
+    await openFile('a.md')
+    editContent('saved a')
+    let finish!: (result: { rev: string; modifiedAt: number }) => void
+    writeFile.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+    const pending = flushSave()
+    const queued = flushSave()
+    readFile.mockResolvedValueOnce({ path: 'b.md', content: 'b', rev: 'b1', modifiedAt: 2 })
+    await openFile('b.md')
+    editContent('unsaved b')
+    finish({ rev: 'a2', modifiedAt: 3 })
+    await Promise.all([pending, queued])
+    expect(writeFile).toHaveBeenCalledTimes(1)
+    expect(dirty.value).toBe(true)
+    expect(content.value).toBe('unsaved b')
+  })
+
+  it('reopening the same note during a save still adopts its new base', async () => {
+    readFile.mockResolvedValue({ path: 'a.md', content: 'a', rev: 'a1', modifiedAt: 1 })
+    await openFile('a.md')
+    editContent('saved a')
+    let finish!: (result: { rev: string; modifiedAt: number }) => void
+    writeFile.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+    const pending = flushSave()
+    await openFile('a.md')
+    finish({ rev: 'a2', modifiedAt: 2 })
+    await pending
+    expect(baseRev.value).toBe('a2')
+    expect(dirty.value).toBe(false)
+    expect(content.value).toBe('saved a')
+  })
+
+  it('a delayed save never clears another note’s draft or replaces its base revision', async () => {
+    readFile.mockResolvedValueOnce({ path: 'a.md', content: 'a', rev: 'a1', modifiedAt: 1 })
+    await openFile('a.md')
+    editContent('saved a')
+    let finish!: (result: { rev: string; modifiedAt: number }) => void
+    writeFile.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+    const pending = flushSave()
+    expect(saveState.value).toBe('saving')
+    readFile.mockResolvedValueOnce({ path: 'b.md', content: 'b', rev: 'b1', modifiedAt: 2 })
+    await openFile('b.md')
+    editContent('unsaved b')
+    expect(saveState.value).toBe('unsaved')
+    finish({ rev: 'a2', modifiedAt: 3 })
+    await pending
+    expect(content.value).toBe('unsaved b')
+    expect(baseRev.value).toBe('b1')
+    expect(dirty.value).toBe(true)
+    expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}b.md`)).toBe('unsaved b')
+    expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}a.md`)).toBeNull()
+  })
+
+  it('a delayed save failure is not reported against the newly opened note', async () => {
+    readFile.mockResolvedValueOnce({ path: 'a.md', content: 'a', rev: 'a1', modifiedAt: 1 })
+    await openFile('a.md')
+    editContent('draft a')
+    let fail!: (error: Error) => void
+    writeFile.mockImplementationOnce(() => new Promise((_resolve, reject) => { fail = reject }))
+    const pending = flushSave()
+    readFile.mockResolvedValueOnce({ path: 'b.md', content: 'b', rev: 'b1', modifiedAt: 2 })
+    await openFile('b.md')
+    fail(new Error('write failed'))
+    await pending
+    expect(saveState.value).toBe('saved')
+    expect(fileError.value).toBeNull()
+    expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}a.md`)).toBe('draft a')
+  })
+
+  it('save cannot write the previous text into a note that is still loading', async () => {
+    currentPath.value = 'b.md'
+    loadingPath.value = 'b.md'
+    dirty.value = true
+    content.value = 'previous note text'
+    await flushSave()
+    expect(writeFile).not.toHaveBeenCalled()
+    expect(saveState.value).toBe('loading')
+  })
+
   it('editContent sets dirty but does not auto-persist', async () => {
     readFile.mockResolvedValue({ path: 'a.md', content: 'x', rev: '1', modifiedAt: 1 })
     writeFile.mockResolvedValue({ rev: '2', modifiedAt: 2 })

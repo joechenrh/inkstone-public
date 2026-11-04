@@ -1,6 +1,7 @@
 import { IconCommit, IconGitBranch, IconPushArrow } from '../components/icons.js'
 import { gitBusy, gitError, gitStatus, pushVault } from '../state/git.js'
-import { commitLoading, openCommit } from '../state/commit.js'
+import { commitError, commitLoading, commitOpen, openCommit } from '../state/commit.js'
+import { saveAll, saveAllError, savingAll } from '../state/document.js'
 
 /**
  * Vault-level git state and actions. These describe the vault — the same thing the sidebar
@@ -13,6 +14,7 @@ export function GitFooter() {
   const busy = gitBusy.value
   const err = gitError.value
   const isBusy = busy !== 'idle'
+  const readError = !commitOpen.value ? commitError.value : null
 
   // The same button, one step further: it opens the panel that says what is about to be committed
   // rather than committing on the spot with a generated message.
@@ -40,7 +42,7 @@ export function GitFooter() {
           aria-label={busy === 'committing' ? 'Committing…' : 'Commit'}
         >
           <IconCommit size={14} />
-          <span>Commit</span>
+          <span>{commitLoading.value ? 'Loading…' : 'Commit'}</span>
         </button>
       </div>
       {/* The button is the confirmation.
@@ -61,10 +63,24 @@ export function GitFooter() {
           title={busy === 'pushing' ? 'Pushing…' : `Push ${status.ahead} to ${status.branch}`}
         >
           <IconPushArrow size={13} />
-          {busy === 'pushing' ? 'Pushing…' : `Push ${status.ahead}`}
+          {busy === 'pushing' ? 'Pushing…' : `${err ? 'Retry push' : 'Push'} ${status.ahead}`}
         </button>
       )}
       {err !== null && <span class="ink-git-error">{err}</span>}
+      {saveAllError.value !== null && (
+        <span class="ink-git-error" role="alert">
+          <span class="ink-git-error-text" title={saveAllError.value}>{saveAllError.value}</span>
+          <button type="button" class="ink-git-retry" disabled={savingAll.value}
+            onClick={() => { void saveAll() }}>Retry</button>
+        </span>
+      )}
+      {readError !== null && (
+        <span class="ink-git-error" role="alert">
+          <span class="ink-git-error-text" title={readError}>{readError}</span>
+          <button type="button" class="ink-git-retry" disabled={commitLoading.value}
+            onClick={() => { void openCommit() }}>Retry</button>
+        </span>
+      )}
     </div>
   )
 }

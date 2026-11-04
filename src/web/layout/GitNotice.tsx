@@ -1,5 +1,6 @@
 import { gitNotice, dismissGitNotice } from '../state/git.js'
 import './gitnotice.css'
+import { IconClose } from '../components/icons.js'
 
 /**
  * What a git action says on a phone.
@@ -22,9 +23,16 @@ export function GitNotice() {
   return (
     <div class={`ink-gitnotice${notice.kind === 'error' ? ' error' : ''}`} role="status">
       <span class="ink-gitnotice-text">{notice.text}</span>
+      {notice.kind === 'error' && notice.retry && (
+        <button type="button" class="ink-gitnotice-retry" onClick={() => {
+          const retry = notice.retry
+          dismissGitNotice()
+          void retry?.()
+        }}>Retry</button>
+      )}
       {notice.kind === 'error' && (
         <button type="button" class="ink-gitnotice-close" aria-label="Dismiss" onClick={dismissGitNotice}>
-          ✕
+          <IconClose size={14} />
         </button>
       )}
     </div>

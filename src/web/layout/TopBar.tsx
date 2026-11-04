@@ -6,6 +6,7 @@ import {
   IconChevron,
   IconCommit,
   IconEditMode,
+  IconFiles,
   IconMore,
   IconOutline,
   IconPushArrow,
@@ -16,7 +17,7 @@ import {
   IconSource,
   IconUnsavedDot,
 } from '../components/icons.js'
-import { dirty } from '../state/document.js'
+import { dirty, saveAll } from '../state/document.js'
 import { setViewMode, viewMode } from '../state/settings.js'
 import {
   isPhone,
@@ -103,6 +104,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
               : []),
             // Git was unreachable on a phone: the bottom bar is the view control and Save, and
             // the footer that carries it on the desktop is not rendered here at all.
+            { label: 'Save all', icon: <IconFiles />, onSelect: () => { void saveAll() } },
             { label: 'Commit…', icon: <IconCommit />, onSelect: () => { void openCommit() } },
             // Push is its own item, not a mode of committing. Shown on the same condition the
             // desktop's push button uses — a remote exists and there is something ahead of it —

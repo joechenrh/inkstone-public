@@ -1,4 +1,4 @@
-import { flushSave, goBack, goForward } from './document.js'
+import { flushSave, goBack, goForward, saveAll } from './document.js'
 import { toggleReadOnly, toggleSourceMode } from './settings.js'
 import { refreshGitStatus } from './git.js'
 import { setSidebarView, toggleLeftPanel, toggleRightPanel } from './ui.js'
@@ -64,7 +64,8 @@ export function handleShortcut(e: KeyboardEvent): boolean {
       break
     case 's':
     case 'S':
-      void flushSave().then(() => { void refreshGitStatus() })
+      if (e.shiftKey) void saveAll()
+      else void flushSave().then(() => { void refreshGitStatus() })
       break
     // Back and forward through the notes visited this session — Typora's binding. Following a link
     // between notes is otherwise a one-way door, and a dead end is a bug rather than a missing

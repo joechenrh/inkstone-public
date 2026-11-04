@@ -1,4 +1,4 @@
-import { computed, signal } from '@preact/signals'
+import { computed, effect, signal } from '@preact/signals'
 import { backend, ConflictError, type FileSnapshot, type Rev } from '../api/index.js'
 import { recordRecent } from './recent.js'
 import { recordVisit, stepBack, stepForward, whileWalking } from './visits.js'
@@ -7,8 +7,54 @@ import { isPhone, phoneScreen } from './ui.js'
 import { invalidateCorpus } from './search.js'
 import { setViewMode, viewMode } from './settings.js'
 import { suspendedPath } from './suspend.js'
+import { chosenRepo } from '../auth/identity.js'
+import { refreshGitStatus, sayGitNotice } from './git.js'
 
 export const DRAFT_KEY_PREFIX = 'inkstone.draft:'
+const DRAFT_INDEX_PREFIX = 'inkstone.draft-index:'
+interface Draft { path: string; content: string; base: Rev | null; scope: string }
+export const drafts = signal(new Map<string, Draft>())
+export const savingAll = signal(false)
+export const saveAllError = signal<string | null>(null)
+
+function draftScope(): string {
+  const repo = chosenRepo.value
+  return repo ? `${repo.owner}/${repo.name}@${repo.defaultBranch}` : 'server'
+}
+const draftId = (scope: string, path: string) => `${scope}\0${path}`
+const loadedScopes = new Set<string>()
+effect(() => {
+  const scope = draftScope()
+  if (loadedScopes.has(scope)) return
+  loadedScopes.add(scope)
+  try {
+    const stored = JSON.parse(localStorage.getItem(`${DRAFT_INDEX_PREFIX}${scope}`) ?? '[]') as Draft[]
+    const next = new Map(drafts.peek())
+    for (const draft of stored) {
+      if (typeof draft.path === 'string' && typeof draft.content === 'string'
+        && (draft.base === null || typeof draft.base === 'string')) {
+        next.set(draftId(scope, draft.path), { ...draft, scope })
+      }
+    }
+    drafts.value = next
+  } catch { /* The original per-note draft remains available if metadata cannot be read. */ }
+})
+
+function updateDraft(scope: string, path: string, draft: Draft | null): void {
+  const next = new Map(drafts.peek())
+  if (draft) next.set(draftId(scope, path), draft)
+  else next.delete(draftId(scope, path))
+  drafts.value = next
+  try {
+    const remaining = [...next.values()].filter((entry) => entry.scope === scope)
+    const key = `${DRAFT_INDEX_PREFIX}${scope}`
+    if (remaining.length) localStorage.setItem(key, JSON.stringify(remaining))
+    else localStorage.removeItem(key)
+  } catch { /* Keeping the in-memory draft must not depend on storage quota. */ }
+}
+
+export const unsavedCount = computed(() => [...drafts.value.values()]
+  .filter((draft) => draft.scope === draftScope() && draft.path !== suspendedPath.value).length)
 
 /**
  * The note being fetched, if one is.
@@ -25,6 +71,8 @@ export const baseRev = signal<Rev | null>(null)
 /** When the open file was last written, for display. Null when the backend has no such fact. */
 export const modifiedAt = signal<number | null>(null)
 export const dirty = signal(false)
+export const savingPath = signal<string | null>(null)
+let documentGeneration = 0
 /**
  * What went wrong, and with which of the two things a document does.
  *
@@ -45,12 +93,24 @@ export const saveError = computed(() => fileError.value?.message ?? null)
 /** The version that won a race against an unsaved edit, ready to show or adopt. */
 export const conflict = signal<FileSnapshot | null>(null)
 
+export const saveState = computed(() => {
+  const path = currentPath.value
+  if (path === null) return 'closed'
+  if (loadingPath.value === path) return 'loading'
+  if (suspendedPath.value === path) return 'live'
+  if (savingPath.value === path) return 'saving'
+  if (conflict.value !== null) return 'conflict'
+  if (fileError.value?.kind === 'save') return 'failed'
+  return dirty.value ? 'unsaved' : 'saved'
+})
+
 function draftKey(path: string): string {
   return `${DRAFT_KEY_PREFIX}${path}`
 }
 
 /** Reset all document state (content, dirty, mtime, errors) and remove the draft for `path`. Call when closing/deleting the currently-open file. */
 export function closeDocument(path: string): void {
+  documentGeneration++
   loadingPath.value = null
   content.value = ''
   dirty.value = false
@@ -61,6 +121,7 @@ export function closeDocument(path: string): void {
   fileError.value = null
   conflict.value = null
   localStorage.removeItem(draftKey(path))
+  updateDraft(draftScope(), path, null)
 }
 
 /** Clears the failure notice without touching the unsaved text, which stays unsaved. */
@@ -69,6 +130,7 @@ export function dismissSaveError(): void {
 }
 
 export async function openFile(path: string): Promise<void> {
+  documentGeneration++
   // Claimed before the read, not after. The moment this returns to the caller the app is *on*
   // this note: the breadcrumb names it, its row is selected, and on a phone the screen has
   // already changed. Only the text is still coming.
@@ -86,6 +148,8 @@ export async function openFile(path: string): Promise<void> {
 
   let file: FileSnapshot
   try {
+    // Do not read an older snapshot while Save all is writing this vault.
+    if (savingAll.value) await saveChain
     file = await backend.readFile(path)
   } catch (err) {
     // Nothing was opened after all, so the path goes back to whatever it was and the failure is
@@ -104,7 +168,9 @@ export async function openFile(path: string): Promise<void> {
   if (currentPath.value !== path) return
   loadingPath.value = null
 
-  const draft = localStorage.getItem(draftKey(path))
+  const scope = draftScope()
+  const pending = drafts.value.get(draftId(scope, path))
+  const draft = pending?.content ?? localStorage.getItem(draftKey(path))
 
   // On a phone, opening a note pushes to it, and it opens in read.
   //
@@ -125,9 +191,13 @@ export async function openFile(path: string): Promise<void> {
     // The previous session had unsaved content; prioritize keeping the user's text
     content.value = draft
     dirty.value = true
+    baseRev.value = pending ? pending.base : file.rev
+    updateDraft(scope, path, { path, content: draft, base: baseRev.value, scope })
   } else {
     content.value = file.content
     dirty.value = false
+    updateDraft(scope, path, null)
+    localStorage.removeItem(draftKey(path))
   }
 }
 
@@ -136,6 +206,9 @@ export function editContent(next: string): void {
   dirty.value = true
   const path = currentPath.value
   if (path) {
+    const scope = draftScope()
+    const pending = drafts.value.get(draftId(scope, path))
+    updateDraft(scope, path, { path, content: next, base: pending ? pending.base : baseRev.value, scope })
     try { localStorage.setItem(draftKey(path), next) } catch { /* a failed fallback write must not block editing */ }
   }
 }
@@ -158,28 +231,46 @@ let saveChain: Promise<void> | null = null
 
 export function flushSave(): Promise<void> {
   const prev = saveChain
+  const path = currentPath.value
+  const generation = documentGeneration
+  // A save queued for this note must not follow the user into another note.
+  const save = () => currentPath.value === path && documentGeneration === generation
+    ? doFlushSave().then(() => {}) : Promise.resolve()
   // then(fn, fn): doFlushSave already swallows all exceptions internally (conflict→conflict,
   // others→saveError) and never rejects. The second argument is defensive redundancy — even
   // if it throws in the future, it guarantees the chain won't be permanently blocked by a
   // single exception, so subsequent saves can still proceed.
-  const run: Promise<void> = prev ? prev.then(doFlushSave, doFlushSave) : doFlushSave()
+  const run: Promise<void> = prev ? prev.then(save, save) : save()
   saveChain = run
   // Reset once the tail of the chain settles (unless a later call has meanwhile replaced saveChain with a new chain).
   void run.finally(() => { if (saveChain === run) saveChain = null })
   return run
 }
 
-async function doFlushSave(): Promise<void> {
+async function doFlushSave(): Promise<boolean> {
   const path = currentPath.value
-  if (!path || !dirty.value) return
+  if (!path || !dirty.value || loadingPath.value !== null) return false
   // Not while this note is being edited with other people: the session ends with one write. The
   // text is not at risk — `editContent` has already put the draft in local storage. See
   // `state/suspend.ts`.
-  if (path === suspendedPath.value) return
+  if (path === suspendedPath.value) return false
   const snapshot = content.value
+  const generation = documentGeneration
+  const base = baseRev.value
+  const scope = draftScope()
+  // Reopening the same note may still adopt this write if it read the same base.
+  const active = () => draftScope() === scope && currentPath.value === path && (documentGeneration === generation
+    || (loadingPath.value === null && baseRev.value === base))
+  savingPath.value = path
   try {
-    const result = await backend.writeFile(path, snapshot, baseRev.value ?? undefined)
+    const result = await backend.writeFile(path, snapshot, base ?? undefined)
     rememberOurWrite(result.rev)
+    const pending = drafts.value.get(draftId(scope, path))
+    updateDraft(scope, path, pending && pending.content !== snapshot ? { ...pending, base: result.rev } : null)
+    if (!active()) {
+      if (localStorage.getItem(draftKey(path)) === snapshot) localStorage.removeItem(draftKey(path))
+      return true
+    }
     baseRev.value = result.rev
     modifiedAt.value = result.modifiedAt
     fileError.value = null
@@ -188,14 +279,82 @@ async function doFlushSave(): Promise<void> {
       dirty.value = false
       localStorage.removeItem(draftKey(path))
     }
+    return true
   } catch (err) {
+    if (!active()) return false
     if (err instanceof ConflictError) {
       conflict.value = err.theirs
       fileError.value = { kind: 'save', message: 'The file has changed on disk' }
-      return
+      return false
     }
     fileError.value = { kind: 'save', message: err instanceof Error ? err.message : String(err) }
+    return false
+  } finally {
+    savingPath.value = null
   }
+}
+
+let allSavePromise: Promise<void> | null = null
+
+/** Save registered drafts without opening notes, committing, or changing the current selection. */
+export function saveAll(): Promise<void> {
+  if (allSavePromise) return allSavePromise
+  const scope = draftScope()
+  const pending = [...drafts.value.values()].filter((draft) => draft.scope === scope)
+  savingAll.value = true
+  saveAllError.value = null
+  const run = async () => {
+    let saved = 0
+    const failed: string[] = []
+    for (const snapshot of pending) {
+      if (draftScope() !== scope) return
+      if (snapshot.path === suspendedPath.value) continue
+      // An earlier queued save may already have saved or rebased this draft.
+      const draft = drafts.value.get(draftId(scope, snapshot.path))
+      if (!draft) continue
+      try {
+        if (draft.path === currentPath.value && loadingPath.value === null) {
+          const saved = await doFlushSave()
+          if (!saved) throw new Error(fileError.value?.kind === 'save' ? fileError.value.message : 'Could not save')
+        } else {
+          if (draft.base === null) throw new Error('Open this note before saving it')
+          const file = await backend.readFile(draft.path)
+          if (file.rev !== draft.base && !backend.isSameRev(file.rev, draft.base)) {
+            throw new ConflictError('The file has changed', file)
+          }
+          savingPath.value = draft.path
+          const result = await backend.writeFile(draft.path, draft.content, draft.base)
+          rememberOurWrite(result.rev)
+          const latest = drafts.value.get(draftId(scope, draft.path))
+          updateDraft(scope, draft.path, latest && latest.content !== draft.content ? { ...latest, base: result.rev } : null)
+          if (localStorage.getItem(draftKey(draft.path)) === draft.content) localStorage.removeItem(draftKey(draft.path))
+        }
+        saved++
+      } catch (error) {
+        failed.push(`${draft.path}: ${error instanceof Error ? error.message : 'Could not save'}`)
+      } finally {
+        savingPath.value = null
+      }
+    }
+    if (draftScope() !== scope) return
+    await refreshGitStatus()
+    if (failed.length) {
+      saveAllError.value = `Could not save ${failed.length} note${failed.length === 1 ? '' : 's'}: ${failed.join('; ')}`
+      sayGitNotice('error', saveAllError.value, saveAll)
+    } else if (saved) {
+      sayGitNotice('done', `Saved ${saved} note${saved === 1 ? '' : 's'}`)
+    }
+  }
+  const work = saveChain ? saveChain.then(run, run) : run()
+  const tail = work.then(() => {})
+  saveChain = tail
+  const result = work.finally(() => {
+    savingAll.value = false
+    allSavePromise = null
+    if (saveChain === tail) saveChain = null
+  })
+  allSavePromise = result
+  return result
 }
 
 export function resolveConflictTakeDisk(): void {
@@ -209,6 +368,7 @@ export function resolveConflictTakeDisk(): void {
   fileError.value = null
   const path = currentPath.value
   if (path) localStorage.removeItem(draftKey(path))
+  if (path) updateDraft(draftScope(), path, null)
 }
 
 export async function resolveConflictKeepMine(): Promise<void> {
@@ -219,6 +379,10 @@ export async function resolveConflictKeepMine(): Promise<void> {
   modifiedAt.value = current.modifiedAt
   conflict.value = null
   dirty.value = true
+  const path = currentPath.value
+  const scope = draftScope()
+  const pending = path ? drafts.value.get(draftId(scope, path)) : null
+  if (pending) updateDraft(scope, pending.path, { ...pending, base: current.rev })
   await flushSave()
 }
 
@@ -264,6 +428,9 @@ export async function rebaseOpenDocument(): Promise<void> {
     rememberOurWrite(file.rev)
     baseRev.value = file.rev
     modifiedAt.value = file.modifiedAt
+    const scope = draftScope()
+    const pending = drafts.value.get(draftId(scope, path))
+    if (pending) updateDraft(scope, path, { ...pending, base: file.rev })
   } catch { /* the next save will surface anything really wrong */ }
 }
 

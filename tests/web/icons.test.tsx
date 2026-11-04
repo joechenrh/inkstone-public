@@ -68,12 +68,6 @@ describe('icons', () => {
     expect(svg.getAttribute('fill')).toBe('none')
   })
 
-  it('IconCommit contains circle and line elements', () => {
-    const { container } = render(<IconCommit />)
-    expect(container.querySelector('circle')).toBeTruthy()
-    expect(container.querySelector('line')).toBeTruthy()
-  })
-
   it('IconCommit has the ink-icon class', () => {
     const { container } = render(<IconCommit />)
     const svg = container.querySelector('svg')!

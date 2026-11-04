@@ -172,6 +172,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   color: var(--ink-fg-muted);
   font-size: 13px;
 }
@@ -180,6 +181,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: none;
+  white-space: nowrap;
 }
 
 .ink-topbar,
@@ -361,7 +364,11 @@
   align-items: center;
   gap: 12px;
   font-size: 12px;
+  flex: none;
+  white-space: nowrap;
 }
+
+.ink-git-retry { color: var(--ink-link); text-decoration: underline; text-underline-offset: 3px; }
 
 .ink-git-branch {
   display: inline-flex;
@@ -413,6 +420,8 @@
   color: var(--ink-link);
   transition: background-color 0.12s ease, color 0.12s ease, opacity 0.12s ease;
   margin-left: 4px;
+  flex: none;
+  white-space: nowrap;
 }
 
 .ink-push-btn:hover {
@@ -433,9 +442,17 @@
 }
 
 .ink-git-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 220px;
   color: var(--ink-danger);
   font-size: 12px;
 }
+
+.ink-git-error-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ink-git-retry { flex: none; }
 
 /* ---------------------------------------------------------------------------
    The phone: one screen at a time.

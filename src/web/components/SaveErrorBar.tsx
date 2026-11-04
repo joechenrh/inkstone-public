@@ -1,4 +1,4 @@
-import { conflict, dismissSaveError, fileError, flushSave, openFile } from '../state/document.js'
+import { conflict, dismissSaveError, fileError, flushSave, openFile, saveState } from '../state/document.js'
 import { refreshGitStatus } from '../state/git.js'
 import './conflictbar.css'
 
@@ -28,8 +28,8 @@ export function SaveErrorBar() {
   return (
     <div class="ink-conflict" role="alert">
       <span>{failure.kind === 'save' ? 'Could not save' : 'Could not open'}: {failure.message}</span>
-      <button type="button" onClick={retry}>
-        Try again
+      <button type="button" onClick={retry} disabled={saveState.value === 'saving'}>
+        {saveState.value === 'saving' ? 'Saving…' : 'Try again'}
       </button>
       <button type="button" onClick={dismissSaveError}>
         Dismiss

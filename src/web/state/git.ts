@@ -27,7 +27,7 @@ export async function commitVault(): Promise<void> {
  * What the last git action is saying, for surfaces with no status bar of their own — which on a
  * phone is all of them. `working` and `done` clear themselves; an error waits to be read.
  */
-export const gitNotice = signal<{ kind: 'working' | 'done' | 'error'; text: string } | null>(null)
+export const gitNotice = signal<{ kind: 'working' | 'done' | 'error'; text: string; retry?: () => Promise<void> } | null>(null)
 
 let noticeTimer = 0
 
@@ -37,10 +37,10 @@ export function dismissGitNotice(): void {
   gitNotice.value = null
 }
 
-export function sayGitNotice(kind: 'working' | 'done' | 'error', text: string): void {
+export function sayGitNotice(kind: 'working' | 'done' | 'error', text: string, retry?: () => Promise<void>): void {
   if (noticeTimer) window.clearTimeout(noticeTimer)
   noticeTimer = 0
-  gitNotice.value = { kind, text }
+  gitNotice.value = { kind, text, ...(retry ? { retry } : {}) }
   // A failure stays: it is the only one of the three that might need reading twice.
   if (kind === 'done') noticeTimer = window.setTimeout(dismissGitNotice, 3200)
 }
@@ -58,7 +58,7 @@ export async function pushVault(): Promise<void> {
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Push failed'
     gitError.value = message
-    sayGitNotice('error', message)
+    sayGitNotice('error', message, pushVault)
   } finally {
     gitBusy.value = 'idle'
   }

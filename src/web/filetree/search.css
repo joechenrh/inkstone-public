@@ -12,15 +12,9 @@
   color: var(--ink-fg-muted);
 }
 
-/* Focus goes on the field, not the input inside it.
- *
- * The shell's ring stands 2px outside whatever has focus, which is right for a button and wrong
- * here: the input already sits inside a bordered box, so the ring drew a second rectangle around
- * the first. The border takes the accent and a low-opacity halo bleeds outward from it — GitHub,
- * Linear and most current form design systems do exactly this, and it is one shape instead of two. */
+/* Focus changes the existing border without adding an outer ring or changing the field's size. */
 .ink-search:focus-within {
   border-color: var(--ink-link);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink-link) 18%, transparent);
 }
 
 .ink-search-input:focus,
@@ -85,13 +79,22 @@
   background: none;
   cursor: pointer;
   font: inherit;
-  padding: 6px 8px;
+  padding: 9px 8px;
   border-radius: var(--ink-r-sm);
   color: var(--ink-fg);
 }
 
 .ink-search-hit:hover {
   background: var(--ink-sidebar-hover);
+}
+
+.ink-search-hit:focus-visible {
+  outline: 1px solid var(--ink-link);
+  outline-offset: -2px;
+}
+
+.ink-search-hit[aria-current="page"] {
+  background: var(--ink-sidebar-active);
 }
 
 /* Which question this group answers. Two groups, because "a note called that" and "a note that
@@ -112,15 +115,24 @@
 }
 
 .ink-search-hit-head {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
+  display: block;
   font-size: var(--ink-tree-font-size, 14px);
 }
 
+.ink-search-hit-name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: "Cantarell", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
 .ink-search-hit-where {
-  margin-left: auto;
-  flex-shrink: 0;
+  display: block;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--ink-fg-muted);
   font-size: 11px;
 }

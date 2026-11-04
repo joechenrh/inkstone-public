@@ -25,6 +25,35 @@ async function login(page: Page) {
 const groups = (page: Page) =>
   page.evaluate(() => Array.from(document.querySelectorAll('.ink-search-group'), (e) => e.textContent))
 
+test('search results can be reached, traversed and opened with the keyboard', async ({ page }) => {
+  await login(page)
+  const field = page.locator('.ink-search-input')
+  await field.fill('crepe')
+  const hits = page.locator('.ink-search-hit')
+  await expect(hits.nth(1)).toBeVisible()
+  await field.press('ArrowDown')
+  await expect(hits.first()).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(hits.nth(1)).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(field).toBeFocused()
+  await expect(field).toHaveValue('crepe')
+  await field.press('ArrowUp')
+  await expect(hits.last()).toBeFocused()
+  const path = await hits.last().getAttribute('title')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.ink-breadcrumb')).toHaveAttribute('title', path!)
+})
+
+test('long result names and paths stay within the sidebar', async ({ page }) => {
+  await login(page)
+  await page.locator('.ink-search-input').fill('crepe')
+  await expect(page.locator('.ink-search-hit').first()).toBeVisible()
+  const overflow = await page.locator('.ink-search-hit').evaluateAll((hits) =>
+    hits.some((hit) => hit.scrollWidth > hit.clientWidth))
+  expect(overflow).toBe(false)
+})
+
 test('typing searches names and text together, with no second key', async ({ page }) => {
   await login(page)
   await page.locator('.ink-search-input').fill('blockquote')
@@ -123,14 +152,22 @@ test('the highlighted word is visible in its own row', async ({ page }) => {
 
 test('the field shows focus without drawing a second box around itself', async ({ page }) => {
   await login(page)
+  const before = await page.locator('.ink-search').evaluate((el) => ({
+    border: getComputedStyle(el).borderColor,
+    width: el.getBoundingClientRect().width,
+    height: el.getBoundingClientRect().height,
+  }))
   await page.locator('.ink-search-input').focus()
 
   const focus = await page.evaluate(() => {
     const field = getComputedStyle(document.querySelector('.ink-search')!)
     const input = getComputedStyle(document.querySelector('.ink-search-input')!)
-    return { halo: field.boxShadow !== 'none', ring: input.outlineStyle }
+    const bounds = document.querySelector('.ink-search')!.getBoundingClientRect()
+    return { border: field.borderColor, halo: field.boxShadow, ring: input.outlineStyle, width: bounds.width, height: bounds.height }
   })
-  expect(focus.halo, 'the field carries the focus').toBe(true)
+  expect(focus.border).not.toBe(before.border)
+  expect(focus.halo).toBe('none')
+  expect({ width: focus.width, height: focus.height }).toEqual({ width: before.width, height: before.height })
   expect(focus.ring, 'the input inside it must not draw its own ring').toBe('none')
 })
 

@@ -26,6 +26,17 @@ export function SearchField() {
         value={q}
         onInput={(e) => { setSearchQuery((e.target as HTMLInputElement).value) }}
         onKeyDown={(e) => {
+          if (e.isComposing) return
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
+            const hits = inputRef.current?.closest('.ink-tree-container')
+              ?.querySelectorAll<HTMLButtonElement>('.ink-search-hit')
+            const hit = e.key === 'ArrowUp' ? hits?.[hits.length - 1] : hits?.[0]
+            if (hit) {
+              e.preventDefault()
+              if (e.key === 'Enter') hit.click()
+              else hit.focus()
+            }
+          }
           // Escape clears rather than blurring: the query is the thing in the way, not the focus.
           if (e.key === 'Escape') {
             e.preventDefault()

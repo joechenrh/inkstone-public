@@ -323,9 +323,9 @@
  * an editor surface: a textarea must not make it inherit the form-field ring. */
 .ink-shell
   :is(button, a, input, select, textarea, [tabindex])
-  :not(.ink-doc):not(.ink-source-area):not(.ink-search-input):not(.ink-tree-inline-input):focus-visible,
+  :not(.ink-doc):not(.ink-source-area):not(.ink-search-input):not(.ink-tree-inline-input):not(.ink-tree-row):not(.ink-search-hit):focus-visible,
 .ink-shell
-  :is(button, a, input, select, textarea, [tabindex]):not(.ink-doc):not(.ink-source-area):not(.ink-search-input):not(.ink-tree-inline-input):focus-visible {
+  :is(button, a, input, select, textarea, [tabindex]):not(.ink-doc):not(.ink-source-area):not(.ink-search-input):not(.ink-tree-inline-input):not(.ink-tree-row):not(.ink-search-hit):focus-visible {
   outline: 2px solid var(--ink-link);
   outline-offset: 2px;
   border-radius: var(--ink-r-sm);

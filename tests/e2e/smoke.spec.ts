@@ -622,12 +622,22 @@ test('keyboard focus is visible', async ({ page }) => {
       // The element itself, or the box around it. A composite widget legitimately shows focus on
       // its wrapper — the search field does, because a ring standing outside an input that already
       // sits in a bordered box draws a second rectangle around the first.
-      const shows = (node: Element | null) => {
-        if (!node) return false
+      const nodes = [el, el.parentElement].filter((node): node is Element => node !== null)
+      const styles = () => nodes.map((node) => {
         const cs = getComputedStyle(node)
-        return (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || cs.boxShadow !== 'none'
-      }
-      return shows(el) || shows(el.parentElement)
+        return {
+          ring: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0,
+          shadow: cs.boxShadow,
+          border: cs.borderColor,
+          background: cs.backgroundColor,
+        }
+      })
+      const focused = styles()
+      ;(el as HTMLElement).blur()
+      const unfocused = styles()
+      ;(el as HTMLElement).focus({ preventScroll: true })
+      return focused.some((style, index) => style.ring || style.shadow !== 'none'
+        || style.border !== unfocused[index]!.border || style.background !== unfocused[index]!.background)
     })
     if (ring !== null) seen.push(ring)
   }
@@ -1026,12 +1036,46 @@ test('the drawer takes the margin before it takes the text', async ({ page }) =>
   expect(wideOpen.scrollerRight).toBe(wideOpen.viewport)
 })
 
-// The row menu is fixed-positioned so it escapes the sidebar's overflow clipping; if that
-// regressed it would be cut off at the row instead of overlaying the editor.
+test('file tree arrow keys follow visible rows and folder hierarchy', async ({ page }) => {
+  await login(page)
+  const rows = page.locator('.ink-tree-row')
+  const folder = page.locator('.ink-tree-row[title="notes"]')
+  await folder.focus()
+  await folder.press('ArrowRight')
+  await expect(folder).toHaveAttribute('aria-expanded', 'true')
+  await folder.press('ArrowRight')
+  const child = page.locator('.ink-tree-row:focus')
+  const firstPath = await child.getAttribute('title')
+  expect(firstPath).toMatch(/^notes\//)
+  await expect(child).toHaveAttribute('aria-level', '2')
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('.ink-tree-row:focus')).not.toHaveAttribute('title', firstPath!)
+  await page.keyboard.press('ArrowUp')
+  await expect(page.locator('.ink-tree-row:focus')).toHaveAttribute('title', firstPath!)
+  await page.keyboard.press('ArrowLeft')
+  await expect(folder).toBeFocused()
+  await folder.press('ArrowLeft')
+  await expect(folder).toHaveAttribute('aria-expanded', 'false')
+  await folder.press('End')
+  await expect(rows.last()).toBeFocused()
+  await page.keyboard.press('Home')
+  await expect(rows.first()).toBeFocused()
+  await folder.focus()
+  await folder.press('ArrowRight')
+  const note = page.locator('.ink-tree-row[title="notes/welcome.md"]')
+  await note.focus()
+  await note.press('Enter')
+  await expect(page.locator('.ink-breadcrumb')).toHaveAttribute('title', 'notes/welcome.md')
+})
+
+// The row menu must escape the sidebar's overflow clipping.
 test('row menu opens fully outside the sidebar and closes on Escape', async ({ page }) => {
   await login(page)
-  await treeItem(page, 'notes').hover()
-  await page.getByRole('button', { name: 'Actions for notes' }).click()
+  const action = page.getByRole('button', { name: 'Actions for notes' })
+  await action.focus()
+  await expect(action.locator('..')).toHaveCSS('opacity', '1')
+  await action.press('Enter')
+  await expect(page.getByRole('treeitem', { name: /notes/ }).first()).toHaveAttribute('aria-expanded', 'false')
 
   const menu = page.locator('.ink-menu')
   await expect(menu).toBeVisible()
@@ -1046,6 +1090,7 @@ test('row menu opens fully outside the sidebar and closes on Escape', async ({ p
 
   await page.keyboard.press('Escape')
   await expect(menu).toHaveCount(0)
+  await expect(action).toBeFocused()
 })
 
 /**

@@ -181,12 +181,41 @@ export function TreeNode({ entry, depth, onOpenFile }: TreeNodeProps) {
       <div
         class={`ink-tree-row${selected ? ' selected' : ''}`}
         style={{ paddingLeft: `${8 + depth * INDENT_PX}px` }}
+        onPointerDown={(event) => {
+          // Re-clicking the focused row otherwise retains its keyboard focus indicator.
+          if (document.activeElement === event.currentTarget) event.currentTarget.blur()
+        }}
         onClick={handleClick}
         role="treeitem"
         aria-expanded={entry.type === 'dir' ? expanded : undefined}
+        aria-level={depth + 1}
         aria-selected={selected}
+        title={entry.path}
         tabIndex={0}
         onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) {
+            e.preventDefault()
+            e.stopPropagation()
+            const rows = Array.from(e.currentTarget.closest('.ink-tree')
+              ?.querySelectorAll<HTMLElement>('.ink-tree-row') ?? [])
+            const index = rows.indexOf(e.currentTarget)
+            if (e.key === 'ArrowDown') rows[Math.min(index + 1, rows.length - 1)]?.focus()
+            else if (e.key === 'ArrowUp') rows[Math.max(index - 1, 0)]?.focus()
+            else if (e.key === 'Home') rows[0]?.focus()
+            else if (e.key === 'End') rows[rows.length - 1]?.focus()
+            else if (e.key === 'ArrowRight' && entry.type === 'dir') {
+              if (!expanded) toggleDir(entry.path)
+              else if (rows[index + 1]?.title.startsWith(`${entry.path}/`)) rows[index + 1]?.focus()
+            } else if (e.key === 'ArrowLeft') {
+              if (expanded) toggleDir(entry.path)
+              else {
+                const slash = entry.path.lastIndexOf('/')
+                if (slash >= 0) rows.find((row) => row.title === entry.path.slice(0, slash))?.focus()
+              }
+            }
+            return
+          }
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             handleClick()

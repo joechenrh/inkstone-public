@@ -7,7 +7,7 @@ import {
   matchingText,
   searchQuery,
 } from '../state/search.js'
-import { tree } from '../state/vault.js'
+import { currentPath, tree } from '../state/vault.js'
 import './search.css'
 
 /** "notes/deep/file.md" → "notes / deep" */
@@ -40,7 +40,12 @@ function Hit(
   { path: string; name: string; excerpt?: string; query: string; onOpen: (p: string) => void },
 ) {
   return (
-    <button type="button" class="ink-search-hit" onClick={() => { onOpen(path) }}>
+    <button type="button" class="ink-search-hit" title={path}
+      aria-current={currentPath.value === path ? 'page' : undefined}
+      onPointerDown={(event) => {
+        if (document.activeElement === event.currentTarget) event.currentTarget.blur()
+      }}
+      onClick={() => { onOpen(path) }}>
       <span class="ink-search-hit-head">
         <span class="ink-search-hit-name"><Marked text={name} query={query} /></span>
         <span class="ink-search-hit-where">{where(path)}</span>
@@ -76,7 +81,26 @@ export function SearchResults({ onOpen }: { onOpen: (path: string) => void }) {
   }
 
   return (
-    <div class="ink-search-results">
+    <div class="ink-search-results" onKeyDown={(event) => {
+      const hits = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('.ink-search-hit'))
+      const index = hits.indexOf(event.target as HTMLButtonElement)
+      if (index < 0) return
+      const field = event.currentTarget.closest('.ink-tree-container')
+        ?.querySelector<HTMLInputElement>('.ink-search-input')
+      if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) {
+        event.preventDefault()
+        event.stopPropagation()
+        field?.focus()
+        return
+      }
+      const next = event.key === 'ArrowDown' ? Math.min(index + 1, hits.length - 1)
+        : event.key === 'ArrowUp' ? index - 1
+          : event.key === 'Home' ? 0 : event.key === 'End' ? hits.length - 1 : -1
+      if (next >= 0) {
+        event.preventDefault()
+        hits[next]?.focus()
+      }
+    }}>
       {named.length > 0 && (
         <>
           <div class="ink-search-group">Notes</div>

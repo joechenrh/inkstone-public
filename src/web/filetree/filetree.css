@@ -31,6 +31,13 @@
   transition: background-color 0.12s ease;
 }
 
+/* Keep keyboard focus inside the row so the sidebar cannot clip the outline. */
+.ink-tree-row:focus-visible {
+  outline: 1px solid var(--ink-link);
+  outline-offset: -1px;
+  border-radius: var(--ink-r-sm);
+}
+
 /* Fix 7: Selected row — left accent bar (Typora style) + subtle background */
 .ink-tree-row.selected {
   background: var(--ink-sidebar-active);
@@ -48,6 +55,11 @@
   transform: scaleY(1);
   transition: opacity 0.12s ease, transform 0.12s ease;
   transform-origin: center;
+}
+
+/* The focus outline already identifies this row; do not stack the selection stripe on it. */
+.ink-tree-row.selected:focus-visible::before {
+  opacity: 0;
 }
 
 .ink-tree-row:not(.selected)::before {
@@ -124,8 +136,13 @@
   transition: opacity 0.12s ease;
 }
 
-.ink-tree-row:hover .ink-tree-actions {
+.ink-tree-row:hover .ink-tree-actions,
+.ink-tree-row:focus-within .ink-tree-actions {
   opacity: 1;
+}
+
+@media (hover: none) {
+  .ink-tree-actions { opacity: 1; }
 }
 
 /* Keep the trigger visible while its menu is open — otherwise moving the pointer to the

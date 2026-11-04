@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { backend } from '../api/index.js'
 import { content, dirty, editContent, modifiedAt } from '../state/document.js'
 import { gitStatus } from '../state/git.js'
@@ -90,8 +90,8 @@ function DiffBody({ text, session }: { text: string; session: Session }) {
         <pre key={hi} class={`ink-hist-hunk${hi > 0 ? ' split' : ''}`}>
           {hunk.map((line, i) => {
             const cls = line.startsWith('+') ? 'a' : line.startsWith('-') ? 'd' : ''
-            // The leading +/-/space is what the colour already says.
-            return <span key={i} class={cls}>{line.slice(1)}{'\n'}</span>
+            // Keep the +/- markers so additions and removals are readable without colour.
+            return <span key={i} class={cls}>{line}{'\n'}</span>
           })}
         </pre>
       ))}
@@ -106,14 +106,22 @@ export function HistoryPanel() {
   const [openSha, setOpenSha] = useState<string | null>(null)
   const [diff, setDiff] = useState<{ sha: string; text: string } | null>(null)
   const [pending, setPending] = useState<string | null>(null)
+  const [diffError, setDiffError] = useState<string | null>(null)
   const [restoring, setRestoring] = useState(false)
+  const diffRequest = useRef(0)
+  const restoreRequest = useRef(0)
 
   // Collapse only when the file changes. An expanded session must survive a reload of the log,
   // and must certainly survive typing.
   useEffect(() => {
+    setSessions(null)
+    setError(null)
     setOpenSha(null)
     setDiff(null)
     setPending(null)
+    setDiffError(null)
+    setRestoring(false)
+    return () => { diffRequest.current++; restoreRequest.current++ }
   }, [path])
 
   // Reload on the file, and on the vault's git state — which changes when the autosave loop or the
@@ -140,24 +148,47 @@ export function HistoryPanel() {
   // takes ~20ms, so a "loading" line only ever appeared long enough to be a flicker — two layout
   // changes where the reader expects one. `pending` keeps the clicked row responsive without
   // moving anything.
-  const toggle = (s: Session) => {
-    if (openSha === s.toSha) { setOpenSha(null); setDiff(null); return }
+  const loadDiff = (s: Session) => {
+    const request = ++diffRequest.current
+    const active = () => request === diffRequest.current && currentPath.value === path
     setPending(s.toSha)
     backend.gitDiff(path, s.fromSha, s.toSha)
-      .then((r) => { setDiff({ sha: s.toSha, text: r.diff }); setOpenSha(s.toSha) })
-      .catch(() => { setDiff({ sha: s.toSha, text: '' }); setOpenSha(s.toSha) })
-      .finally(() => { setPending(null) })
+      .then((r) => {
+        if (!active()) return
+        setDiffError(null); setDiff({ sha: s.toSha, text: r.diff }); setOpenSha(s.toSha)
+      })
+      .catch(() => {
+        if (!active()) return
+        setDiff(null); setDiffError(s.toSha); setOpenSha(s.toSha)
+      })
+      .finally(() => { if (active()) setPending(null) })
+  }
+
+  const toggle = (s: Session) => {
+    if (openSha === s.toSha || pending === s.toSha) {
+      diffRequest.current++
+      setOpenSha(null); setDiff(null); setDiffError(null); setPending(null)
+      return
+    }
+    loadDiff(s)
   }
 
   // Restoring loads the old text into the editor as unsaved changes rather than writing anything.
   // Nothing is lost and nothing is committed until the user saves, and if they don't want it after
   // all, reopening the note throws it away.
   const restore = (s: Session) => {
+    const request = ++restoreRequest.current
+    const active = () => request === restoreRequest.current && currentPath.value === path
+    const before = content.value
     setRestoring(true)
     backend.fileAtCommit(path, s.toSha)
-      .then((r) => { editContent(r.content) })
-      .catch((e: unknown) => { setError(e instanceof Error ? e.message : 'Could not read that version') })
-      .finally(() => { setRestoring(false) })
+      .then((r) => {
+        if (!active()) return
+        if (content.value !== before) { setError('The note changed while loading this version. Try again.'); return }
+        editContent(r.content)
+      })
+      .catch((e: unknown) => { if (active()) setError(e instanceof Error ? e.message : 'Could not read that version') })
+      .finally(() => { if (active()) setRestoring(false) })
   }
 
   let lastDay: string | null = null
@@ -191,18 +222,18 @@ export function HistoryPanel() {
           return (
             <div key={s.toSha}>
               {showDay && <div class="ink-hist-day">{day}</div>}
-              {/* The accent rule and the open fill belong to the whole entry, not the row: on the
-                  row alone the rule stopped a third of the way down an expanded entry and read as
-                  a stray tick in its corner. */}
+              {/* Keep the version heading and its expanded diff in one block. */}
               <div class={`ink-hist-item${s.kind === 'anchor' ? ' anchor' : ''}${isOpen ? ' open' : ''}`}>
               <button
                 type="button"
                 class={`ink-hist-entry${isOpen ? ' open' : ''}${pending === s.toSha ? ' pending-diff' : ''}`}
                 aria-expanded={isOpen}
+                aria-busy={pending === s.toSha}
                 onClick={() => { toggle(s) }}
               >
                 <span class="ink-hist-when">
-                  {sessionWhen(s)}{s.kind === 'anchor' && !s.isCreation && s.message === '' ? ' · Commit' : ''}
+                  {sessionWhen(s)}
+                  {s.kind === 'anchor' && !s.isCreation && <span class="ink-hist-source" title="Manual commit">· Commit</span>}
                 </span>
                 <span class="ink-hist-delta">
                   {(s.added ?? 0) > 0 && <span class="p">+{s.added}</span>}
@@ -215,12 +246,20 @@ export function HistoryPanel() {
                 {s.message !== '' && <span class="ink-hist-message">{s.message}</span>}
               </button>
 
+              {isOpen && diffError === s.toSha && (
+                <div class="ink-hist-note" role="alert">
+                  Could not load changes.{' '}
+                  <button type="button" class="ink-hist-restore" disabled={pending === s.toSha}
+                    onClick={() => { loadDiff(s) }}>{pending === s.toSha ? 'Retrying…' : 'Retry'}</button>
+                </div>
+              )}
+
               {isOpen && diff?.sha === s.toSha && (
                 <>
                   <DiffBody text={diff.text} session={s} />
                   <div class="ink-hist-actions">
                     <button type="button" class="ink-hist-restore" disabled={restoring} onClick={() => { restore(s) }}>
-                      Restore this version
+                      {restoring ? 'Loading version…' : 'Restore this version'}
                     </button>
                   </div>
                 </>

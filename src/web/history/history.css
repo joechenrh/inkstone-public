@@ -49,9 +49,8 @@
   outline: none;
 }
 
-/* Between the click and the diff arriving. Only the row dims — nothing moves, because moving is
-   what made expanding feel like two separate events. */
-.ink-hist-entry.pending-diff { opacity: 0.55; }
+/* Keep the row's paint stable while the diff loads: dimming it briefly looks like a flash. */
+.ink-hist-entry.pending-diff { cursor: progress; }
 
 /* Open, the row and its diff are one block rather than two stacked cards with a seam between
    them: one fill, one radius, on the entry that contains both. */
@@ -61,44 +60,21 @@
   overflow: hidden;
 }
 
-/* Deliberate commits carry the accent rule down the full height of the entry, expanded or not.
- *
- * Drawn rather than bordered: a border has no ends, so it can only be square, and three different
- * square rails at three different widths were most of what made this application look assembled
- * out of parts. One rail, one shape — the same one a quote gets in the document. */
-/*
- * Entries stand apart, which is what lets the rail be the height of the one it marks.
- *
- * Two goes at this. Flush rows with a full-height rail drew one long bar across three commits;
- * flush rows with the rail inset instead left it visibly shorter than the hover fill behind it,
- * which on a single entry reads as a tick that belongs to nothing. The separation belongs between
- * the entries, not inside the mark: with a gap here, the rail can run the full height of its own
- * entry — level with the fill, top and bottom — and still never touch its neighbour.
- */
 .ink-hist-item {
   margin-bottom: 6px;
 }
 
-.ink-hist-item.anchor {
-  position: relative;
-  padding-left: 6px;
+.ink-hist-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.ink-hist-item.anchor::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 2px;
-  border-radius: var(--ink-r-pill);
-  background: var(--ink-link);
+.ink-hist-source {
+  flex: none;
+  color: var(--ink-fg-muted);
+  font-size: 11px;
 }
-
-/* Pressing Commit is the only real signal in a log whose messages are all generated, so it is the
-   one thing worth marking. */
-.ink-hist-item.anchor .ink-hist-when,
-.ink-hist-item.anchor:hover .ink-hist-when { color: var(--ink-link); }
 
 .ink-hist-entry.pending {
   cursor: default;

@@ -220,7 +220,7 @@ export const IconPushArrow = (p: IconProps) =>
   svg(<><line x1="12" y1="19" x2="12" y2="6" /><path d="M6 11l6-6 6 6" /></>, p)
 
 export const IconCommit = (p: IconProps) =>
-  svg(<><line x1="3" y1="12" x2="21" y2="12" /><circle cx="12" cy="12" r="3.5" /></>, p)
+  svg(<><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></>, p)
 
 export const IconGitBranch = (p: IconProps) =>
   svg(<><circle cx="6" cy="6" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="6" r="2.5" /><path d="M6 8.5v7" /><path d="M8.5 6q5 0 7 4.5" /></>, p)
@@ -303,7 +303,7 @@ export const IconBack = (p: IconProps) =>
   svg(<polyline points="14.5,5.5 8,12 14.5,18.5" />, p, 'ink-icon-back')
 
 export const IconChevron = (p: IconProps) =>
-  svg(<polyline points="9.5,5.5 16,12 9.5,18.5" />, p, 'ink-icon-chevron')
+  svg(<polyline points="8.75,5.5 15.25,12 8.75,18.5" />, p, 'ink-icon-chevron')
 
 /* Close. A cross rather than a chevron: this dismisses a dialog rather than going back a screen. */
 export const IconClose = (p: IconProps) =>

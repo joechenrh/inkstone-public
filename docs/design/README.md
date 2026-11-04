@@ -9,7 +9,7 @@ As-built design documentation for Inkstone. These describe how the system works 
 | [theming.md](theming.md) | Design tokens, light/dark resolution, Lapis content theme |
 | [layout.md](layout.md) | Shell grid, floating right drawer, content column |
 | [persistence.md](persistence.md) | Manual save, optimistic locking, conflicts, drafts, watcher, git |
-| [editor-engine.md](editor-engine.md) | What Vditor costs, what Crepe and CodeMirror 6 cost, and the measurements behind all three. A decision record, not a decision |
+| [editor-engine.md](editor-engine.md) | Editor architecture, Markdown round trips, and the measurements behind the engine migration |
 | [agent.md](agent.md) | **Replaced.** Points at what took its place |
 | [live-share.md](live-share.md) | A link other people edit the note through, without signing in: sessions, the wire, the clocks |
 | [live-agent.md](live-agent.md) | An HTTP API onto a live session, so a program outside this application can read the note and edit it. There is no AI in Inkstone |
@@ -17,7 +17,7 @@ As-built design documentation for Inkstone. These describe how the system works 
 | [sharing.md](sharing.md) | Read-only share links, the store on disk, and the reader's page — `public-route` only |
 | [TODO.md](TODO.md) | Known limits of what is shipped, with the number that says when each one starts to hurt |
 
-**Only on the `public-route` branch:** [public-route.md](public-route.md) — Inkstone opened to other people, each bringing their own GitHub repository. Shipped there and deployed; the invariant below still holds on `main`.
+[public-route.md](public-route.md) covers GitHub sign-in and browser-side repository access. Both vault and GitHub modes are part of the current application.
 
 ## What 2.5 was
 

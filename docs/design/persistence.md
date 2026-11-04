@@ -4,7 +4,11 @@ Four mechanisms keep the browser, the disk, and git in agreement: manual save wi
 
 ## Manual save only
 
-Autosave was removed in Phase 0.5. Saving is Ctrl+S, and an unsaved document shows a dot in the breadcrumb and in its file-tree row.
+Saving is Cmd/Ctrl+S. An unsaved document shows a dot beside its title and in its selected file-tree row.
+
+Cmd/Ctrl+Shift+S saves all registered drafts, including notes that are no longer open. On a phone the same action is in the More menu. There is no additional desktop Save button or changing Saved/Saving label.
+
+Save all retains each draft's original revision and uses the same serialized write queue as individual saves. A conflict or failed write leaves that draft available for retry while the remaining notes continue saving. Notes in an active live session are skipped until that session ends. Saving never commits or pushes.
 
 The reason is git. A vault that autosaves produces a commit stream of half-finished sentences; a vault that saves on an explicit keystroke produces commits that correspond to moments the author considered done. The dot exists so "unsaved" is never ambiguous — with no autosave, the user is responsible for the transition, so it has to be visible.
 
@@ -18,29 +22,19 @@ Resolution is a choice, never a merge: keep the editor's version (rebase onto th
 
 ## Serialized saves
 
-`flushSave()` in `src/web/state/document.ts` chains every call onto the previous one:
-
-```ts
-let saveChain: Promise<void> | null = null
-
-export function flushSave(): Promise<void> {
-  const prev = saveChain
-  const run = prev ? prev.then(doFlushSave, doFlushSave) : doFlushSave()
-  saveChain = run
-  void run.finally(() => { if (saveChain === run) saveChain = null })
-  return run
-}
-```
+`flushSave()` and `saveAll()` in [document.ts](../../src/web/state/document.ts) share one Promise chain. An individual save captures the document it belongs to, so a queued request cannot follow navigation into a different note.
 
 Concurrent saves are a correctness bug, not merely wasteful: two in-flight writes both carry the same `baseMtimeMs`, the server serializes them, and the second one finds an mtime the *first one* just changed — a self-inflicted 409 that reports "the file has changed on disk" on every save. Serialized, the second call sees `dirty === false` and returns immediately.
 
-When idle, `doFlushSave` starts synchronously so callers keep their existing "the save has begun" timing. Both arguments to `.then` are the same function: `doFlushSave` already swallows its own errors, and the redundancy guarantees one exception can never wedge the chain permanently.
+When idle, the write starts synchronously. Failed writes settle the queue so later saves can retry. A response for a note that is no longer open cannot replace the current note's revision, clear its unsaved flag, or report its own error against the new note.
 
 The save snapshots `content` before the request and only clears `dirty` if the value is unchanged on return — text typed during a save stays dirty rather than being marked clean and lost.
 
 ## Drafts
 
 Every edit mirrors the buffer to `localStorage` under `inkstone.draft:<path>`. On open, a draft that differs from the disk content wins, and the document opens dirty.
+
+The draft index at `inkstone.draft-index:<scope>` also retains the content and original revision. The scope is the local vault or the chosen GitHub repository and branch. Save all uses this index rather than treating every legacy draft key as a pending write, and the index is restored after a page reload.
 
 This covers the gap the manual-save decision creates: a closed tab or a crash between edits and Ctrl+S would otherwise lose work. The draft is removed on a successful save and on close. A failed `localStorage` write is swallowed — a full or blocked storage must never block typing.
 

@@ -10,6 +10,7 @@ import { editorViewCtx, serializerCtx } from '@milkdown/kit/core'
 import type { Ctx } from '@milkdown/kit/ctx'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { TextSelection } from '@milkdown/kit/prose/state'
+import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import { imageSchema, remarkPreserveEmptyLinePlugin } from '@milkdown/kit/preset/commonmark'
 import { replaceAll } from '@milkdown/kit/utils'
 import { codeCompletion, codeHighlighting, codeIndent, codeWrap } from './code-highlight.js'
@@ -108,12 +109,16 @@ function trackModifier(e: KeyboardEvent): void {
 /**
  * The note's markdown, with everything that is open closed first — on a copy.
  *
- * `given` is what the editor serialised from what is on screen, which is right whenever nothing is
- * open, and that is nearly always. See `mark-reveal.ts`.
+ * `given` comes from the editor's delayed listener. Use the current document when presentation
+ * transactions have moved past that snapshot. See `mark-reveal.ts`.
  */
-function closedMarkdown(ctx: Ctx, given: string): string {
+function closedMarkdown(ctx: Ctx, given: string, reportedDoc?: ProseNode): string {
   const view = ctx.get(editorViewCtx)
-  if (!marksAreOpen(view.state) && !sourceIsOpen(view.state)) return given
+  if (!marksAreOpen(view.state) && !sourceIsOpen(view.state)) {
+    // Milkdown skips addToHistory=false transactions in its delayed listener. Its supplied
+    // Markdown may therefore describe the state before generated delimiters were removed.
+    return reportedDoc && reportedDoc !== view.state.doc ? ctx.get(serializerCtx)(view.state.doc) : given
+  }
   let tr = view.state.tr
   tr = closeMarksOn(view.state, tr, ctx)
   tr = closeSourceOn(view.state, tr, ctx)
@@ -314,6 +319,8 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     crepe.editor.remove(remarkPreserveEmptyLinePlugin)
 
     crepe.on((listener) => {
+      let reportedDoc: ProseNode | undefined
+      listener.updated((_ctx, doc) => { reportedDoc = doc })
       listener.markdownUpdated((c, given) => {
         // Echoes of our own `setValue` are not edits. Vditor needed a synchronous guard *and* a
         // value comparison because its echo was async; both are cheap and both are kept.
@@ -323,12 +330,12 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         // the text that goes on to be the draft in local storage, what a commit reads and what
         // source mode shows — so without this a stray marker could reach a note without anyone
         // having saved while one was open. Nothing is dispatched: the reader keeps what they see.
-        const markdown = closedMarkdown(c, given)
+        const markdown = closedMarkdown(c, given, reportedDoc)
+        window.clearTimeout(debounce)
         if (markdown === lastSyncedRef.current) return
         // A guest's keystrokes go to the room, not to a file: this browser has no vault behind it.
         // The owner's editor keeps `content` current, and that is what the session is saved from.
         if (guest) { lastSyncedRef.current = markdown; return }
-        window.clearTimeout(debounce)
         debounce = window.setTimeout(() => {
           lastSyncedRef.current = markdown
           editContent(markdown)
@@ -427,6 +434,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
        * same note instead — a tight `|Left|Centre|` came back re-padded, which is the one thing the
        * mode promises will not happen. The reader owns the text while they are looking at it.
        */
+      window.clearTimeout(debounce)
       if (sourceMode.value) return
       crepe.editor.action((c) => {
         collapseSource(c.get(editorViewCtx), c)
@@ -468,6 +476,17 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       // And the key goes on to the editor, which knows what Enter means in a list.
     }
     host.addEventListener('keydown', closeSourceOnEnter, true)
+
+    // Selection formatting must undo without its generated delimiters. Appended changes during an
+    // undo/redo are recorded by ProseMirror's history even when addToHistory is false.
+    const closeRevealBeforeHistory = (e: KeyboardEvent) => {
+      if (e.isComposing || !(e.metaKey || e.ctrlKey) || e.altKey || !['KeyZ', 'KeyY'].includes(e.code)) return
+      crepeRef.current?.editor.action((c) => {
+        const view = c.get(editorViewCtx)
+        collapseMarks(view, c, true)
+      })
+    }
+    host.addEventListener('keydown', closeRevealBeforeHistory, true)
 
     /**
      * Where the bar goes, in the editor's own coordinates rather than the viewport's — it is an
@@ -582,6 +601,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       window.clearTimeout(debounce)
       host.removeEventListener('keydown', closeLinkBeforeSave, true)
       host.removeEventListener('keydown', closeSourceOnEnter, true)
+      host.removeEventListener('keydown', closeRevealBeforeHistory, true)
       window.clearTimeout(settle)
       host.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onResize)

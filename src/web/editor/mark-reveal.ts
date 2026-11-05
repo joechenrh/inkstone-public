@@ -1,6 +1,7 @@
 import { $prose } from '@milkdown/kit/utils'
 import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
-import { RemoveMarkStep } from '@milkdown/kit/prose/transform'
+import { AddMarkStep, RemoveMarkStep } from '@milkdown/kit/prose/transform'
+import { isHistoryTransaction } from '@milkdown/kit/prose/history'
 import { emphasisSchema, inlineCodeSchema, strongSchema } from '@milkdown/kit/preset/commonmark'
 import { strikethroughSchema } from '@milkdown/kit/preset/gfm'
 import type { Ctx } from '@milkdown/kit/ctx'
@@ -49,6 +50,8 @@ interface Open {
   syntax: string
   /** The mark's type name, which is all that has to survive a transaction. */
   mark: string
+  /** Introduced by formatting selected text, rather than editing or visiting Markdown syntax. */
+  fromSelection?: boolean
 }
 
 const KEY = new PluginKey<Open | null>('inkstoneMarkReveal')
@@ -76,13 +79,14 @@ function typeOf(name: string, ctx: Ctx): MarkType | null {
  * it is in is the italic. Collected as spans first and chosen afterwards, because `Fragment.forEach`
  * has no way to stop early.
  */
-function runAt(doc: Node, pos: number, ctx: Ctx): Open | null {
+function runAt(doc: Node, pos: number, ctx: Ctx, onlyMark?: string): Open | null {
   const $from = doc.resolve(pos)
   if (!$from.parent.isTextblock) return null
 
   let best: Open | null = null
   for (const { schema, syntax } of MARKS) {
     const type = schema.type(ctx)
+    if (onlyMark !== undefined && type.name !== onlyMark) continue
     const runs: { from: number; to: number }[] = []
     let pos = $from.start()
     $from.parent.forEach((child) => {
@@ -141,9 +145,9 @@ function collapse(tr: Transaction, open: Open, ctx: Ctx): Transaction {
  *
  * The editor calls this before it splits a line and when the document loses focus.
  */
-export function collapseMarks(view: EditorView, ctx: Ctx): void {
+export function collapseMarks(view: EditorView, ctx: Ctx, selectedOnly = false): void {
   const open = KEY.getState(view.state)
-  if (!open) return
+  if (!open || (selectedOnly && !open.fromSelection)) return
   view.dispatch(collapse(view.state.tr, open, ctx))
 }
 
@@ -175,13 +179,16 @@ export function marksAreOpen(state: EditorState): boolean {
  * happen together: moving the caret straight from `**bold**` into `` `code` `` is one selection
  * change, and a version that only closed left the second run shut until something else moved.
  */
-function openAt(tr: Transaction, pos: number, ctx: Ctx): Transaction {
-  const run = runAt(tr.doc, pos, ctx)
+function openAt(tr: Transaction, pos: number, ctx: Ctx, preserveSelection = false, onlyMark?: string): Transaction {
+  const run = runAt(tr.doc, pos, ctx, onlyMark)
   if (run === null) return tr
+  if (preserveSelection && tr.selection.to > run.to) return tr
   const type = typeOf(run.mark, ctx)
   if (type === null) return tr
 
   const len = run.syntax.length
+  const selection = tr.selection
+  const mapFrom = tr.mapping.maps.length
   // The markers wear the mark themselves, so an open run still looks like what it is.
   const marker = tr.doc.type.schema.text(run.syntax, [type.create()])
   tr.insert(run.to, marker).insert(run.from, marker)
@@ -190,9 +197,13 @@ function openAt(tr: Transaction, pos: number, ctx: Ctx): Transaction {
   const caret = pos === run.from ? run.from
     : pos === run.to ? run.to + 2 * len
       : pos + len
+  const mapping = tr.mapping.slice(mapFrom)
+  const from = preserveSelection ? mapping.map(selection.from, 1) : caret
+  const to = preserveSelection ? mapping.map(selection.to, -1) : caret
+  const backward = preserveSelection && selection.anchor > selection.head
   return tr
-    .setSelection(TextSelection.create(tr.doc, caret))
-    .setMeta(KEY, { from: run.from, to: run.to + 2 * len, syntax: run.syntax, mark: run.mark })
+    .setSelection(TextSelection.create(tr.doc, backward ? to : from, backward ? from : to))
+    .setMeta(KEY, { from: run.from, to: run.to + 2 * len, syntax: run.syntax, mark: run.mark, fromSelection: preserveSelection })
     .setMeta('addToHistory', false)
 }
 
@@ -285,6 +296,20 @@ export const markReveal = $prose((ctx) =>
       },
     },
     appendTransaction(trs, old, state) {
+      // Explicit formatting of selected text should reveal its new syntax immediately. Input
+      // rules finish with a caret, so typing Markdown itself keeps its existing behavior.
+      const history = trs.some((tr) => isHistoryTransaction(tr)
+        || (tr.getMeta('appendedTransaction') && isHistoryTransaction(tr.getMeta('appendedTransaction') as Transaction)))
+      const added = state.selection.empty || readOnly.value || history ? [] : trs.flatMap((tr) =>
+        tr.getMeta(KEY) !== undefined ? [] : tr.steps.flatMap((step) =>
+          step instanceof AddMarkStep && typeOf(step.mark.type.name, ctx) ? [step.mark.type.name] : []))
+      const revealAdded = (tr: Transaction): Transaction | null => {
+        for (const name of [...new Set(added)].reverse()) {
+          const opened = openAt(tr, tr.selection.from, ctx, true, name)
+          if ((opened.getMeta(KEY) as Open | null | undefined)?.mark === name) return opened
+        }
+        return null
+      }
       const open = KEY.getState(state)
       if (open) {
         const { from, to } = state.selection
@@ -294,11 +319,16 @@ export const markReveal = $prose((ctx) =>
         if (intact(state.doc, open) && trs.some((tr) => tr.steps.some((step) =>
           step instanceof RemoveMarkStep && step.mark.type.name === open.mark))) {
           const len = open.syntax.length
-          return state.tr
+          const tr = state.tr
             .delete(open.to - len, open.to)
             .delete(open.from, open.from + len)
             .setMeta(KEY, null)
             .setMeta('addToHistory', false)
+          return revealAdded(tr) ?? tr
+        }
+        if (added.length > 0) {
+          const tr = collapse(state.tr, open, ctx)
+          return revealAdded(tr) ?? tr
         }
         /*
          * Still inside, and still spelled the way it was: leave it open, whatever is being typed.
@@ -321,7 +351,7 @@ export const markReveal = $prose((ctx) =>
       if (trs.some((tr) => tr.getMeta(KEY) === null)) return null
       // Reading, not editing.
       if (readOnly.value) return null
-      if (!state.selection.empty) return null
+      if (!state.selection.empty) return revealAdded(state.tr)
 
       const run = runAt(state.doc, state.selection.from, ctx)
       if (run === null) {
@@ -344,6 +374,8 @@ export const markReveal = $prose((ctx) =>
           .setMeta(KEY, typed)
           .setMeta('addToHistory', false)
       }
+      // Do not append freshly inserted presentation syntax to an undo/redo transaction.
+      if (history) return null
       /*
        * A run that was *just made* is not one to open.
        *

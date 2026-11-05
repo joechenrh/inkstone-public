@@ -50,7 +50,7 @@ export function writeWhatWasTyped(ctx: Ctx): void {
         // The brackets: markdown only treats them specially when a matching `](` or `][` follows,
         // and typing `[a](b)` here makes a link — so a literal that looks exactly like a link is
         // not something this application can produce by accident.
-        .replace(/\\([[\]()])/g, '$1')
+        .replace(/\\([[\]()])/g, (escaped, character: string) => state.stack.includes('label') ? escaped : character)
         // The inline emphasis characters.
         .replace(/\\([*~`])/g, '$1')
         /*

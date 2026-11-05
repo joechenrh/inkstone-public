@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'preact/hooks'
-import { content, editContent } from '../state/document.js'
+import { content, editContent, loadingPath } from '../state/document.js'
 import { readOnly } from '../state/settings.js'
 import { blockAtOffset, caretBlockIndex, lineAtOffset, offsetOfBlock, placeCaretInBlock } from './source-sync.js'
 import { documentRoot } from './surface.js'
@@ -91,7 +91,7 @@ export function SourceEditor() {
         class="ink-source-area"
         aria-label="Markdown source"
         spellcheck={false}
-        readOnly={readOnly.value}
+        readOnly={readOnly.value || loadingPath.value !== null}
         value={text}
         onScroll={syncScroll}
         onInput={(e) => { editContent((e.target as HTMLTextAreaElement).value) }}

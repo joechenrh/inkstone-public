@@ -2,6 +2,10 @@ import { $prose } from '@milkdown/kit/utils'
 import { NodeSelection, Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
 import { Decoration, DecorationSet } from '@milkdown/kit/prose/view'
 import { imageSchema, linkSchema } from '@milkdown/kit/preset/commonmark'
+import { editorViewOptionsCtx, parserCtx } from '@milkdown/kit/core'
+import type { Ctx } from '@milkdown/kit/ctx'
+import { Fragment } from '@milkdown/kit/prose/model'
+import type { Mark, Node as ProseNode } from '@milkdown/kit/prose/model'
 import type { EditorState, Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { readOnly } from '../state/settings.js'
@@ -41,17 +45,98 @@ interface Open {
   kind: 'link' | 'image'
   /** Keep the original spelling when merely visiting an angle autolink. */
   syntax?: string
+  source?: string
+  label?: string
+  original?: Fragment
 }
 
 const KEY = new PluginKey<Open | null>('inkstoneSourceReveal')
 
+/** Input rules must not consume a partial URL or image while its source is being edited. */
+export function editSourceAsText(ctx: Ctx): void {
+  ctx.update(editorViewOptionsCtx, (options) => ({
+    ...options,
+    handleTextInput(view, from, to, text, deflt) {
+      const open = KEY.getState(view.state)
+      if (open && from >= open.from && to <= open.to) {
+        view.dispatch(view.state.tr.insertText(text, from, to))
+        return true
+      }
+      return options.handleTextInput?.call(this, view, from, to, text, deflt) ?? false
+    },
+  }))
+}
+
 /** `[text](url)`, which is the only shape this ever writes and so the only one it reads back. */
 // The final paren closes the Markdown link; parentheses inside a URL belong to the URL.
 // Stopping at the first ')' made expanded links such as /wiki/Foo_(bar) impossible to follow.
-const SOURCE = /^\[([^\]]*)\]\((\S*)\)$/
+const SOURCE = /^\[((?:\\.|[^\]\\])*)\]\(([\s\S]*)\)$/
 
-/** And the same with the `!` in front of it. */
-const IMAGE_SOURCE = /^!\[([^\]]*)\]\(([^)\s]*)\)$/
+/** Use the same grammar for revealed source and Markdown loaded from a file. */
+function parsedSource(text: string, ctx: Parameters<typeof linkSchema.type>[0]): ProseNode | null {
+  const doc = ctx.get(parserCtx)(text)
+  const block = doc?.firstChild
+  return doc?.childCount === 1 && block?.type.name === 'paragraph' ? block : null
+}
+
+function parsedLink(text: string, ctx: Parameters<typeof linkSchema.type>[0]): { content: Fragment; mark: Mark } | null {
+  if (!text.startsWith('[') || !text.endsWith(')')) return null
+  const block = parsedSource(text, ctx)
+  const type = linkSchema.type(ctx)
+  let mark: Mark | undefined
+  let valid = !!block?.childCount
+  block?.forEach((node) => {
+    const link = type.isInSet(node.marks)
+    if (!link || (mark && !link.eq(mark))) valid = false
+    else mark = link
+  })
+  return valid && mark && block ? { content: block.content, mark } : null
+}
+
+function parsedImage(text: string, ctx: Parameters<typeof linkSchema.type>[0]): ProseNode | null {
+  if (!text.startsWith('![') || !text.endsWith(')')) return null
+  const block = parsedSource(text, ctx)
+  const node = block?.firstChild
+  return block?.childCount === 1 && node?.type === imageSchema.type(ctx) && node.attrs.src ? node : null
+}
+
+const escapeLabel = (text: string) => text.replace(/\\/g, '\\\\').replace(/[[\]]/g, '\\$&')
+function addressSource(href: string): string {
+  let depth = 0
+  for (const character of href) {
+    if (character === '(') depth++
+    if (character === ')' && --depth < 0) break
+  }
+  return depth !== 0 || /[\s<>]/u.test(href)
+    ? `<${href.replace(/\\/g, '\\\\').replace(/[<>]/g, '\\$&')}>`
+    : href.replace(/\\/g, '\\\\')
+}
+const sourceText = (doc: ProseNode, open: Open) => doc.textBetween(open.from, open.to, '\n', '\n')
+
+/** Plain label edits retain the surrounding styles hidden by source presentation. */
+function editedLabel(original: Fragment | undefined, parsed: Fragment, link: Mark): Fragment {
+  if (!original) return parsed
+  let plain = true
+  let before = ''
+  let after = ''
+  original.forEach((node) => { if (!node.isText) plain = false; before += node.text ?? '' })
+  parsed.forEach((node) => {
+    if (!node.isText || node.marks.some((mark) => mark.type !== link.type)) plain = false
+    after += node.text ?? ''
+  })
+  // Explicit new formatting belongs to the parser; only ordinary text needs style inheritance.
+  if (!plain) return parsed
+  let start = 0
+  while (start < before.length && start < after.length && before[start] === after[start]) start++
+  let end = before.length
+  let nextEnd = after.length
+  while (end > start && nextEnd > start && before[end - 1] === after[nextEnd - 1]) { end--; nextEnd-- }
+  let marks = original.firstChild?.marks ?? []
+  original.forEach((node, offset) => { if (offset < start && offset + node.nodeSize >= start) marks = node.marks })
+  const inserted = after.slice(start, nextEnd)
+  const middle = inserted ? Fragment.from(link.type.schema.text(inserted, marks)) : Fragment.empty
+  return original.cut(0, start).append(middle).append(original.cut(end))
+}
 
 /** The run of text carrying the link mark the selection is in, with its href — or null. */
 function linkAt(selection: EditorState['selection'], ctx: Parameters<typeof linkSchema.type>[0]) {
@@ -164,17 +249,19 @@ function openSourceIn(
 
   const image = imageAt(tr.selection, ctx)
   if (image !== null && !overlaps(image)) {
-    const source = `![${image.alt}](${image.src})`
+    const alt = escapeLabel(image.alt)
+    const source = `![${alt}](${addressSource(image.src)})`
+    const original = tr.doc.slice(image.from, image.to).content
     tr.replaceWith(image.from, image.to, tr.doc.type.schema.text(source))
     // The alt text selected, as Typora leaves it: it is the part you are most likely to be there to
     // write, and typing replaces it rather than landing inside the brackets.
     const altFrom = image.from + 2
     const selection = image.alt === ''
       ? TextSelection.create(tr.doc, altFrom)
-      : TextSelection.create(tr.doc, altFrom, altFrom + image.alt.length)
+      : TextSelection.create(tr.doc, altFrom, altFrom + alt.length)
     return tr
       .setSelection(selection)
-      .setMeta(KEY, { from: image.from, to: image.from + source.length, kind: 'image' })
+      .setMeta(KEY, { from: image.from, to: image.from + source.length, kind: 'image', source, original })
       .setMeta('addToHistory', false)
   }
 
@@ -182,7 +269,9 @@ function openSourceIn(
   if (link === null || overlaps(link)) return null
   if (link.syntax === 'bare') return null
   const text = tr.doc.textBetween(link.from, link.to, '', '')
-  const source = `[${text}](${link.href})`
+  const label = escapeLabel(text)
+  const source = `[${label}](${addressSource(link.href)})`
+  const original = tr.doc.slice(link.from, link.to).content
   /*
    * Where the caret goes when the brackets appear under it.
    *
@@ -198,11 +287,11 @@ function openSourceIn(
     ? link.from + source.length
     : pos === link.from
       ? link.from
-      : Math.min(pos + 1, link.from + source.length)
+      : link.from + 1 + escapeLabel(text.slice(0, pos - link.from)).length
   tr.replaceWith(link.from, link.to, tr.doc.type.schema.text(source))
   return tr
     .setSelection(TextSelection.create(tr.doc, caret))
-    .setMeta(KEY, { from: link.from, to: link.from + source.length, kind: 'link', syntax: link.syntax })
+    .setMeta(KEY, { from: link.from, to: link.from + source.length, kind: 'link', syntax: link.syntax, source, label, original })
     .setMeta('addToHistory', false)
 }
 
@@ -214,13 +303,19 @@ function openSourceIn(
  * left, which is what happens in every markdown editor and what could not happen before.
  */
 function collapse(tr: Transaction, open: Open, ctx: Parameters<typeof linkSchema.type>[0]): Transaction {
-  const text = tr.doc.textBetween(open.from, open.to, '', '')
+  const text = sourceText(tr.doc, open)
+  if (text === open.source && open.original) {
+    tr.replaceWith(open.from, open.to, open.original)
+    return tr.setMeta(KEY, null).setMeta('addToHistory', false)
+  }
   if (open.kind === 'image') {
-    const m = IMAGE_SOURCE.exec(text)
+    const parsed = parsedImage(text, ctx)
     // An empty address is not a picture. Left as text, which is how one gets deleted: take out a
     // bracket, or empty the parentheses, and what stays is what you typed.
-    if (m && m[2]) {
-      const image = imageSchema.type(ctx).create({ src: m[2], alt: m[1] ?? '', title: '' })
+    if (parsed) {
+      const original = open.original?.firstChild
+      const image = imageSchema.type(ctx).create({ ...original?.attrs, ...parsed.attrs,
+        title: parsed.attrs.title ?? original?.attrs.title ?? '' })
       tr.replaceWith(open.from, open.to, image)
       // The selection is deliberately left alone. Setting it beside the picture sent the caret
       // back to the picture the moment you clicked anywhere else in the note — and took the view
@@ -228,12 +323,18 @@ function collapse(tr: Transaction, open: Open, ctx: Parameters<typeof linkSchema
     }
     return tr.setMeta(KEY, null).setMeta('addToHistory', false)
   }
-  const m = SOURCE.exec(text)
-  if (m && m[1]) {
+  const parsed = parsedLink(text, ctx)
+  if (parsed) {
     const type = linkSchema.type(ctx)
-    tr.replaceWith(open.from, open.to, tr.doc.type.schema.text(m[1], [type.create({
-      href: m[2], title: '', syntax: open.syntax ?? 'markdown',
-    })]))
+    const oldMark = open.original?.firstChild?.marks.find((mark) => mark.type === type)
+    const mark = type.create({ ...oldMark?.attrs, ...parsed.mark.attrs,
+      title: parsed.mark.attrs.title ?? oldMark?.attrs.title ?? null,
+      syntax: open.syntax ?? parsed.mark.attrs.syntax })
+    const content = SOURCE.exec(text)?.[1] === open.label && open.original
+      ? open.original : editedLabel(open.original, parsed.content, mark)
+    const nodes: ProseNode[] = []
+    content.forEach((node) => { nodes.push(node.mark(mark.addToSet(node.marks.filter((existing) => existing.type !== type)))) })
+    tr.replaceWith(open.from, open.to, Fragment.fromArray(nodes))
   }
   return tr.setMeta(KEY, null).setMeta('addToHistory', false)
 }
@@ -340,7 +441,7 @@ function leadsSomewhere(href: string): boolean {
 function hrefAt(view: EditorView, ctx: Parameters<typeof linkSchema.type>[0], pos: number): string | null {
   const open = KEY.getState(view.state)
   if (open && pos >= open.from && pos <= open.to) {
-    return SOURCE.exec(view.state.doc.textBetween(open.from, open.to, '', ''))?.[2] ?? null
+    return parsedLink(sourceText(view.state.doc, open), ctx)?.mark.attrs.href as string | null ?? null
   }
   const $pos = view.state.doc.resolve(pos)
   const type = linkSchema.type(ctx)
@@ -484,12 +585,12 @@ export const sourceReveal = $prose((ctx) =>
             span(targetTo, open.to, 'marker'),
           ].filter((decoration) => decoration.from < decoration.to))
         }
-        const m = IMAGE_SOURCE.exec(state.doc.textBetween(open.from, open.to, '', ''))
-        if (!m?.[2]) return null
+        const image = parsedImage(sourceText(state.doc, open), ctx)
+        if (!image) return null
         // Keyed by the address, so typing in the alt text does not reload the picture and typing
         // in the address reloads it exactly once.
         return DecorationSet.create(state.doc, [
-          Decoration.widget(open.to, () => preview(m[2] ?? '', m[1] ?? ''), { side: 1, key: `preview:${m[2]}` }),
+          Decoration.widget(open.to, () => preview(image.attrs.src, image.attrs.alt ?? ''), { side: 1, key: `preview:${image.attrs.src}` }),
         ])
       },
       handleDOMEvents: {

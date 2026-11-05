@@ -192,8 +192,8 @@ export async function commitRename(name: string): Promise<void> {
   pendingOp.value = null
   if (to === op.path) return
   try {
-    await backend.rename(op.path, to)
-    if (currentPath.value === op.path) currentPath.value = to
+    const { renameDocuments } = await import('./document.js')
+    await renameDocuments(op.path, to)
     // A move lands the note somewhere that may be collapsed, or not yet on screen at all.
     expandAncestors(to)
     await refreshTree()

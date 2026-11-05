@@ -289,3 +289,15 @@ pending edits synchronously, so no-op saves retain the original Markdown instead
 An unchanged bare Unicode URL that came from Markdown retains its bare spelling; editing its
 destination returns it to the normal URL safety checks. `tests/e2e/noop-notes.spec.ts` covers these
 boundaries with synthetic bold headings, Unicode URLs, angle autolinks and rapid note switches.
+
+Revealed links and images keep their original node fragment while showing editable source. Merely
+visiting them restores that fragment, including titles and mixed emphasis. Changing only a link's
+address retains its formatted label. Edited source is parsed by the Markdown parser, so escaped
+labels, whitespace destinations and balanced parentheses follow the same grammar as normal files.
+Text input inside revealed source bypasses input rules: a parenthesis inside a destination must not
+prematurely consume it as a new link or image. HTML image paste keeps an absent title absent rather
+than substituting the alt text. `tests/e2e/source-integrity.spec.ts` exercises saved and reopened files.
+
+Each wholesale editor replacement advances an epoch. A delayed snapshot from an earlier epoch or
+content revision cannot republish an old draft, even when the path stays the same. Switching between
+notes with identical contents still replaces the editor state and separates their undo histories.

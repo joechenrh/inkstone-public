@@ -2,7 +2,7 @@ import { linkSchema } from '@milkdown/kit/preset/commonmark'
 import type { Ctx } from '@milkdown/kit/ctx'
 import type { MarkSchema } from '@milkdown/kit/transformer'
 import { remarkStringifyOptionsCtx } from '@milkdown/kit/core'
-import { defaultHandlers } from 'mdast-util-to-markdown'
+import { defaultHandlers, type State } from 'mdast-util-to-markdown'
 import { $prose } from '@milkdown/kit/utils'
 import { Plugin } from '@milkdown/kit/prose/state'
 import type { Mark, TagParseRule } from '@milkdown/kit/prose/model'
@@ -76,6 +76,26 @@ export function linkSyntax(node: {
   return 'markdown'
 }
 
+/** Balanced parentheses are valid destinations; preserve necessary escapes for real backslashes. */
+function literalDestinations(state: State, run: () => string): string {
+  const safe = state.safe
+  state.safe = (value, config) => {
+    let written = safe.call(state, value, config)
+    if (!state.stack.includes('destinationRaw') && !state.stack.includes('destinationLiteral')) return written
+    written = written.replace(/(?<!\\)\\&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#[xX][0-9a-fA-F]+);)/g, '&')
+      .replace(/(?<!\\)\\\./g, '.')
+    let depth = 0
+    let balanced = true
+    for (const character of value ?? '') {
+      if (character === '(') depth++
+      if (character === ')' && --depth < 0) { balanced = false; break }
+    }
+    if (balanced && depth === 0 && !(value ?? '').includes('\\')) written = written.replace(/(?<!\\)\\([()])/g, '$1')
+    return written
+  }
+  try { return run() } finally { state.safe = safe }
+}
+
 /** Explicit [url](url) must not be shortened to <url> just because its label is its address. */
 export function preserveLinkSyntax(ctx: Ctx): void {
   ctx.update(remarkStringifyOptionsCtx, (options) => ({
@@ -84,20 +104,11 @@ export function preserveLinkSyntax(ctx: Ctx): void {
       ...options.handlers,
       link(node, parent, state, info) {
         const resourceLink = state.options.resourceLink
-        const safe = state.safe
-        state.safe = (value, config) => {
-          const written = safe.call(state, value, config)
-          // These characters do not need escaping in URL destinations. Keep entity-shaped
-          // ampersands protected and preserve paired backslashes representing real characters.
-          return state.stack.includes('destinationRaw') || state.stack.includes('destinationLiteral')
-            ? written.replace(/(?<!\\)\\&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#[xX][0-9a-fA-F]+);)/g, '&')
-              .replace(/(?<!\\)\\\./g, '.')
-            : written
-        }
         if (node.data?.inkstoneSyntax === 'markdown') state.options.resourceLink = true
-        try { return defaultHandlers.link(node, parent, state, info) }
-        finally { state.options.resourceLink = resourceLink; state.safe = safe }
+        try { return literalDestinations(state, () => defaultHandlers.link(node, parent, state, info)) }
+        finally { state.options.resourceLink = resourceLink }
       },
+      image: (node, parent, state, info) => literalDestinations(state, () => defaultHandlers.image(node, parent, state, info)),
     },
   }))
 }

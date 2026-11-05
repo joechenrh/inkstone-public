@@ -108,3 +108,51 @@ test('switching to Source after formatting flushes only real edits and keeps raw
   await page.waitForTimeout(500)
   await expect(page.locator('.ink-source-area')).toHaveValue(`${formatted}\nRaw edit.\n`)
 })
+
+test('notes with identical contents keep separate undo histories and save ownership', async ({ page }) => {
+  const identical = original.replace('After.', 'After.x')
+  await page.request.put('/api/file', { data: { path: second, content: identical } })
+  await open(page, first)
+  await endOfTail(page)
+  await page.keyboard.type('x')
+  await page.keyboard.press('ControlOrMeta+s')
+  await expect.poll(() => read(page, first)).toBe(identical)
+  await open(page, second)
+  await endOfTail(page)
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.locator('.ink-doc')).toContainText('After.x')
+  await endOfTail(page)
+  await page.keyboard.type('y')
+  await page.keyboard.press('ControlOrMeta+s')
+  await expect.poll(() => read(page, second)).toBe(identical.replace('After.x', 'After.xy'))
+  expect(await read(page, first)).toBe(identical)
+})
+
+test('Source mode blocks edits during loading and separates native undo between notes', async ({ page }) => {
+  await open(page, first)
+  await page.getByRole('button', { name: /Markdown source/ }).click()
+  await page.locator('.ink-source-area').fill(`${original}\nDraft belongs to first.\n`)
+  let release!: () => void
+  let started!: () => void
+  const hold = new Promise<void>((resolve) => { release = resolve })
+  const reading = new Promise<void>((resolve) => { started = resolve })
+  await page.route((url) => url.pathname === '/api/file' && url.searchParams.get('path') === second, async (route) => {
+    if (route.request().method() === 'GET') { started(); await hold }
+    await route.continue()
+  })
+  await page.locator('.ink-tree-name').filter({ hasText: second.split('/').pop()! }).click()
+  await reading
+  await expect(page.locator('.ink-source-area')).toHaveAttribute('readonly', '')
+  await page.locator('.ink-source-area').focus()
+  await page.keyboard.type('wrong note')
+  release()
+  await expect(page.locator('.ink-source-area')).toHaveValue(other)
+  await expect(page.locator('.ink-source-area')).not.toHaveAttribute('readonly', '')
+  await page.locator('.ink-source-area').focus()
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.locator('.ink-source-area')).toHaveValue(other)
+  await page.keyboard.press('ControlOrMeta+s')
+  expect(await read(page, second)).toBe(other)
+  await open(page, first)
+  await expect(page.locator('.ink-source-area')).toHaveValue(`${original}\nDraft belongs to first.\n`)
+})

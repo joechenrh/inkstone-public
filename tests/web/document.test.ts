@@ -471,3 +471,160 @@ describe('handleExternalChange', () => {
     expect(readFile).not.toHaveBeenCalled()
   })
 })
+
+describe('late reads belong to the document that requested them', () => {
+  const file = (path: string, text = path): FileSnapshot => ({ path, content: text, rev: `rev:${text}`, modifiedAt: 1 })
+
+  it('ignores an older failure while another note is loading', async () => {
+    let fail!: (error: Error) => void
+    let finish!: (snapshot: FileSnapshot) => void
+    readFile.mockImplementationOnce(() => new Promise((_resolve, reject) => { fail = reject }))
+      .mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+    const old = openFile('a.md')
+    const next = openFile('b.md')
+    fail(new Error('old request failed'))
+    await old
+    expect(loadingPath.value).toBe('b.md')
+    expect(fileError.value).toBeNull()
+    finish(file('b.md'))
+    await next
+    expect(content.value).toBe('b.md')
+  })
+
+  it('keeps the newest read when the same path is opened twice', async () => {
+    let finish!: (snapshot: FileSnapshot) => void
+    readFile.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+      .mockResolvedValueOnce(file('a.md', 'new'))
+    const old = openFile('a.md')
+    await openFile('a.md')
+    finish(file('a.md', 'old'))
+    await old
+    expect(content.value).toBe('new')
+    expect(baseRev.value).toBe('rev:new')
+  })
+
+  for (const kind of ['external change', 'commit rebase']) {
+    it(`does not apply a late ${kind} to the next note`, async () => {
+      const { rebaseOpenDocument } = await import('../../src/web/state/document.js')
+      readFile.mockResolvedValueOnce(file('a.md'))
+      await openFile('a.md')
+      let finish!: (snapshot: FileSnapshot) => void
+      readFile.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+        .mockResolvedValueOnce(file('b.md'))
+      const old = kind === 'external change' ? handleExternalChange('a.md', 'external') : rebaseOpenDocument()
+      await openFile('b.md')
+      editContent('new note draft')
+      finish(file('a.md', 'old note update'))
+      await old
+      expect(content.value).toBe('new note draft')
+      expect(baseRev.value).toBe('rev:b.md')
+      expect(conflict.value).toBeNull()
+      expect([...drafts.value.values()].find((draft) => draft.path === 'b.md')?.base).toBe('rev:b.md')
+    })
+  }
+
+  it('flushes pending editor keystrokes before adopting an external change', async () => {
+    const { provideEditorFlush } = await import('../../src/web/editor/current.js')
+    readFile.mockResolvedValueOnce(file('a.md'))
+    await openFile('a.md')
+    readFile.mockResolvedValueOnce(file('a.md', 'external'))
+    provideEditorFlush(() => editContent('last keystrokes'))
+    try {
+      await handleExternalChange('a.md', 'external')
+      expect(content.value).toBe('last keystrokes')
+      expect(conflict.value?.content).toBe('external')
+    } finally { provideEditorFlush(null) }
+  })
+})
+
+describe('moving notes carries unsaved buffers and their revision', () => {
+  it('moves open and closed drafts under a renamed folder, rebasing only unchanged files', async () => {
+    const { renameDocuments } = await import('../../src/web/state/document.js')
+    const files = new Map<string, FileSnapshot>(['a', 'b'].map((name) => [`old/${name}.md`, {
+      path: `old/${name}.md`, content: name, rev: `old:${name}`, modifiedAt: 1,
+    }]))
+    readFile.mockImplementation(async (path) => {
+      const file = files.get(path)
+      if (!file) throw new Error('missing file')
+      return file
+    })
+    const rename = vi.spyOn(apiModule.backend, 'rename').mockImplementation(async () => {
+      for (const [path, file] of [...files]) {
+        files.delete(path)
+        const next = path.replace('old/', 'new/')
+        files.set(next, { ...file, path: next, rev: `new:${file.content}` })
+      }
+    })
+    try {
+      await openFile('old/a.md')
+      editContent('draft a')
+      await openFile('old/b.md')
+      editContent('draft b')
+      await renameDocuments('old', 'new')
+      expect(currentPath.value).toBe('new/b.md')
+      expect(content.value).toBe('draft b')
+      expect(baseRev.value).toBe('new:b')
+      expect([...drafts.value.values()].map(({ path, content, base }) => ({ path, content, base }))).toEqual([
+        { path: 'new/a.md', content: 'draft a', base: 'new:a' },
+        { path: 'new/b.md', content: 'draft b', base: 'new:b' },
+      ])
+      expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}old/a.md`)).toBeNull()
+      expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}new/a.md`)).toBe('draft a')
+      writeFile.mockResolvedValueOnce({ rev: 'saved', modifiedAt: 2 })
+      await flushSave()
+      expect(writeFile).toHaveBeenCalledWith('new/b.md', 'draft b', 'new:b')
+    } finally { rename.mockRestore() }
+  })
+
+  it('keeps a stale draft base when a move also encounters changed disk content', async () => {
+    const { renameDocuments } = await import('../../src/web/state/document.js')
+    const rename = vi.spyOn(apiModule.backend, 'rename').mockResolvedValue()
+    try {
+      readFile.mockResolvedValueOnce({ path: 'a.md', content: 'original', rev: 'old', modifiedAt: 1 })
+      await openFile('a.md')
+      editContent('mine')
+      readFile.mockResolvedValueOnce({ path: 'a.md', content: 'external', rev: 'other', modifiedAt: 2 })
+        .mockResolvedValueOnce({ path: 'b.md', content: 'external', rev: 'moved', modifiedAt: 3 })
+      await renameDocuments('a.md', 'b.md')
+      expect(content.value).toBe('mine')
+      expect(baseRev.value).toBe('old')
+      expect([...drafts.value.values()][0]).toMatchObject({ path: 'b.md', content: 'mine', base: 'old' })
+    } finally { rename.mockRestore() }
+  })
+})
+
+it('a failed open never restores a still-loading path with another note’s buffer', async () => {
+  readFile.mockResolvedValueOnce({ path: 'a.md', content: 'A only', rev: 'a', modifiedAt: 1 })
+  await openFile('a.md')
+  let finish!: (snapshot: FileSnapshot) => void
+  readFile.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve }))
+    .mockRejectedValueOnce(new Error('C failed'))
+  const b = openFile('b.md')
+  await openFile('c.md')
+  expect(currentPath.value).toBeNull()
+  expect(content.value).toBe('')
+  expect(baseRev.value).toBeNull()
+  finish({ path: 'b.md', content: 'B only', rev: 'b', modifiedAt: 2 })
+  await b
+  expect(currentPath.value).toBeNull()
+  expect(content.value).toBe('')
+})
+
+it('a rejected rename retains both draft paths and leaves subsequent saves usable', async () => {
+  const { renameDocuments } = await import('../../src/web/state/document.js')
+  readFile.mockResolvedValue({ path: 'a.md', content: 'disk', rev: 'old', modifiedAt: 1 })
+  await openFile('a.md')
+  editContent('mine')
+  localStorage.setItem(`${DRAFT_KEY_PREFIX}b.md`, 'other draft')
+  const rename = vi.spyOn(apiModule.backend, 'rename')
+  try {
+    await expect(renameDocuments('a.md', 'b.md')).rejects.toThrow('unsaved draft')
+    expect(rename).not.toHaveBeenCalled()
+    expect(currentPath.value).toBe('a.md')
+    expect(content.value).toBe('mine')
+    expect(localStorage.getItem(`${DRAFT_KEY_PREFIX}b.md`)).toBe('other draft')
+    writeFile.mockResolvedValueOnce({ rev: 'saved', modifiedAt: 2 })
+    await flushSave()
+    expect(writeFile).toHaveBeenCalledWith('a.md', 'mine', 'old')
+  } finally { rename.mockRestore() }
+})

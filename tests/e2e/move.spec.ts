@@ -69,6 +69,8 @@ test('move: a slash in the rename field moves too, and the note stays open', asy
   await login(page)
   await makeNote(page, 'e2e-slash.md')
   await tree(page).getByText('e2e-slash.md').click()
+  await page.locator('.ink-doc').click()
+  await page.keyboard.type('Before move')
 
   await openMenu(page, 'e2e-slash.md', 'Rename')
   const input = page.locator('.ink-tree-inline-input')
@@ -78,6 +80,15 @@ test('move: a slash in the rename field moves too, and the note stays open', asy
   await expect(tree(page).getByText('e2e-slashed.md')).toBeVisible()
   // The open document followed the file rather than pointing at a path that no longer exists.
   await expect(page.locator('.ink-breadcrumb')).toContainText('e2e-slashed.md')
+  await expect(page.locator('.ink-doc')).toContainText('Before move')
+  await page.locator('.ink-doc').click()
+  await page.keyboard.press('ControlOrMeta+End')
+  await page.keyboard.type(' after move')
+  await page.keyboard.press('ControlOrMeta+s')
+  await expect.poll(async () => (await (await page.request.get('/api/file?path=notes/e2e-slashed.md')).json()).content)
+    .toBe('Before move after move\n')
+  const old = await page.request.get('/api/file?path=e2e-slash.md')
+  expect(old.status()).toBe(404)
 
   await openMenu(page, 'e2e-slashed.md', 'Delete')
   await page.getByTitle('Confirm delete').click()

@@ -132,11 +132,14 @@ export function dismissSaveError(): void {
 
 export async function openFile(path: string): Promise<void> {
   flushEditorText()
-  documentGeneration++
+  const generation = ++documentGeneration
+  const scope = draftScope()
+  const active = () => currentPath.value === path && documentGeneration === generation && draftScope() === scope
   // Claimed before the read, not after. The moment this returns to the caller the app is *on*
   // this note: the breadcrumb names it, its row is selected, and on a phone the screen has
   // already changed. Only the text is still coming.
-  const previous = currentPath.value
+  // A path still loading does not own the visible text. Never restore that pairing on failure.
+  const previous = loadingPath.value === null ? currentPath.value : null
   // Whatever was being held to show the last note's pictures. An object URL keeps its blob alive
   // until it is revoked, and a reader who visits forty notes should not be carrying forty of them.
   if (previous !== path) backend.releaseAssets()
@@ -154,10 +157,18 @@ export async function openFile(path: string): Promise<void> {
     if (savingAll.value) await saveChain
     file = await backend.readFile(path)
   } catch (err) {
+    if (!active()) return
     // Nothing was opened after all, so the path goes back to whatever it was and the failure is
     // reported where every other read failure is.
     loadingPath.value = null
     if (currentPath.value === path) currentPath.value = previous
+    if (previous === null) {
+      content.value = ''
+      baseRev.value = null
+      dirty.value = false
+      modifiedAt.value = null
+      conflict.value = null
+    }
     fileError.value = {
       kind: 'open',
       path,
@@ -167,10 +178,9 @@ export async function openFile(path: string): Promise<void> {
   }
 
   // Another note was asked for while this one was in flight; that one owns the screen.
-  if (currentPath.value !== path) return
+  if (!active()) return
   loadingPath.value = null
 
-  const scope = draftScope()
   const pending = drafts.value.get(draftId(scope, path))
   const draft = pending?.content ?? localStorage.getItem(draftKey(path))
 
@@ -204,6 +214,7 @@ export async function openFile(path: string): Promise<void> {
 }
 
 export function editContent(next: string): void {
+  if (loadingPath.value !== null) return
   content.value = next
   dirty.value = true
   const path = currentPath.value
@@ -230,6 +241,84 @@ export function editContent(next: string): void {
 // synchronous call timing so callers' "save has started" expectations aren't disrupted);
 // only when a save is already in flight do we queue the new call behind it.
 let saveChain: Promise<void> | null = null
+
+/** Move saved files and their unsaved buffers together, in the same queue as writes. */
+export function renameDocuments(from: string, to: string): Promise<void> {
+  flushEditorText()
+  const scope = draftScope()
+  const moved = (path: string) => path === from || path.startsWith(`${from}/`)
+  const destination = (path: string) => `${to}${path.slice(from.length)}`
+  const run = async () => {
+    if (draftScope() !== scope) throw new Error('The vault changed before the move')
+    flushEditorText()
+    const paths = new Set([...drafts.value.values()].filter((draft) => draft.scope === scope && moved(draft.path))
+      .map((draft) => draft.path))
+    if (currentPath.value && moved(currentPath.value)) paths.add(currentPath.value)
+    for (const path of paths) {
+      if (drafts.value.has(draftId(scope, destination(path)))
+        || localStorage.getItem(draftKey(destination(path))) !== null) {
+        throw new Error('The destination has an unsaved draft')
+      }
+    }
+    const before = new Map<string, FileSnapshot>()
+    for (const path of paths) before.set(path, await backend.readFile(path))
+    if (draftScope() !== scope) throw new Error('The vault changed before the move')
+    await backend.rename(from, to)
+    if (draftScope() !== scope) return
+    // Keystrokes made while the backend was moving still belong to the old owner.
+    flushEditorText()
+    const after = new Map<string, FileSnapshot>()
+    for (const path of paths) {
+      try { after.set(path, await backend.readFile(destination(path))) } catch { /* Retain the old base; never guess past a failed read. */ }
+    }
+    if (draftScope() !== scope) return
+    flushEditorText()
+    for (const draft of [...drafts.value.values()]) {
+      if (draft.scope !== scope || !moved(draft.path)) continue
+      const old = before.get(draft.path)
+      const file = after.get(draft.path)
+      const base = old && file && old.content === file.content
+        && (draft.base === old.rev || backend.isSameRev(draft.base, old.rev)) ? file.rev : draft.base
+      const path = destination(draft.path)
+      updateDraft(scope, path, { ...draft, path, base })
+      updateDraft(scope, draft.path, null)
+    }
+    // Include the older per-file fallback, even for notes not opened in this session.
+    const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i))
+    for (const key of keys) {
+      if (!key?.startsWith(DRAFT_KEY_PREFIX)) continue
+      const path = key.slice(DRAFT_KEY_PREFIX.length)
+      if (!moved(path)) continue
+      try {
+        localStorage.setItem(draftKey(destination(path)), localStorage.getItem(key)!)
+        localStorage.removeItem(key)
+      } catch { /* The scoped draft above remains authoritative. */ }
+    }
+    const path = currentPath.value
+    if (path && moved(path)) {
+      const nextPath = destination(path)
+      const pending = drafts.value.get(draftId(scope, nextPath))
+      const file = after.get(path)
+      documentGeneration++
+      currentPath.value = nextPath
+      if (loadingPath.value !== null && file) {
+        content.value = pending?.content ?? file.content
+        dirty.value = !!pending
+      }
+      if (!pending && !dirty.value && file) content.value = file.content
+      loadingPath.value = null
+      baseRev.value = pending ? pending.base : file?.rev ?? baseRev.value
+      if (file) modifiedAt.value = file.modifiedAt
+      if (conflict.value) conflict.value = { ...conflict.value, path: nextPath }
+    }
+  }
+  const work = saveChain ? saveChain.then(run) : run()
+  // Keep subsequent saves behind the move; a failed rename must not poison the queue.
+  const tail = work.catch(() => {})
+  saveChain = tail
+  void tail.finally(() => { if (saveChain === tail) saveChain = null })
+  return work
+}
 
 export function flushSave(): Promise<void> {
   flushEditorText()
@@ -427,12 +516,16 @@ export function forgetOurWrites(): void {
 export async function rebaseOpenDocument(): Promise<void> {
   const path = currentPath.value
   if (path === null) return
+  const generation = documentGeneration
+  const scope = draftScope()
+  const base = baseRev.value
   try {
     const file = await backend.readFile(path)
+    if (currentPath.value !== path || documentGeneration !== generation || draftScope() !== scope
+      || baseRev.value !== base || loadingPath.value !== null) return
     rememberOurWrite(file.rev)
     baseRev.value = file.rev
     modifiedAt.value = file.modifiedAt
-    const scope = draftScope()
     const pending = drafts.value.get(draftId(scope, path))
     if (pending) updateDraft(scope, path, { ...pending, base: file.rev })
   } catch { /* the next save will surface anything really wrong */ }
@@ -440,12 +533,19 @@ export async function rebaseOpenDocument(): Promise<void> {
 
 export async function handleExternalChange(path: string, rev: Rev): Promise<void> {
   if (path !== currentPath.value) return
+  flushEditorText()
   // Our own write, echoed back by whatever watches the vault — the latest one, or any of the few
   // before it whose echo is still on its way.
   if (backend.isSameRev(rev, baseRev.value)) return
   if (ours.some((mine) => backend.isSameRev(rev, mine))) return
 
+  const generation = documentGeneration
+  const scope = draftScope()
+  const base = baseRev.value
   const file = await backend.readFile(path)
+  if (currentPath.value !== path || documentGeneration !== generation || draftScope() !== scope
+    || baseRev.value !== base || loadingPath.value !== null) return
+  flushEditorText()
 
   if (!dirty.value) {
     content.value = file.content

@@ -29,13 +29,14 @@ import { collab, collabServiceCtx } from '@milkdown/plugin-collab'
 import type { LiveWire } from '../live/provider.js'
 import { provideEditorFlush, provideEditorText } from './current.js'
 import { changeRevision, contentRevision } from './change-revision.js'
+import { imageAttributes } from './image-attributes.js'
 import { applyToday, provideToday } from './today.js'
 import { serveAgent } from '../live/apply.js'
 import { keepMirror } from '../live/mirror.js'
 import { copyClosed, copyLinksAsMarkdown } from './copy-closed.js'
 import { showUploading, uploadPlaceholder } from './upload-placeholder.js'
 import { closeMarksOn, collapseMarks, markReveal, marksAreOpen } from './mark-reveal.js'
-import { closeSourceBeforeEnter, closeSourceOn, collapseSource, sourceIsOpen, sourceReveal } from './source-reveal.js'
+import { closeSourceBeforeEnter, closeSourceOn, collapseSource, editSourceAsText, sourceIsOpen, sourceReveal } from './source-reveal.js'
 import { writeTablesAsTyped, writeWhatWasTyped } from './markdown-escapes.js'
 import { attachImagePaste } from './image-paste.js'
 import { markerReveal } from './marker-reveal.js'
@@ -174,6 +175,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
   const lastSyncedRef = useRef<string>('')
   const syncedRevisionRef = useRef(0)
   const editorPathRef = useRef<string | null>(null)
+  const editorEpochRef = useRef(0)
   /** True while we are pushing a value in, so the echo is not read back as the reader typing. */
   const settingRef = useRef(false)
   const readyRef = useRef(false)
@@ -271,6 +273,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     })
     crepeRef.current = crepe
     crepe.editor.use(changeRevision)
+    crepe.editor.use(imageAttributes)
     // Before `create()`: a Milkdown editor takes its plugins while it is being built. See
     // `link-input.ts` — without these, `[1](2)` typed into a note is not a link and is saved
     // escaped, which is the only way this application could not write one.
@@ -313,6 +316,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     crepe.editor.config(writeWhatWasTyped)
     crepe.editor.config(preserveLinkSyntax)
     crepe.editor.config(copyLinksAsMarkdown)
+    crepe.editor.config(editSourceAsText)
     // …and its tables the way they were typed; see `markdown-escapes.ts`.
     crepe.editor.config(writeTablesAsTyped)
     // Milkdown keeps a blank line across a round trip by writing `<br />` into the markdown for
@@ -346,6 +350,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         const revision = contentRevision(c.get(editorViewCtx).state)
         if (wire === null && revision === syncedRevisionRef.current) return
         const path = editorPathRef.current
+        const epoch = editorEpochRef.current
         if (path !== currentPath.value || loadingPath.value !== null || sourceMode.value) return
         // What is read is the document with nothing open, whatever is on screen. While a run or a
         // link is showing its own markdown the document holds literal `` ` `` and `[`, and this is
@@ -359,7 +364,9 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         // The owner's editor keeps `content` current, and that is what the session is saved from.
         if (guest) { lastSyncedRef.current = markdown; return }
         debounce = window.setTimeout(() => {
-          if (disposed || path !== currentPath.value || editorPathRef.current !== path || sourceMode.value) return
+          if (disposed || path !== currentPath.value || editorPathRef.current !== path || sourceMode.value
+            || loadingPath.value !== null || editorEpochRef.current !== epoch
+            || contentRevision(c.get(editorViewCtx).state) !== revision) return
           syncedRevisionRef.current = revision
           lastSyncedRef.current = markdown
           editContent(markdown)
@@ -424,12 +431,13 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       provideToday((today) => applyToday(crepe.editor.ctx.get(editorViewCtx), today))
       const surface = host.querySelector<HTMLElement>('.ProseMirror')
       surface?.classList.add(DOC_SURFACE)
-      crepe.setReadonly(readOnly.value)
+      crepe.setReadonly(readOnly.value || loadingPath.value !== null)
       // And catch up, if it moved while we were starting.
       if (content.value !== mountedWith) {
         settingRef.current = true
         lastSyncedRef.current = content.value
         try {
+          editorEpochRef.current++
           crepe.editor.action(replaceAll(content.value, true))
           /*
            * What the editor calls this document, not what we handed it.
@@ -649,7 +657,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
   useEffect(() => {
     const crepe = crepeRef.current
     if (!crepe || !readyRef.current) return
-    if (sourceMode.value) return
+    if (sourceMode.value || loadingPath.value !== null) return
     /*
      * Never during a session.
      *
@@ -659,7 +667,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
      */
     if (wire !== null) return
     const next = content.value
-    if (next === lastSyncedRef.current) return
+    if (next === lastSyncedRef.current && editorPathRef.current === currentPath.value) return
     settingRef.current = true
     lastSyncedRef.current = next
     try {
@@ -670,6 +678,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       // expensive option and it is the right one here — this path only runs when the document was
       // replaced wholesale (a file opened, a conflict resolved, an agent's proposal applied), and
       // a diff between two unrelated documents is slower than a rebuild as well as being wrong.
+      editorEpochRef.current++
       crepe.editor.action(replaceAll(next, true))
       /*
        * What the editor calls this document, not what we handed it.
@@ -686,11 +695,11 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     } finally {
       settingRef.current = false
     }
-  }, [content.value, currentPath.value, sourceMode.value])
+  }, [content.value, currentPath.value, sourceMode.value, loadingPath.value])
 
   useEffect(() => {
-    crepeRef.current?.setReadonly(readOnly.value)
-  }, [readOnly.value])
+    crepeRef.current?.setReadonly(readOnly.value || loadingPath.value !== null)
+  }, [readOnly.value, loadingPath.value])
 
   /** One place to run a table edit and put the bar back where the edit left the table. */
   const withTable = (run: (view: EditorView, ctx: Ctx, at: TableTarget) => void) => {

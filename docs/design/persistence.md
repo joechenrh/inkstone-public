@@ -144,3 +144,22 @@ Measured before the change and after, by clicking and reloading at three latenci
 **Two thresholds keep a fast load from flickering**, both in `usePendingPlaceholder`: nothing is drawn for the first 180ms, and once a placeholder appears it stays at least 300ms. On a local disk — 21ms for the tree, 37ms to open a note — no placeholder is ever drawn at all; past 200ms of latency both appear and stay. Neither number is there to announce a wait; they exist to prevent a flash.
 
 The placeholders are skeletons in the shape of what replaces them — indented rows for the tree, a centred heading and three lines for a note — rather than spinners. A spinner says something is happening somewhere; this says what is coming and where. Both stop moving under `prefers-reduced-motion`.
+
+## Read ownership and moves
+
+Opening a note captures its path, vault scope and request generation. Both successful responses and
+failures must still own that generation before updating the screen. External reloads and post-commit
+revision reads also check the original base, so a late result cannot rebase another note or replace
+newer content. External reloads flush pending editor input before deciding whether to show a conflict.
+A failed open can restore a previously loaded note; a path whose read never completed does not own
+the visible text and cannot be restored with another note's buffer.
+
+Renames and folder moves share the save queue. They flush the editor, carry scoped drafts and the
+per-file fallback to the new paths, and update the current child note. For backends that assign a new
+revision on move, a draft adopts that revision only when its old base still matched and the moved
+file has identical saved content. A stale draft keeps its old base and must resolve a conflict.
+A destination with an existing draft is refused, preserving both buffers.
+
+Both editor surfaces are read-only while a file is loading, and document edits are rejected until
+that read completes. Source mode mounts a separate textarea per path so the browser's native undo
+stack cannot bring the previous note's text into the new one.

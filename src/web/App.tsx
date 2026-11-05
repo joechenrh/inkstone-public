@@ -120,7 +120,7 @@ export function App() {
           <DocumentSkeleton />
           {/* Over the editor for the same reason, and only with a file open — there is no source
               for no document. */}
-          {currentPath.value !== null && sourceMode.value && <SourceEditor />}
+          {currentPath.value !== null && sourceMode.value && <SourceEditor key={currentPath.value} />}
         </>
       }
       right={<RightPanel />}

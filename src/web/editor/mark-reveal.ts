@@ -1,5 +1,6 @@
 import { $prose } from '@milkdown/kit/utils'
 import { Plugin, PluginKey, TextSelection } from '@milkdown/kit/prose/state'
+import { RemoveMarkStep } from '@milkdown/kit/prose/transform'
 import { emphasisSchema, inlineCodeSchema, strongSchema } from '@milkdown/kit/preset/commonmark'
 import { strikethroughSchema } from '@milkdown/kit/preset/gfm'
 import type { Ctx } from '@milkdown/kit/ctx'
@@ -287,6 +288,18 @@ export const markReveal = $prose((ctx) =>
       const open = KEY.getState(state)
       if (open) {
         const { from, to } = state.selection
+        // A formatting command removes the semantic mark, not the revealed characters. Close
+        // the presentation without applying the mark again, including on partial selections.
+        // Keep these deletions out of undo history just like ordinary reveal/collapse changes.
+        if (intact(state.doc, open) && trs.some((tr) => tr.steps.some((step) =>
+          step instanceof RemoveMarkStep && step.mark.type.name === open.mark))) {
+          const len = open.syntax.length
+          return state.tr
+            .delete(open.to - len, open.to)
+            .delete(open.from, open.from + len)
+            .setMeta(KEY, null)
+            .setMeta('addToHistory', false)
+        }
         /*
          * Still inside, and still spelled the way it was: leave it open, whatever is being typed.
          *

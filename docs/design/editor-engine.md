@@ -266,3 +266,9 @@ Inside an angle autolink, backslashes are literal: the parser does not consume M
 there. The text serializer therefore emits the parsed value directly in the `autolink` context;
 escaping it again doubles backslashes on every save. Regression tests cover both clean URLs and
 URLs already containing backslashes across repeated parse/save and real editor reopen cycles.
+
+Formatting commands also close revealed marks when removing them. The generated delimiters are
+deleted without reapplying the removed mark, so toggling bold, emphasis, strikethrough, or inline
+code stays effective after moving the caret or saving. Partial selections preserve the formatting
+outside the selection. Delimiter cleanup stays out of undo history; undo and redo track the format
+change itself. `tests/e2e/mark-toggle.spec.ts` covers shortcut and toolbar removal and saved output.

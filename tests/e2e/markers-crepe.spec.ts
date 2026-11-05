@@ -7,9 +7,8 @@ import { expect, test, type Page } from '@playwright/test'
  * like markdown rather than like a word processor. This engine showed a toolbar instead.
  *
  * The assertions are deliberately about two things at once: what is on screen, and that the file on
- * disk is byte-identical afterwards. The markers are decorations — the document is never touched —
- * and that is the property worth holding, because the alternative (replacing the text with its own
- * markdown, as links and pictures do) would put literal asterisks in reach of every save.
+ * disk is byte-identical afterwards. Revealed syntax is temporary text in the editor; serialization
+ * closes it so the file retains semantic formatting rather than literal, escaped delimiters.
  */
 
 async function open(page: Page, note = 'marks-crepe.md', expectText = 'bold text') {

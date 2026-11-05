@@ -281,3 +281,11 @@ the user typed directly keeps its original editing history.
 
 The editor listener also checks its reported document against the current state. Its delayed
 snapshot can precede delimiter cleanup, so a stale snapshot must not repopulate a saved draft.
+
+Content revisions distinguish real document edits from presentation transactions. Loading a note
+resets the revision; opening or closing source markers does not advance it. Delayed listeners only
+publish real edits for the note still owned by that editor. Navigation, view changes, and saves flush
+pending edits synchronously, so no-op saves retain the original Markdown instead of normalizing it.
+An unchanged bare Unicode URL that came from Markdown retains its bare spelling; editing its
+destination returns it to the normal URL safety checks. `tests/e2e/noop-notes.spec.ts` covers these
+boundaries with synthetic bold headings, Unicode URLs, angle autolinks and rapid note switches.

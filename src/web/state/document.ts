@@ -9,6 +9,7 @@ import { setViewMode, viewMode } from './settings.js'
 import { suspendedPath } from './suspend.js'
 import { chosenRepo } from '../auth/identity.js'
 import { refreshGitStatus, sayGitNotice } from './git.js'
+import { flushEditorText } from '../editor/current.js'
 
 export const DRAFT_KEY_PREFIX = 'inkstone.draft:'
 const DRAFT_INDEX_PREFIX = 'inkstone.draft-index:'
@@ -130,6 +131,7 @@ export function dismissSaveError(): void {
 }
 
 export async function openFile(path: string): Promise<void> {
+  flushEditorText()
   documentGeneration++
   // Claimed before the read, not after. The moment this returns to the caller the app is *on*
   // this note: the breadcrumb names it, its row is selected, and on a phone the screen has
@@ -230,6 +232,7 @@ export function editContent(next: string): void {
 let saveChain: Promise<void> | null = null
 
 export function flushSave(): Promise<void> {
+  flushEditorText()
   const prev = saveChain
   const path = currentPath.value
   const generation = documentGeneration
@@ -298,6 +301,7 @@ let allSavePromise: Promise<void> | null = null
 
 /** Save registered drafts without opening notes, committing, or changing the current selection. */
 export function saveAll(): Promise<void> {
+  flushEditorText()
   if (allSavePromise) return allSavePromise
   const scope = draftScope()
   const pending = [...drafts.value.values()].filter((draft) => draft.scope === scope)

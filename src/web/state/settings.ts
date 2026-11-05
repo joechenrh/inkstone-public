@@ -1,4 +1,5 @@
 import { computed, signal } from '@preact/signals'
+import { flushEditorText } from '../editor/current.js'
 
 const EDITOR_KEY = 'inkstone.editorFontSize'
 const READ_ONLY_KEY = 'inkstone.readOnly'
@@ -93,6 +94,7 @@ export const readOnly = computed(() => viewMode.value === 'read')
 export const sourceMode = computed(() => viewMode.value === 'source')
 
 export function setViewMode(mode: ViewMode): void {
+  if (mode !== viewMode.value) flushEditorText()
   viewMode.value = mode
   // Only the reading posture is remembered; see above.
   safeSet(READ_ONLY_KEY, mode === 'read' ? '1' : '0')

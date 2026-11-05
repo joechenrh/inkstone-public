@@ -107,20 +107,22 @@ export const bareUrlsStayBare = linkSchema.extendSchema((prev) => (ctx: Ctx): Ma
   const upstream = schema.toMarkdown
   return {
     ...schema,
-    attrs: { ...schema.attrs, syntax: { default: 'markdown' } },
+    attrs: { ...schema.attrs, syntax: { default: 'markdown' }, parsedBare: { default: false } },
     inclusive: false,
     parseMarkdown: {
       match: schema.parseMarkdown.match,
       runner(state, node, type) {
-        state.openMark(type, { href: node.url, title: node.title, syntax: linkSyntax(node) })
+        const syntax = linkSyntax(node)
+        state.openMark(type, { href: node.url, title: node.title, syntax, parsedBare: syntax === 'bare' })
         state.next(node.children)
         state.closeMark(type)
       },
     },
     toDOM(mark, inline) {
       const dom = schema.toDOM!(mark, inline) as [string, Record<string, unknown>, number]
-      const { syntax: _syntax, ...attrs } = dom[1]
-      return [dom[0], { ...attrs, 'data-link-syntax': mark.attrs.syntax }, 0]
+      const { syntax: _syntax, parsedBare: _parsedBare, ...attrs } = dom[1]
+      return [dom[0], { ...attrs, 'data-link-syntax': mark.attrs.syntax,
+        'data-parsed-bare': mark.attrs.parsedBare ? 'true' : undefined }, 0]
     },
     parseDOM: schema.parseDOM?.map((rule) => {
       if (!rule.tag) return rule
@@ -128,14 +130,20 @@ export const bareUrlsStayBare = linkSchema.extendSchema((prev) => (ctx: Ctx): Ma
       return { ...tagRule, getAttrs(dom: HTMLElement) {
         const attrs = typeof tagRule.getAttrs === 'function' ? tagRule.getAttrs(dom) : tagRule.attrs
         if (attrs === false) return false
-        return { ...attrs, syntax: dom.getAttribute('data-link-syntax') ?? 'markdown' }
+        return { ...attrs, syntax: dom.getAttribute('data-link-syntax') ?? 'markdown',
+          parsedBare: dom.getAttribute('data-parsed-bare') === 'true' }
       } }
     }),
     toMarkdown: {
       match: upstream.match,
       runner: (state, mark, node) => {
         const text = (node as { text?: string | null }).text
-        if (mark.attrs.syntax === 'bare' && isBareUrl(text, mark.attrs.href, mark.attrs.title)) return
+        // Original Unicode URLs already passed the parser. Keep their spelling while retaining
+        // the existing restrictions on ASCII Markdown delimiters, entities and backslashes.
+        const parsedSafe = mark.attrs.parsedBare && typeof text === 'string' && !/\s/u.test(text)
+          && keepsItsBareForm(text.replace(/[^\x00-\x7F]/gu, 'a'))
+        const unchangedBare = parsedSafe && text === mark.attrs.href && !mark.attrs.title
+        if (mark.attrs.syntax === 'bare' && (unchangedBare || isBareUrl(text, mark.attrs.href, mark.attrs.title))) return
         state.withMark(mark, 'link', undefined, {
           title: mark.attrs.title,
           url: mark.attrs.href,
@@ -169,7 +177,7 @@ export const syncBareUrls = $prose((ctx) => new Plugin({
         if (text === mark.attrs.href) continue
         tr.removeMark(from, to, mark)
         if (/^https?:\/\/\S+$/i.test(text)) {
-          tr.addMark(from, to, type.create({ ...mark.attrs, href: text }))
+          tr.addMark(from, to, type.create({ ...mark.attrs, href: text, parsedBare: false }))
         }
       }
       return false

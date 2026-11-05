@@ -1,5 +1,5 @@
 /**
- * What the editor has *right now*, for the two moments when waiting is not an option.
+ * What the editor has *right now*, when waiting for a delayed update is not an option.
  *
  * The editor syncs its text into `content` on a debounce, which is right for the ordinary case —
  * a signal that changed on every keystroke would re-render the application once per character.
@@ -16,6 +16,12 @@
  */
 
 let reader: (() => string) | null = null
+let flusher: (() => void) | null = null
+
+export function provideEditorFlush(next: (() => void) | null): void { flusher = next }
+
+/** Flush real pending edits before navigation or saving; display-only changes do nothing. */
+export function flushEditorText(): void { flusher?.() }
 
 /** Registered by the editor while it is mounted, and withdrawn when it is not. */
 export function provideEditorText(next: (() => string) | null): void {

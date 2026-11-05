@@ -32,7 +32,7 @@ The save snapshots `content` before the request and only clears `dirty` if the v
 
 ## Drafts
 
-Every edit mirrors the buffer to `localStorage` under `inkstone.draft:<path>`. On open, a draft that differs from the disk content wins, and the document opens dirty.
+Editor updates mirror the buffer to `localStorage` under `inkstone.draft:<path>`. Pending edits are flushed before navigation, view changes, and saves. On open, a draft that differs from the disk content wins, and the document opens dirty.
 
 The draft index at `inkstone.draft-index:<scope>` also retains the content and original revision. The scope is the local vault or the chosen GitHub repository and branch. Save all uses this index rather than treating every legacy draft key as a pending write, and the index is restored after a page reload.
 

@@ -27,7 +27,8 @@ import { marksEndAtTheirMarker } from './mark-inclusivity.js'
 import { bareUrlsStayBare, preserveLinkSyntax, syncBareUrls } from './bare-url.js'
 import { collab, collabServiceCtx } from '@milkdown/plugin-collab'
 import type { LiveWire } from '../live/provider.js'
-import { provideEditorText } from './current.js'
+import { provideEditorFlush, provideEditorText } from './current.js'
+import { changeRevision, contentRevision } from './change-revision.js'
 import { applyToday, provideToday } from './today.js'
 import { serveAgent } from '../live/apply.js'
 import { keepMirror } from '../live/mirror.js'
@@ -42,7 +43,7 @@ import { alertReveal } from './alert-reveal.js'
 import { showAssetImages } from '../assets/images.js'
 import { PasteLine } from '../assets/PasteLine.js'
 import { useImagePaste } from '../assets/usePaste.js'
-import { content, editContent } from '../state/document.js'
+import { content, editContent, loadingPath } from '../state/document.js'
 import { readOnly, sourceMode } from '../state/settings.js'
 import { currentPath } from '../state/vault.js'
 import { DOC_SURFACE } from './surface.js'
@@ -171,6 +172,8 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
   pasteRef.current = paste
   /** The value the editor and `content` agree on — the same discipline the Vditor shell needed. */
   const lastSyncedRef = useRef<string>('')
+  const syncedRevisionRef = useRef(0)
+  const editorPathRef = useRef<string | null>(null)
   /** True while we are pushing a value in, so the echo is not read back as the reader typing. */
   const settingRef = useRef(false)
   const readyRef = useRef(false)
@@ -267,6 +270,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       },
     })
     crepeRef.current = crepe
+    crepe.editor.use(changeRevision)
     // Before `create()`: a Milkdown editor takes its plugins while it is being built. See
     // `link-input.ts` — without these, `[1](2)` typed into a note is not a link and is saved
     // escaped, which is the only way this application could not write one.
@@ -318,6 +322,20 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     // preserving; the engine this replaced wrote nothing for it either.
     crepe.editor.remove(remarkPreserveEmptyLinePlugin)
 
+    const flushPending = () => {
+      if (disposed || guest || !readyRef.current || sourceMode.value || loadingPath.value !== null
+        || editorPathRef.current !== currentPath.value) return
+      const view = crepe.editor.ctx.get(editorViewCtx)
+      const revision = contentRevision(view.state)
+      if (wire === null && revision === syncedRevisionRef.current) return
+      window.clearTimeout(debounce)
+      const markdown = closedMarkdown(crepe.editor.ctx, crepe.getMarkdown())
+      syncedRevisionRef.current = revision
+      if (markdown === lastSyncedRef.current) return
+      lastSyncedRef.current = markdown
+      editContent(markdown)
+    }
+
     crepe.on((listener) => {
       let reportedDoc: ProseNode | undefined
       listener.updated((_ctx, doc) => { reportedDoc = doc })
@@ -325,6 +343,10 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         // Echoes of our own `setValue` are not edits. Vditor needed a synchronous guard *and* a
         // value comparison because its echo was async; both are cheap and both are kept.
         if (settingRef.current || !readyRef.current) return
+        const revision = contentRevision(c.get(editorViewCtx).state)
+        if (wire === null && revision === syncedRevisionRef.current) return
+        const path = editorPathRef.current
+        if (path !== currentPath.value || loadingPath.value !== null || sourceMode.value) return
         // What is read is the document with nothing open, whatever is on screen. While a run or a
         // link is showing its own markdown the document holds literal `` ` `` and `[`, and this is
         // the text that goes on to be the draft in local storage, what a commit reads and what
@@ -332,11 +354,13 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         // having saved while one was open. Nothing is dispatched: the reader keeps what they see.
         const markdown = closedMarkdown(c, given, reportedDoc)
         window.clearTimeout(debounce)
-        if (markdown === lastSyncedRef.current) return
+        if (markdown === lastSyncedRef.current) { syncedRevisionRef.current = revision; return }
         // A guest's keystrokes go to the room, not to a file: this browser has no vault behind it.
         // The owner's editor keeps `content` current, and that is what the session is saved from.
         if (guest) { lastSyncedRef.current = markdown; return }
         debounce = window.setTimeout(() => {
+          if (disposed || path !== currentPath.value || editorPathRef.current !== path || sourceMode.value) return
+          syncedRevisionRef.current = revision
           lastSyncedRef.current = markdown
           editContent(markdown)
         }, INPUT_DEBOUNCE_MS)
@@ -388,7 +412,10 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
         })
       }
       // The editor's own spelling of what it was built with; see the note in the sync effect.
-      lastSyncedRef.current = crepe.getMarkdown()
+      lastSyncedRef.current = closedMarkdown(crepe.editor.ctx, crepe.getMarkdown())
+      syncedRevisionRef.current = contentRevision(crepe.editor.ctx.get(editorViewCtx).state)
+      editorPathRef.current = currentPath.value
+      provideEditorFlush(flushPending)
       // What this editor holds, for anything that cannot wait for the debounce below. See
       // `current.ts` — ending a live session is the case that proved this necessary.
       provideEditorText(() => closedMarkdown(crepe.editor.ctx, crepe.getMarkdown()))
@@ -413,7 +440,9 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
            * a reformat, which is the one thing the move to this engine promised would be deliberate.
            * Recording the editor's spelling as "what is synced" makes the echo compare equal.
            */
-          lastSyncedRef.current = crepe.getMarkdown()
+          lastSyncedRef.current = closedMarkdown(crepe.editor.ctx, crepe.getMarkdown())
+          syncedRevisionRef.current = contentRevision(crepe.editor.ctx.get(editorViewCtx).state)
+          editorPathRef.current = currentPath.value
         } finally {
           settingRef.current = false
         }
@@ -425,7 +454,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
     // instant would write `\[text\](url)` into the note. Closing first, in the capture phase,
     // means what gets read is a link. See `source-reveal.ts`.
     const closeLinkBeforeSave = (e: KeyboardEvent) => {
-      if (!(e.key === 's' && (e.metaKey || e.ctrlKey))) return
+      if (!(e.key.toLowerCase() === 's' && (e.metaKey || e.ctrlKey))) return
       const crepe = crepeRef.current
       if (!crepe) return
       /*
@@ -435,21 +464,13 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
        * mode promises will not happen. The reader owns the text while they are looking at it.
        */
       window.clearTimeout(debounce)
-      if (sourceMode.value) return
+      if (sourceMode.value || loadingPath.value !== null || editorPathRef.current !== currentPath.value) return
+      // The global save handler needs the latest real edit, not a delayed listener snapshot.
+      flushPending()
       crepe.editor.action((c) => {
         collapseSource(c.get(editorViewCtx), c)
         collapseMarks(c.get(editorViewCtx), c)
       })
-      // Synchronously, because the save is about to read `content` and the editor's own update is
-      // debounced. The Vditor shell flushes on Ctrl+S for the same reason.
-      settingRef.current = true
-      try {
-        const md = crepe.getMarkdown()
-        lastSyncedRef.current = md
-        editContent(md)
-      } finally {
-        settingRef.current = false
-      }
     }
     host.addEventListener('keydown', closeLinkBeforeSave, true)
 
@@ -593,6 +614,7 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       disposed = true
       readyRef.current = false
       provideEditorText(null)
+      provideEditorFlush(null)
       provideToday(null)
       stopMirror()
       stopAgent()
@@ -658,7 +680,9 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
        * a reformat, which is the one thing the move to this engine promised would be deliberate.
        * Recording the editor's spelling as "what is synced" makes the echo compare equal.
        */
-      lastSyncedRef.current = crepe.getMarkdown()
+      lastSyncedRef.current = closedMarkdown(crepe.editor.ctx, crepe.getMarkdown())
+      syncedRevisionRef.current = contentRevision(crepe.editor.ctx.get(editorViewCtx).state)
+      editorPathRef.current = currentPath.value
     } finally {
       settingRef.current = false
     }

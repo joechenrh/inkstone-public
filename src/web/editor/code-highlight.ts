@@ -1,32 +1,14 @@
 import { autocompletion } from '@codemirror/autocomplete'
 import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language'
-import { tags as t } from '@lezer/highlight'
+import { tagHighlighter, tags as t } from '@lezer/highlight'
 import type { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 
 /**
- * The colours a fenced block is highlighted in, so both engines highlight it the same.
- *
- * Vditor renders code through highlight.js wearing `github.min.css`; Crepe renders it through a
- * CodeMirror instance wearing CodeMirror's own default. Side by side that is not a shade or two —
- * `int` is red in one and orange in the other, strings green here and dark blue there — and on a
- * note with forty fences in it, the difference is most of the page.
- *
- * The values below are read off the shipped `github.min.css` rather than chosen, so this matches
- * what the application has rendered since Phase 1 rather than approximating it. highlight.js groups
- * many token names onto one colour; the groups are kept, with the CodeMirror tag that means the
- * same thing in each.
- *
- * This is deliberately not per-document-theme. Neither engine's palette ever was: Vditor's code
- * colours come from its own stylesheet and do not change when the reader changes theme — verified
- * in dark mode, where its keywords are still this red on the dark panel — so making Crepe's change
- * would be a new behaviour rather than a matching one.
- *
- * Nothing here colours ordinary code text, and that is the reason the dark mode works at all.
- * highlight.js only wraps the tokens it recognises; everything else is bare text that inherits the
- * colour the theme gives the block, which is `#4f5467` in light and `#abbad4` in dark. Assigning
- * even a "base" colour here froze that at a light-mode value, and on the dark panel the plain half
- * of every fence — an XML element's content, an unrecognised identifier — went nearly invisible.
+ * GitHub colours remain the fallback. A second highlighter emits stable CodeMirror token classes
+ * for document themes to override through CSS. Unstyled tokens retain their existing fallback;
+ * ordinary code text still inherits the block's foreground. Both highlighters run together, so
+ * changing a theme only changes the cascade, never the editor state or undo history.
  */
 
 /** github.min.css, by the group highlight.js puts each token in. */
@@ -58,12 +40,37 @@ const githubLight = HighlightStyle.define([
   { tag: t.invalid, color: DELETION },
 ])
 
-/**
- * `basicSetup` already installs CodeMirror's default style, but installs it as a *fallback* — a
- * style added afterwards is the one that applies. So this is added, not substituted, and no part of
- * Crepe's own setup has to be taken apart to make room for it.
- */
-export const codeHighlighting: Extension = syntaxHighlighting(githubLight)
+/** The semantic hooks used by the imported Typora themes (CodeMirror 5 token names). */
+const themeTokens = tagHighlighter([
+  { tag: [t.keyword, t.modifier, t.self], class: 'cm-keyword' },
+  { tag: t.variableName, class: 'cm-variable' },
+  { tag: [t.definition(t.variableName), t.function(t.variableName), t.function(t.definition(t.variableName)),
+    t.definition(t.function(t.variableName)), t.className, t.definition(t.className), t.macroName], class: 'cm-def' },
+  { tag: t.typeName, class: 'cm-type' },
+  { tag: [t.standard(t.variableName), t.namespace, t.standard(t.name)], class: 'cm-builtin' },
+  { tag: t.propertyName, class: 'cm-property' },
+  { tag: t.attributeName, class: 'cm-attribute' },
+  { tag: t.number, class: 'cm-number' },
+  { tag: [t.bool, t.literal, t.atom], class: 'cm-atom' },
+  { tag: [t.string, t.character, t.regexp, t.attributeValue], class: 'cm-string' },
+  { tag: [t.special(t.string), t.escape], class: 'cm-string-2' },
+  { tag: t.comment, class: 'cm-comment' },
+  { tag: t.operator, class: 'cm-operator' },
+  { tag: [t.meta, t.annotation], class: 'cm-meta' },
+  { tag: t.tagName, class: 'cm-tag' },
+  { tag: [t.bracket, t.angleBracket], class: 'cm-bracket' },
+  { tag: t.quote, class: 'cm-quote' },
+  { tag: t.link, class: 'cm-link' },
+  { tag: t.heading, class: 'cm-header' },
+  { tag: t.invalid, class: 'cm-error' },
+])
+
+export const codeHighlighting: Extension = [
+  syntaxHighlighting(githubLight),
+  syntaxHighlighting(themeTokens),
+  // Scope legacy token rules to code content; language menus and the shell stay outside it.
+  EditorView.contentAttributes.of({ class: 'cm-s-inner' }),
+]
 
 /**
  * Tab indents by four spaces inside a fenced block.

@@ -77,16 +77,8 @@ const HOOKS = [
   ['.md-diagram-panel', null],
   ['.md-footnote', null],
   ['.md-tag', null],
-  /*
-   * Typora's own CodeMirror, which is also where a theme keeps its syntax colours.
-   *
-   * Dropped, and this is the lossy part of every import: the token colours in this editor are a
-   * `HighlightStyle` in `code-highlight.ts`, one palette shared by every document theme, so a
-   * theme's `.cm-s-inner .cm-keyword` has nowhere to go. Thirty-five of Drake's rules are this.
-   * A theme's fenced *block* — its background and its plain text colour — still converts, which is
-   * the half you see first; Tailwind already ships a dark block that way.
-   */
-  ['.cm-s-inner', null],
+  // Keep .cm-s-inner token selectors: code-highlight.ts emits their semantic token classes.
+  // Typora's source editor and CodeMirror 5 layout widgets still have no matching DOM here.
   ['.cm-s-typora-default', null],
   ['.CodeMirror', null],    // Typora's source editor; we have none
 ]

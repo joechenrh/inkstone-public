@@ -306,3 +306,9 @@ Backspace unwraps a fenced block only at a collapsed caret at its first column. 
 selections stay owned by CodeMirror: selecting all code and deleting clears the content while
 retaining the fence and language. The language-search field uses its wrapper's single hairline focus
 state; both the upstream wrapper outline and the shell's generic input ring are suppressed there.
+
+CodeMirror keeps the GitHub highlight style as its fallback and adds a semantic token highlighter
+that emits the imported themes' `.cm-*` classes. `.cm-s-inner` is confined to code content so the
+native palettes cannot reach language menus. CSS overrides colours and typography per token;
+changing theme or appearance does not replace the editor state. Drake's previously filtered token
+rules are restored from upstream, and future conversions retain these selectors.

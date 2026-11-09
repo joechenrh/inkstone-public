@@ -77,7 +77,20 @@ The conformance rule is therefore about painting, not geometry: a box wider than
 
 **Drake, and what an import cannot bring.** `drake-theme.css` is converted from liangjingkanji's Typora theme (MIT). Converting it found the import pipeline two engines out of date: `convert-typora-theme.mjs` still emitted `.vditor-ir .vditor-reset` selectors for a DOM that no longer exists — the shipped themes were re-scoped when the engine changed and the script was not — and it stripped only `@charset` and `@import`, so Drake's `@include-when-export url('https://fonts.googleapis.com/…')` glued itself to the palette and the whole theme converted to three rules. Both are fixed: the root is `.ink-doc.ink-doc.ink-doc`, the hook table maps to this editor's DOM, and a statement at-rule is recognised by its shape rather than by name.
 
-What still does not convert is a theme's **syntax colours**. A Typora theme keeps them in `.cm-s-inner .cm-*` rules — thirty-five of Drake's — and here the token colours are a `HighlightStyle` in `code-highlight.ts`, one palette for every document theme. A theme's fenced *block* converts (Drake's dark panel and its plain-text colour do), and the tokens on it are the application's. Making that palette follow the document theme is the work this would need.
+Syntax colours now follow a theme when it defines them. CodeMirror emits stable `.cm-*` token
+classes inside `.cm-s-inner`, alongside the existing GitHub fallback styles. Imported Typora rules
+therefore override only their declared tokens and properties. Aspartate, Tailwind, Everforest,
+BitClean and Drake use their native palettes; Lapis, Plain and Forest keep the default palette.
+Light/dark overrides use the same CSS cascade as the rest of each theme.
+
+For example, a theme can provide only `.ink-doc .cm-s-inner .cm-keyword { color: #cc7832; }`;
+strings, comments and other tokens retain their fallback unless separately styled. Common hooks
+include `cm-string`, `cm-comment`, `cm-number`, `cm-def`, `cm-type`, `cm-property`, `cm-operator`,
+`cm-tag` and `cm-attribute`. The converter preserves token selectors while continuing to drop
+obsolete CodeMirror 5 widgets. Theme changes update CSS without rebuilding the editor, so text,
+selection and undo history stay with the existing CodeMirror instance. Browser checks in
+`tests/e2e/code-theme.spec.ts` cover every supported theme appearance and partial palettes.
+
 
 **What a theme does not own.** Two properties were taken back from the themes after being measured, and both are enforced by `theme-conformance.spec.ts` rather than by review:
 

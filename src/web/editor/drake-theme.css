@@ -5,11 +5,9 @@
  * Light only, which is what `drake.css` is — the repository's eleven other variants are separate
  * stylesheets and this is the one that was asked for.
  *
- * What did not come across: the theme's syntax colours. Thirty-five of its rules style Typora's
- * own CodeMirror (`.cm-s-inner .cm-keyword` and friends), and in this editor the token colours are
- * a `HighlightStyle` in `code-highlight.ts` — one palette shared by every document theme. So the
- * fenced block is Drake's (its dark panel, its plain-text colour) and the tokens on it are the
- * application's, the same arrangement Tailwind already ships.
+ * Syntax colours use the upstream CodeMirror token rules. Inkstone emits compatible semantic
+ * classes alongside its default palette, so the theme overrides only the tokens it defines.
+ * Palette source: upstream drake.css at 93187ff893a51177fc33421d3810acd37a5a7890.
  *
  * Shell tokens are filled in from the theme's own resolved colours, so the sidebar and the
  * page stay one surface. Everything below the marker is the standard finishing every
@@ -673,6 +671,99 @@
   }
 
 
+
+  /* Native syntax palette; imported with the document selector scoped above. */
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-meta {
+    color: #BBB529;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-number {
+    color: #6897BB;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-keyword {
+    color: #CC7832;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-def {
+    color: #FFD760;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable {
+    color: var(--code-block-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable-2 {
+    color: var(--code-block-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-variable-3 {
+    color: #9876AA;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-type {
+    color: #AABBCC;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-property {
+    color: #FFC66D;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-operator {
+    color: var(--code-block-color);
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-string {
+    color: #6A8759;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-string-2 {
+    color: #6A8759;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-comment {
+    color: #787878;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-link {
+    color: #CC7832;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-atom {
+    color: #CC7832;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-error {
+    color: #BC3F3C;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-tag {
+    color: #E8BF6A;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-quote {
+    color: #a6e22e;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-attribute {
+    color: #9876AA;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-qualifier {
+    color: #6A8759;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-bracket {
+    color: #E8BF6A;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-builtin {
+    color: #FF9E59;
+  }
+
+  .ink-doc.ink-doc.ink-doc .cm-s-inner span.cm-special {
+    color: #FF9E59;
+  }
 
   /* ---- standard finishing ---- */
 

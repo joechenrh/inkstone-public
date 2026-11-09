@@ -317,6 +317,18 @@
   font-family: inherit;
 }
 
+/* CodeMirror defaults to a black caret even on a theme's dark code panel. Use the code's
+   foreground for both native and drawn carets; drawSelection still hides the native one. */
+.milkdown .ink-doc .milkdown-code-block .cm-content {
+  caret-color: var(--ink-code-caret, currentColor);
+}
+
+.milkdown .ink-doc .milkdown-code-block :is(.cm-cursor, .cm-dropCursor) {
+  border-left-color: var(--ink-code-caret, currentColor);
+  /* Lines have no left inset here; CodeMirror's negative margin clips the first-column caret. */
+  margin-left: 0;
+}
+
 /* The size and leading are settled here; the face comes from above. */
 /* `.cm-scroller` has to be named: CodeMirror sets its leading to 1.4 there, and everything below
    inherits it, so telling only `.cm-content` to inherit inherited 1.4. A ten-line fence came out

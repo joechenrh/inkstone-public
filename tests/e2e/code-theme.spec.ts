@@ -95,3 +95,56 @@ for (const fixture of [
       .toContain(fixture.content)
   })
 }
+
+test('code caret contrasts with its own surface in every theme appearance', async ({ page }) => {
+  await page.locator('.cm-content').click()
+  await page.keyboard.press('ArrowRight')
+  const failures: string[] = []
+  const luminance = (color: string) => {
+    const [r = 0, g = 0, b = 0] = (color.match(/[\d.]+/g) ?? []).slice(0, 3).map((value) => {
+      const component = Number(value) / 255
+      return component <= 0.04045 ? component / 12.92 : ((component + 0.055) / 1.055) ** 2.4
+    })
+    return r * 0.2126 + g * 0.7152 + b * 0.0722
+  }
+  for (const [theme, mode] of palettes) {
+    await page.evaluate(({ theme, mode }) => {
+      document.documentElement.dataset.docTheme = theme
+      document.documentElement.dataset.theme = mode
+    }, { theme, mode })
+    const measured = await page.locator('.cm-content').evaluate((content) => {
+      const editor = content.closest('.cm-editor')!
+      const cursor = editor.querySelector('.cm-cursor')!
+      const block = content.closest('.milkdown-code-block')!
+      return { cursor: getComputedStyle(cursor).borderLeftColor,
+        background: getComputedStyle(block).backgroundColor }
+    })
+    const cursor = luminance(measured.cursor)
+    const background = luminance(measured.background)
+    const ratio = (Math.max(cursor, background) + 0.05) / (Math.min(cursor, background) + 0.05)
+    if (ratio < 3) failures.push(`${theme}/${mode}: cursor ${measured.cursor} on ${measured.background}, contrast ${ratio.toFixed(2)}`)
+  }
+  expect(failures).toEqual([])
+  await page.evaluate(() => {
+    document.documentElement.dataset.docTheme = 'drake'
+    document.documentElement.dataset.theme = 'light'
+  })
+  await page.addStyleTag({ content: '.cm-cursorLayer { animation: none !important; opacity: 1 !important; }' })
+  await page.locator('.cm-content').click()
+  await page.keyboard.press('ArrowRight')
+  const cursor = page.locator('.cm-cursor').first()
+  await expect(cursor).toBeVisible()
+  expect((await cursor.boundingBox())!.height).toBeGreaterThan(0)
+  await page.locator('.milkdown-code-block').screenshot({ path: '/tmp/inkstone-drake-code-caret.png' })
+  await page.keyboard.press('ControlOrMeta+a')
+  await page.keyboard.press('Backspace')
+  await expect(page.locator('.cm-content')).toHaveText('')
+  await expect(cursor).toBeVisible()
+  expect((await cursor.boundingBox())!.height).toBeGreaterThan(0)
+  await expect.poll(async () => {
+    const caret = (await cursor.boundingBox())!
+    const scroller = (await page.locator('.cm-scroller').boundingBox())!
+    return caret.x - scroller.x
+  }).toBeGreaterThanOrEqual(0)
+  await page.locator('.milkdown-code-block').screenshot({ path: '/tmp/inkstone-drake-empty-code-caret.png' })
+})

@@ -162,3 +162,12 @@ Rendering fonts are vendored and declared in `src/web/editor/fonts.css`. No `@im
 **They are subset, and they carry a `unicode-range`.** The full Source Han Serif faces were 8.2MB and 8.8MB; being woff2 they are the one thing gzip cannot touch, so on a cold load they were 17MB of an 18.3MB critical path — 94% of it — against about 1.3MB for everything else combined once compressed. They now carry GB2312 level 1 (3,755 hanzi, the standard common set) and CJK punctuation, and nothing else: 1.0MB and 1.1MB. `scripts/subset-fonts.py` regenerates them and explains the trade; a character outside the set falls through to Songti SC by ordinary font fallback.
 
 The `unicode-range` is the other half and it matters more than the subsetting for anyone writing in English: without it a browser fetches a face the moment any character selects it, and `empty-state.css` names the CJK serif *first* — so opening the app with no note yet pulled eight megabytes to set one English sentence. Measured cold, editor to first render: **22.6MB → 4.5MB for a note with no Chinese in it, and → 7.7MB for one with.**
+
+Code carets use the code panel's foreground, not CodeMirror's light-mode black or the page's
+foreground. This also covers light themes with dark fences, such as Drake and Tailwind. A theme
+may override `--ink-code-caret` if needed. The shared style handles native carets and CodeMirror's
+painted cursor/drop-cursor without overriding drawSelection's intentional native-caret hiding.
+All 13 supported theme/appearance combinations are checked for at least 3:1 cursor contrast against
+their own code panel, with visible-caret checks for populated and empty Drake fences.
+The painted caret also stays inside the scroller at the first column: CodeMirror's default negative
+margin would clip it after the document layout removes the code line's left inset.

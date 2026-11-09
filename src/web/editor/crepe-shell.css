@@ -541,6 +541,7 @@
   border: 1px solid transparent;
   border-radius: 4px;
   color: var(--ink-fg);
+  outline: none;
 }
 
 /* A field inside a menu, not a call to action: the ring stays a hairline and only the fill moves,

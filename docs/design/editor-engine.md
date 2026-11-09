@@ -301,3 +301,8 @@ than substituting the alt text. `tests/e2e/source-integrity.spec.ts` exercises s
 Each wholesale editor replacement advances an epoch. A delayed snapshot from an earlier epoch or
 content revision cannot republish an old draft, even when the path stays the same. Switching between
 notes with identical contents still replaces the editor state and separates their undo histories.
+
+Backspace unwraps a fenced block only at a collapsed caret at its first column. Native CodeMirror
+selections stay owned by CodeMirror: selecting all code and deleting clears the content while
+retaining the fence and language. The language-search field uses its wrapper's single hairline focus
+state; both the upstream wrapper outline and the shell's generic input ring are suppressed there.

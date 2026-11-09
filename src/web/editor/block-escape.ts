@@ -318,7 +318,7 @@ function unwrapFence(view: EditorView, ctx: Ctx, event: KeyboardEvent): boolean 
   // owns the caret in here, so this is a DOM question rather than a ProseMirror one.
   const selection = document.getSelection()
   const node = selection?.anchorNode
-  if (!node || selection?.anchorOffset !== 0) return false
+  if (!node || !selection.isCollapsed || selection.anchorOffset !== 0) return false
   const line = (node instanceof Element ? node : node.parentElement)?.closest?.('.cm-line')
   if (!line || line.previousElementSibling !== null) return false
   if (node !== line && line.firstChild !== null && !line.firstChild.contains(node) && line.firstChild !== node) return false

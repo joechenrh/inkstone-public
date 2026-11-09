@@ -171,3 +171,5 @@ All 13 supported theme/appearance combinations are checked for at least 3:1 curs
 their own code panel, with visible-caret checks for populated and empty Drake fences.
 The painted caret also stays inside the scroller at the first column: CodeMirror's default negative
 margin would clip it after the document layout removes the code line's left inset.
+Code panels keep a shared 16px horizontal inset for text and carets, including themes whose
+upstream stylesheet forces an 8px inset. Each theme retains its own vertical spacing.

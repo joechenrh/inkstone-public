@@ -147,4 +147,12 @@ test('code caret contrasts with its own surface in every theme appearance', asyn
     return caret.x - scroller.x
   }).toBeGreaterThanOrEqual(0)
   await page.locator('.milkdown-code-block').screenshot({ path: '/tmp/inkstone-drake-empty-code-caret.png' })
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect(page.locator('.cm-content')).toContainText('const message')
+  await page.keyboard.press('ControlOrMeta+s')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.locator('.ink-tree-name').filter({ hasText: /^code-theme\.md$/ }).click()
+  await expect(page.getByRole('button', { name: 'Read', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.cm-content')).toContainText('const message')
+  await page.locator('.milkdown-code-block').screenshot({ path: '/tmp/inkstone-drake-code-caret-mobile.png' })
 })

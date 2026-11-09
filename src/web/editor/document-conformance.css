@@ -22,6 +22,12 @@
    one inside a fenced block, in both.
    --------------------------------------------------------------------------- */
 
+/* Keep code and its caret away from the panel edge. Some imported themes force an 8px inset;
+   use the shared 16px horizontal gutter while retaining each theme's vertical spacing. */
+:root[data-doc-theme] .ink-doc.ink-doc.ink-doc.ink-doc .milkdown-code-block {
+  padding-inline: 16px !important;
+}
+
 /* 1. Inline code is set relative to the text around it, never larger. Everforest shipped it at
       100% of body, which reads as a size change mid-sentence rather than as a different voice.
    2. It sits on the baseline. Forest used `vertical-align: top`, which hangs the pill from the top

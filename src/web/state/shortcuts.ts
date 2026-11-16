@@ -5,14 +5,30 @@ import { setSidebarView, toggleLeftPanel, toggleRightPanel } from './ui.js'
 import { beginCreate } from './vault.js'
 import { startToday } from '../editor/today.js'
 
+/** View commands are captured before the editor can consume Ctrl+E or Ctrl+M. */
+export function handleViewShortcut(e: KeyboardEvent): boolean {
+  if (e.defaultPrevented || e.isComposing || !(e.metaKey || e.ctrlKey) || e.shiftKey) return false
+  if (!e.altKey && (e.code === 'KeyE' || e.key.toLowerCase() === 'e')) {
+    toggleReadOnly()
+  } else if (e.code === 'KeyM' || (!e.altKey && e.key.toLowerCase() === 'm')) {
+    // Cmd/Ctrl+M is primary; the original Cmd/Ctrl+Alt+M remains an alias.
+    toggleSourceMode()
+  } else {
+    return false
+  }
+  e.preventDefault()
+  return true
+}
+
 /**
  * All global keyboard shortcuts, in one testable function.
  *
  * Returns true when the event was handled, in which case preventDefault has been called.
  */
 export function handleShortcut(e: KeyboardEvent): boolean {
-  // An editor may have already handled a Vim command such as Ctrl+E or Ctrl+[.
+  // View commands have already run in capture; respect other editor commands such as Ctrl+[.
   if (e.defaultPrevented) return false
+  if (handleViewShortcut(e)) return true
   if (!(e.metaKey || e.ctrlKey)) return false
 
   // Creating things is on Alt, because the conventional keys are not ours to take: the browser
@@ -26,11 +42,6 @@ export function handleShortcut(e: KeyboardEvent): boolean {
         break
       case 'KeyF':
         beginCreate('create-dir')
-        break
-      // M for markdown. Typora's is Cmd+/, which here already toggles the history drawer, and
-      // churning a key that works to match another app is the wrong trade.
-      case 'KeyM':
-        toggleSourceMode()
         break
       // D for the day, and on Alt with the other two because starting today's section is the same
       // kind of act as making a file. Cmd+D alone belongs to the browser's bookmark bar, and a
@@ -59,10 +70,6 @@ export function handleShortcut(e: KeyboardEvent): boolean {
       break
     case '2':
       setSidebarView('outline')
-      break
-    case 'e':
-    case 'E':
-      toggleReadOnly()
       break
     case 's':
     case 'S':

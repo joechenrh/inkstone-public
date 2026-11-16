@@ -33,7 +33,7 @@ test.beforeEach(async ({ page }) => {
   await page.locator('.ink-tree-name').filter({ hasText: /^vim-source\.md$/ }).click()
   await expect(page.locator('.ink-doc')).toContainText('alpha beta gamma')
   await chooseKeys(page, 'vim')
-  await page.getByTitle('Markdown source (Cmd/Ctrl+Alt+M)').click()
+  await page.getByRole('button', { name: /^Markdown source \(/ }).click()
   await expect(editor(page)).toBeVisible()
   await editor(page).click()
 })
@@ -55,9 +55,9 @@ test('modal editing, text objects, undo, redo and exact :w persistence', async (
   await command(page, 'w')
   const expected = original.replace('alpha', 'changed 中文')
   await expect.poll(async () => (await (await page.request.get(`/api/file?path=${file}`)).json()).content).toBe(expected)
-  await page.getByTitle('Edit (Cmd/Ctrl+E)').click()
+  await page.getByRole('button', { name: /^Edit \(/ }).click()
   await expect(page.locator('.ink-doc')).toContainText('changed 中文 beta gamma')
-  await page.getByTitle('Markdown source (Cmd/Ctrl+Alt+M)').click()
+  await page.getByRole('button', { name: /^Markdown source \(/ }).click()
   expect(await sourceText(page)).toBe(expected)
 })
 
@@ -81,18 +81,21 @@ test('visual selection, search, substitution, registers and macros', async ({ pa
   expect(await sourceText(page)).toContain('# Vim source!\n!\n')
 })
 
-test('Vim control keys stay in source and preference survives reload', async ({ page }) => {
+test('view shortcuts override Vim while escape and saved preference keep working', async ({ page }) => {
   await keys(page, 'i')
   await page.keyboard.press('Control+BracketLeft')
   await expect(status(page)).toContainText('NORMAL')
   await page.keyboard.press('Control+e')
+  await expect(editor(page)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Read \(/ })).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('ControlOrMeta+KeyM')
   await expect(editor(page)).toBeVisible()
-  await page.keyboard.press('ControlOrMeta+Alt+KeyM')
+  await page.keyboard.press('ControlOrMeta+KeyM')
   await expect(editor(page)).toHaveCount(0)
   await page.reload()
   await page.locator('.ink-tree-name').filter({ hasText: /^notes$/ }).click()
   await page.locator('.ink-tree-name').filter({ hasText: /^vim-source\.md$/ }).click()
-  await page.getByTitle('Markdown source (Cmd/Ctrl+Alt+M)').click()
+  await page.getByRole('button', { name: /^Markdown source \(/ }).click()
   await expect(editor(page)).toBeVisible()
   await chooseKeys(page, 'standard')
   await expect(page.locator('textarea.ink-source-area')).toHaveValue(original)
@@ -153,16 +156,12 @@ test('long notes preserve the caret block on entering and leaving Vim source', a
   await keys(page, 'ggVGc')
   await page.keyboard.insertText(paragraphs)
   await page.keyboard.press('Escape')
-  await page.getByTitle('Edit (Cmd/Ctrl+E)').click()
+  await page.getByRole('button', { name: /^Edit \(/ }).click()
   await expect(page.locator('.ink-doc > p')).toHaveCount(40)
-  await page.locator('.ink-doc > p').nth(19).evaluate((block) => {
-    const range = document.createRange()
-    range.setStart(block.firstChild!, 5)
-    range.collapse(true)
-    getSelection()!.removeAllRanges()
-    getSelection()!.addRange(range)
-  })
-  await page.keyboard.press('ControlOrMeta+Alt+KeyM')
+  // Wait for source-to-rendered caret restoration before making the next real selection.
+  await expect(page.locator('.ink-doc')).toBeFocused()
+  await page.locator('.ink-doc > p').nth(19).click()
+  await page.keyboard.press('ControlOrMeta+KeyM')
   await expect(editor(page)).toBeVisible()
   await expect.poll(() => page.locator('.ink-source--vim .cm-scroller').evaluate((el) => el.scrollTop)).toBeGreaterThan(0)
   // The first edit identifies the line under the restored caret.
@@ -171,7 +170,7 @@ test('long notes preserve the caret block on entering and leaving Vim source', a
   await expect(editor(page)).toContainText('landed Paragraph number 20')
   await keys(page, '/Paragraph number 7 ')
   await page.keyboard.press('Enter')
-  await page.keyboard.press('ControlOrMeta+Alt+KeyM')
+  await page.keyboard.press('ControlOrMeta+KeyM')
   await expect.poll(() => page.evaluate(() => {
     const node = getSelection()?.focusNode
     return (node instanceof Element ? node : node?.parentElement)?.closest('.ink-doc > *')?.textContent

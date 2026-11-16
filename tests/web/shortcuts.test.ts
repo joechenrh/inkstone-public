@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readOnly, setReadOnly, sourceMode, viewMode } from '../../src/web/state/settings.js'
-import { handleShortcut } from '../../src/web/state/shortcuts.js'
+import { handleShortcut, handleViewShortcut } from '../../src/web/state/shortcuts.js'
 import { leftPanelOpen, rightPanelOpen, sidebarView } from '../../src/web/state/ui.js'
 import { cancelPending, pendingOp } from '../../src/web/state/vault.js'
 
@@ -18,6 +18,27 @@ beforeEach(() => {
 })
 
 describe('handleShortcut', () => {
+  for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+    it(`${modifier}+M toggles Source and E opens Read before editor handling`, () => {
+      const source = key({ key: 'm', code: 'KeyM', [modifier]: true })
+      expect(handleViewShortcut(source)).toBe(true)
+      expect(source.defaultPrevented).toBe(true)
+      expect(viewMode.value).toBe('source')
+      expect(handleShortcut(source)).toBe(false)
+      expect(viewMode.value).toBe('source')
+      expect(handleViewShortcut(key({ key: 'e', code: 'KeyE', [modifier]: true }))).toBe(true)
+      expect(viewMode.value).toBe('read')
+      handleViewShortcut(key({ key: 'e', code: 'KeyE', [modifier]: true }))
+      expect(viewMode.value).toBe('edit')
+    })
+  }
+
+  it('leaves IME composition and other editor keys alone in capture', () => {
+    expect(handleViewShortcut(key({ key: 'm', code: 'KeyM', ctrlKey: true, isComposing: true }))).toBe(false)
+    expect(handleViewShortcut(key({ key: '[', code: 'BracketLeft', ctrlKey: true }))).toBe(false)
+    expect(viewMode.value).toBe('edit')
+  })
+
   it('leaves an editor-handled Ctrl command alone', () => {
     viewMode.value = 'source'
     const event = key({ key: 'e', ctrlKey: true })

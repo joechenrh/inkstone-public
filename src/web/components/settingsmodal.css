@@ -23,9 +23,10 @@
   border-radius: var(--ink-r-md);
   box-shadow: var(--ink-shadow-modal);
   padding: 28px 32px;
-  min-width: 360px;
-  max-width: 480px;
-  width: 100%;
+  min-width: 0;
+  max-width: 840px;
+  width: calc(100% - 48px);
+  height: min(600px, calc(100dvh - 48px));
   max-height: calc(100vh - 48px);
 }
 
@@ -38,6 +39,79 @@
   overflow-y: auto;
   margin: 0 -32px;
   padding: 0 32px;
+}
+
+.ink-settings-body[hidden] { display: none; }
+
+.ink-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px 32px;
+}
+
+.ink-settings-group { min-width: 0; }
+
+.ink-settings-tabs {
+  display: flex;
+  flex: none;
+  gap: 24px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+
+.ink-settings-tab {
+  min-height: 40px;
+  padding: 8px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-fg-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ink-settings-tab:hover { color: var(--ink-fg); }
+.ink-settings-tab[aria-selected="true"] {
+  color: var(--ink-fg);
+  border-bottom-color: var(--ink-link);
+}
+.ink-settings-tab:focus-visible {
+  outline: 2px solid var(--ink-link);
+  outline-offset: 3px;
+}
+
+.ink-shortcuts-intro {
+  margin: 0 0 20px;
+  color: var(--ink-fg-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.ink-shortcuts-list { margin: 0; }
+.ink-shortcuts-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.ink-shortcuts-row dd { margin: 0; flex-shrink: 0; }
+.ink-shortcuts-row kbd {
+  display: inline-block;
+  padding: 2px 5px;
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--ink-r-sm);
+  color: var(--ink-fg);
+  font-family: var(--ink-font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+@media (max-width: 799px) {
+  .ink-settings-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 .ink-settings-title {
@@ -286,6 +360,7 @@
   }
 
   .ink-settings-body { margin: 0 -20px; padding: 0 20px; }
+  .ink-settings-tab { min-height: 44px; }
   .ink-settings .ink-settings-header { align-items: center; }
   .ink-settings .ink-settings-close { margin-top: 0; }
   .ink-swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -376,21 +451,13 @@
  * machine is doing — sat in one list with nothing to say they were different kinds. Five quiet
  * labels cost about a hundred pixels and buy the whole panel back for scanning. */
 .ink-settings-section {
-  margin: 13px 0 2px;
-  padding-top: 9px;
-  border-top: 1px solid var(--ink-rule);
+  margin: 0 0 4px;
+  padding-top: 0;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-fg-muted);
-}
-
-/* The first one opens the panel, so it needs neither the rule nor the space above it. */
-.ink-settings-body > .ink-settings-section:first-child {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
 }
 
 /* The folded theme grid: its current value, and the way in. Shaped like the other values in this

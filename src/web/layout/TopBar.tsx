@@ -1,4 +1,5 @@
 import { MenuButton } from '../components/Menu.js'
+import { shortcutDescription, shortcutLabel } from '../platform.js'
 import { openCommit } from '../state/commit.js'
 import { gitStatus, pushVault } from '../state/git.js'
 import {
@@ -50,9 +51,9 @@ export interface TopBarProps {
  * markup underneath. Each icon names the view it selects rather than the one a click leaves.
  */
 const VIEWS = [
-  { mode: 'edit' as const, text: 'Edit', label: 'Edit (Cmd/Ctrl+E)', Icon: IconEditMode },
-  { mode: 'read' as const, text: 'Read', label: 'Read (Cmd/Ctrl+E)', Icon: IconReadMode },
-  { mode: 'source' as const, text: 'Source', label: 'Markdown source (Cmd/Ctrl+Alt+M)', Icon: IconSource },
+  { mode: 'edit' as const, text: 'Edit', label: 'Edit (Mod+E)', Icon: IconEditMode },
+  { mode: 'read' as const, text: 'Read', label: 'Read (Mod+E)', Icon: IconReadMode },
+  { mode: 'source' as const, text: 'Source', label: 'Markdown source (Mod+M)', Icon: IconSource },
 ]
 
 export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
@@ -127,7 +128,7 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
 
   return (
     <>
-      <button type="button" class="ink-iconbtn" onClick={toggleLeftPanel} title="Toggle file tree (Cmd/Ctrl+\)">
+      <button type="button" class="ink-iconbtn" onClick={toggleLeftPanel} title={`Toggle file tree (${shortcutLabel('Mod+\\')})`}>
         <IconSidebar />
       </button>
       {/* Empty with no file open, rather than "No file open".
@@ -164,15 +165,15 @@ export function TopBar({ onOpenSettings, forceList = false }: TopBarProps) {
                 class={`ink-iconbtn ink-viewbtn${view === mode ? ' on' : ''}`}
                 onClick={() => { setViewMode(mode) }}
                 aria-pressed={view === mode}
-                aria-label={label}
-                title={label}
+                aria-label={shortcutDescription(label)}
+                title={shortcutLabel(label)}
               >
                 <Icon />
                 <span class="ink-view-label" aria-hidden="true">{text}</span>
               </button>
             ))}
           </div>
-          <button type="button" class="ink-iconbtn" onClick={toggleRightPanel} title="Toggle right panel (Cmd/Ctrl+/)">
+          <button type="button" class="ink-iconbtn" onClick={toggleRightPanel} title={`Toggle right panel (${shortcutLabel('Mod+/')})`}>
             <IconRightPanel />
           </button>
         </>

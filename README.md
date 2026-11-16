@@ -29,7 +29,8 @@ Set the variables for one, the other, or both; with both, GitHub sign-in is what
 ## Using Inkstone
 
 - **Edit** formats Markdown as you write and reveals syntax around the caret. **Read** shows the formatted note. **Source** edits the raw Markdown.
-- Enable **Settings → Editing → Source keybindings → Vim** for modal editing in Source. The preference stays in this browser. Use `i` to insert, Escape or Ctrl+[ to return to Normal, `/` to search, and `:w` to save. Motions, text objects, visual selections, registers, macros, undo/redo and `:s` substitution are available through [CodeMirror Vim](https://github.com/replit/codemirror-vim). Vim's Ctrl shortcuts take precedence inside the source editor; use the view buttons or Cmd/Ctrl+Alt+M to leave Source.
+- Enable **Settings → Editing → Source keybindings → Vim** for modal editing in Source. The preference stays in this browser. Use `i` to insert, Escape or Ctrl+[ to return to Normal, `/` to search, and `:w` to save. Motions, text objects, visual selections, registers, macros, undo/redo and `:s` substitution are available through [CodeMirror Vim](https://github.com/replit/codemirror-vim). The app’s view shortcuts take precedence inside the editor: Cmd/Ctrl+E opens Read and Cmd/Ctrl+M returns to Edit. The original Cmd/Ctrl+Alt+M source shortcut remains available.
+- **Settings → Keyboard shortcuts** lists Inkstone’s view, save, workspace, and note commands.
 - Search matches filenames and note contents. Results show the filename, folder, and matching text.
 - Click links in Read mode; use Cmd/Ctrl+click in Edit mode. Links to another note open inside Inkstone.
 - History groups automatic commits into writing sessions. Manual commits show `· Commit` and their message; the first version shows `Created`. Restoring a version loads it as an unsaved draft.
@@ -56,7 +57,7 @@ Use Cmd on macOS and Ctrl on Windows or Linux.
 | Cmd/Ctrl+S | Save the current note |
 | Cmd/Ctrl+Shift+S | Save all pending drafts |
 | Cmd/Ctrl+E | Switch between Edit and Read |
-| Cmd/Ctrl+Alt+M | Toggle Markdown source |
+| Cmd/Ctrl+M | Toggle Markdown source |
 | Cmd/Ctrl+Alt+N / F | New note / folder |
 | Cmd/Ctrl+1 / 2 | Files / outline |
 | Cmd/Ctrl+\\ | Toggle the file tree |

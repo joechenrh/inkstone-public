@@ -22,7 +22,7 @@ import { TopBar } from './layout/TopBar.js'
 import { content, dirty, handleExternalChange, openFile } from './state/document.js'
 import { gitStatus, refreshGitStatus } from './state/git.js'
 import { GitFooter } from './layout/GitFooter.js'
-import { handleShortcut } from './state/shortcuts.js'
+import { handleShortcut, handleViewShortcut } from './state/shortcuts.js'
 import { isPhone, openSettings } from './state/ui.js'
 import { sourceMode } from './state/settings.js'
 import { loadShares } from './state/share.js'
@@ -70,12 +70,17 @@ export function App() {
     window.addEventListener('beforeunload', onBeforeUnload)
 
     const onKey = (e: KeyboardEvent) => { handleShortcut(e) }
+    const onViewKey = (e: KeyboardEvent) => {
+      if (handleViewShortcut(e)) e.stopPropagation()
+    }
+    window.addEventListener('keydown', onViewKey, true)
     window.addEventListener('keydown', onKey)
 
     return () => {
       disconnect()
       window.removeEventListener('beforeunload', onBeforeUnload)
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('keydown', onViewKey, true)
     }
   }, [])
 

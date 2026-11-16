@@ -118,7 +118,7 @@ export function toggleReadOnly(): void {
   setViewMode(viewMode.value === 'read' ? 'edit' : 'read')
 }
 
-/** Cmd/Ctrl+Alt+M. Leaving source returns to editing, which is where it was entered from. */
+/** Cmd/Ctrl+M. Leaving source returns to editing, which is where it was entered from. */
 export function toggleSourceMode(): void {
   setViewMode(viewMode.value === 'source' ? 'edit' : 'source')
 }

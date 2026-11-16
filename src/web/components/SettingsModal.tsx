@@ -2,6 +2,7 @@ import type { ComponentChildren } from 'preact'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { IconChevron, IconClose } from './icons.js'
 import { useModalFocus } from './useModalFocus.js'
+import { KeyboardShortcuts } from './KeyboardShortcuts.js'
 import { auth, backend } from '../api/index.js'
 import { buildLabel } from '../version.js'
 import {
@@ -40,13 +41,17 @@ export function SettingsModal() {
   // so without this the swatches stayed open from one visit to the next, which is exactly the third
   // of the panel this fold exists to give back.
   useEffect(() => {
-    if (!settingsOpen.value) setThemesOpen(false)
+    if (!settingsOpen.value) {
+      setThemesOpen(false)
+      setPage('preferences')
+    }
   }, [settingsOpen.value])
   const [vaultRoot, setVaultRoot] = useState<string | null>(null)
   const [hasRemote, setHasRemote] = useState<boolean | null>(null)
   const [themeChoice, setThemeChoice] = useState<ThemeChoice>(() => readThemeChoice())
   /** Shut on every open: a choice made once should not keep costing the panel a third of itself. */
   const [themesOpen, setThemesOpen] = useState(false)
+  const [page, setPage] = useState<'preferences' | 'shortcuts'>('preferences')
   const activeTheme = findDocTheme(docTheme.value)
   const bothAppearances = offersBothAppearances(docTheme.value)
 
@@ -113,10 +118,45 @@ export function SettingsModal() {
           </button>
         </div>
 
+        <div class="ink-settings-tabs" role="tablist" aria-label="Settings pages">
+          {(['preferences', 'shortcuts'] as const).map((tab) => (
+            <button
+              key={tab}
+              id={`ink-settings-tab-${tab}`}
+              type="button"
+              role="tab"
+              class="ink-settings-tab"
+              aria-selected={page === tab}
+              aria-controls={`ink-settings-panel-${tab}`}
+              tabIndex={page === tab ? 0 : -1}
+              onClick={() => { setPage(tab) }}
+              onKeyDown={(event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+                event.preventDefault()
+                const next = event.key === 'Home' ? 'preferences' : event.key === 'End' ? 'shortcuts'
+                  : tab === 'preferences' ? 'shortcuts' : 'preferences'
+                setPage(next)
+                dialogRef.current?.querySelector<HTMLButtonElement>(`#ink-settings-tab-${next}`)?.focus()
+              }}
+            >
+              {tab === 'preferences' ? 'Preferences' : 'Keyboard shortcuts'}
+            </button>
+          ))}
+        </div>
+
         {/* Everything below the header scrolls, so the way out stays where it was however many
             rows this grows. */}
-        <div class="ink-settings-body">
+        <div
+          class="ink-settings-body"
+          id="ink-settings-panel-preferences"
+          role="tabpanel"
+          aria-labelledby="ink-settings-tab-preferences"
+          hidden={page !== 'preferences'}
+          tabIndex={0}
+        >
+        <div class="ink-settings-grid">
 
+        <section class="ink-settings-group" aria-label="Appearance">
         <h3 class="ink-settings-section">Appearance</h3>
 
 
@@ -225,6 +265,9 @@ export function SettingsModal() {
           </select>
         </div>
 
+        </section>
+
+        <section class="ink-settings-group" aria-label="Editing">
         <h3 class="ink-settings-section">Editing</h3>
 
         <div class="ink-settings-row">
@@ -262,6 +305,9 @@ export function SettingsModal() {
           </div>
         </div>
 
+        </section>
+
+        <section class="ink-settings-group" aria-label="Pictures">
         <h3 class="ink-settings-section">Pictures</h3>
 
         {/* Only where the server was given somewhere to put them. A switch that does nothing is
@@ -317,6 +363,9 @@ export function SettingsModal() {
           </div>
         </div>
 
+        </section>
+
+        <section class="ink-settings-group" aria-label="Storage">
         <h3 class="ink-settings-section">Storage</h3>
 
         <div class="ink-settings-row">
@@ -358,6 +407,19 @@ export function SettingsModal() {
           </div>
         )}
 
+        </section>
+        </div>
+        </div>
+
+        <div
+          class="ink-settings-body"
+          id="ink-settings-panel-shortcuts"
+          role="tabpanel"
+          aria-labelledby="ink-settings-tab-shortcuts"
+          hidden={page !== 'shortcuts'}
+          tabIndex={0}
+        >
+          <KeyboardShortcuts />
         </div>
 
         <div class="ink-settings-footer">

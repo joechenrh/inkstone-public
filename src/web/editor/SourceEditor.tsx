@@ -1,9 +1,17 @@
 import { useLayoutEffect, useRef } from 'preact/hooks'
 import { content, editContent, loadingPath } from '../state/document.js'
-import { readOnly } from '../state/settings.js'
-import { blockAtOffset, caretBlockIndex, lineAtOffset, offsetOfBlock, placeCaretInBlock } from './source-sync.js'
+import { readOnly, sourceMode, sourceVim } from '../state/settings.js'
+import { VimSourceEditor } from './VimSourceEditor.js'
+import { settingsOpen } from '../state/ui.js'
+import { blockAtOffset, caretBlockIndex, lineAtOffset, offsetOfBlock } from './source-sync.js'
+import { rememberSourceCaret } from './source-return.js'
+import { currentPath } from '../state/vault.js'
 import { documentRoot } from './surface.js'
 import './source.css'
+
+export function SourceEditor() {
+  return sourceVim.value ? <VimSourceEditor /> : <PlainSourceEditor />
+}
 
 /**
  * The raw markdown, for the edits the renderer is in the way of.
@@ -15,10 +23,10 @@ import './source.css'
  * two elements to wrap and measure identically forever; one CJK line or one font fallback slides
  * the highlight off the text.
  *
- * Rendered over the editor column rather than instead of it, so VditorEditor stays mounted: it is
+ * Rendered over the editor column rather than instead of it, so CrepeEditor stays mounted: it is
  * expensive to rebuild and it holds its own state. It does not re-render while this is open.
  */
-export function SourceEditor() {
+function PlainSourceEditor() {
   const areaRef = useRef<HTMLTextAreaElement>(null)
   const gutterRef = useRef<HTMLDivElement>(null)
   const text = content.value
@@ -38,12 +46,13 @@ export function SourceEditor() {
   useLayoutEffect(() => {
     const area = areaRef.current
     if (!area) return
+    const path = currentPath.value
 
     const root = documentRoot()
     const from = root === null ? null : caretBlockIndex(root)
     const at = from === null ? 0 : offsetOfBlock(area.value, from)
     if (!readOnly.value) {
-      area.focus()
+      if (!settingsOpen.peek()) area.focus()
       area.setSelectionRange(at, at)
     }
     // Focusing a textarea leaves it scrolled wherever the browser last had it — measured 346px
@@ -58,15 +67,7 @@ export function SourceEditor() {
       // On the way back, from whatever the reader left the caret on — including a line they have
       // just typed, which is why the textarea's own value is read rather than the signal's.
       const back = blockAtOffset(area.value, area.selectionStart ?? 0)
-      const surface = documentRoot()
-      if (surface === null) return
-      // After the mode has actually changed: this runs while the source is still on screen.
-      requestAnimationFrame(() => {
-        const live = documentRoot()
-        if (live === null) return
-        placeCaretInBlock(live, back)
-        live.focus()
-      })
+      if (path && !sourceMode.peek()) rememberSourceCaret(path, back)
     }
   }, [])
 

@@ -47,7 +47,8 @@ import { useImagePaste } from '../assets/usePaste.js'
 import { content, editContent, loadingPath } from '../state/document.js'
 import { readOnly, sourceMode } from '../state/settings.js'
 import { currentPath } from '../state/vault.js'
-import { DOC_SURFACE } from './surface.js'
+import { DOC_SURFACE, documentRoot } from './surface.js'
+import { restoreSourceCaret } from './source-return.js'
 import { TableToolbar } from './TableToolbar.js'
 import { alignColumn, deleteTable, resizeTable, tableAtCaret, type TableTarget } from './crepe-table.js'
 
@@ -696,6 +697,10 @@ export function CrepeEditor({ collab: wire = null, guest = false }: CrepeEditorP
       settingRef.current = false
     }
   }, [content.value, currentPath.value, sourceMode.value, loadingPath.value])
+
+  useEffect(() => {
+    if (!sourceMode.value) restoreSourceCaret(currentPath.value, documentRoot())
+  }, [sourceMode.value])
 
   useEffect(() => {
     crepeRef.current?.setReadonly(readOnly.value || loadingPath.value !== null)

@@ -5,6 +5,7 @@ const EDITOR_KEY = 'inkstone.editorFontSize'
 const READ_ONLY_KEY = 'inkstone.readOnly'
 const SHOW_ASSETS_KEY = 'inkstone.showAssets'
 const TOOLBAR_KEY = 'inkstone.floatingToolbar'
+const SOURCE_VIM_KEY = 'inkstone.sourceVim'
 const EDITOR_SIZES = [12, 14, 16, 18]
 
 function safeGet(key: string): string | null {
@@ -43,6 +44,14 @@ export const showAssets = signal(safeGet(SHOW_ASSETS_KEY) === '1')
  * where the same commands live in a menu and nothing floats.
  */
 export const floatingToolbar = signal(safeGet(TOOLBAR_KEY) !== '0')
+
+/** Vim applies only to raw Markdown; the rendered editor keeps its usual keys. */
+export const sourceVim = signal(safeGet(SOURCE_VIM_KEY) === '1')
+
+export function setSourceVim(on: boolean): void {
+  sourceVim.value = on
+  safeSet(SOURCE_VIM_KEY, on ? '1' : '0')
+}
 
 export function setFloatingToolbar(on: boolean): void {
   floatingToolbar.value = on

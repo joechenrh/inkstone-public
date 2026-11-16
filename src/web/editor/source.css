@@ -64,3 +64,56 @@
 .ink-source-area[readonly] {
   cursor: default;
 }
+
+/* CodeMirror owns its gutter and scrolling in Vim mode. Keep the source typography and palette. */
+.ink-source--vim { display: block; }
+.ink-source--vim .cm-editor {
+  height: 100%;
+  min-width: 0;
+  font-family: var(--ink-font-mono);
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+  font-size: calc(var(--ink-font-size, 16px) * 0.9);
+}
+.ink-source--vim .cm-scroller {
+  font-family: var(--ink-font-mono);
+  line-height: 1.7;
+  overflow: auto;
+}
+.ink-source--vim .cm-content { padding: 18px 0; caret-color: var(--ink-fg); }
+.ink-source--vim .cm-line { padding: 0 20px; }
+.ink-source--vim .cm-gutters {
+  background: var(--ink-bg);
+  color: var(--ink-fg-muted);
+  border-right: 1px solid var(--ink-rule);
+}
+.ink-source--vim .cm-lineNumbers .cm-gutterElement { padding: 0 10px 0 18px; }
+.ink-source--vim .cm-cursor { border-left-color: var(--ink-fg); }
+.ink-source--vim .cm-fat-cursor { background: var(--ink-selection); }
+.ink-source--vim .cm-selectionBackground,
+.ink-source--vim .cm-focused .cm-selectionBackground,
+.ink-source--vim .cm-searchMatch { background: var(--ink-selection); }
+.ink-source--vim .cm-panels {
+  background: var(--ink-bg);
+  color: var(--ink-fg);
+  border-top: 1px solid var(--ink-rule);
+}
+.ink-source--vim .cm-vim-panel {
+  padding: 4px 18px;
+  font-family: var(--ink-font-mono);
+  font-size: 12px;
+}
+.ink-source--vim .cm-vim-panel input {
+  color: var(--ink-fg);
+  caret-color: var(--ink-fg);
+  font: inherit;
+  border-radius: 0;
+  box-shadow: none;
+}
+.ink-source--vim .cm-vim-panel input:focus-visible { outline: none; }
+.ink-source--vim .cm-editor.cm-focused,
+.ink-source--vim .cm-content:focus-visible { outline: none; box-shadow: none; }
+.ink-source--vim .cm-editor:not(.cm-focused) .cm-fat-cursor {
+  background: none;
+  outline: 1px solid var(--ink-fg-muted);
+}

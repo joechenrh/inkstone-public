@@ -18,6 +18,14 @@ beforeEach(() => {
 })
 
 describe('handleShortcut', () => {
+  it('leaves an editor-handled Ctrl command alone', () => {
+    viewMode.value = 'source'
+    const event = key({ key: 'e', ctrlKey: true })
+    event.preventDefault()
+    expect(handleShortcut(event)).toBe(false)
+    expect(viewMode.value).toBe('source')
+  })
+
   it('ignores keys without Ctrl/Cmd', () => {
     expect(handleShortcut(key({ key: '1' }))).toBe(false)
     expect(sidebarView.value).toBe('files')

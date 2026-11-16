@@ -19,6 +19,8 @@ import {
   setFloatingToolbar,
   setShowAssets,
   showAssets,
+  sourceVim,
+  setSourceVim,
 } from '../state/settings.js'
 import { DOC_THEMES, docTheme, findDocTheme, offersBothAppearances } from '../theme/docThemes.js'
 import { closeSettings, isPhone, settingsOpen } from '../state/ui.js'
@@ -224,6 +226,19 @@ export function SettingsModal() {
         </div>
 
         <h3 class="ink-settings-section">Editing</h3>
+
+        <div class="ink-settings-row">
+          <label class="ink-settings-label" for="ink-source-keys">Source keybindings</label>
+          <select
+            id="ink-source-keys"
+            class="ink-settings-select"
+            value={sourceVim.value ? 'vim' : 'standard'}
+            onChange={(e) => { setSourceVim(e.currentTarget.value === 'vim') }}
+          >
+            <option value="standard">Standard</option>
+            <option value="vim">Vim</option>
+          </select>
+        </div>
 
         <div class="ink-settings-row">
           <span class="ink-settings-label">Selection toolbar</span>

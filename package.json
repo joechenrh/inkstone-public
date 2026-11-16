@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.1",
     "@codemirror/language": "^6.12.4",
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/state": "^6.7.1",
@@ -40,6 +41,7 @@
     "@milkdown/plugin-collab": "^7.22.1",
     "@playwright/test": "^1.62.1",
     "@preact/preset-vite": "^2.10.6",
+    "@replit/codemirror-vim": "^6.4.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/preact": "^3.2.4",
     "@types/node": "^22.10.5",

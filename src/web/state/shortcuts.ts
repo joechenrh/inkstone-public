@@ -11,6 +11,8 @@ import { startToday } from '../editor/today.js'
  * Returns true when the event was handled, in which case preventDefault has been called.
  */
 export function handleShortcut(e: KeyboardEvent): boolean {
+  // An editor may have already handled a Vim command such as Ctrl+E or Ctrl+[.
+  if (e.defaultPrevented) return false
   if (!(e.metaKey || e.ctrlKey)) return false
 
   // Creating things is on Alt, because the conventional keys are not ours to take: the browser
